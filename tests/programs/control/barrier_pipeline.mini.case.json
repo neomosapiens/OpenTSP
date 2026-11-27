@@ -1,0 +1,51 @@
+{
+ "schema": "opentsp.program-case",
+ "version": 1,
+ "spec_version": "0.1",
+ "name": "control/barrier_pipeline",
+ "profile": "mini",
+ "program": "barrier_pipeline.mini.ots",
+ "tags": [
+  "sim",
+  "e2e"
+ ],
+ "weights": {
+  "x": {
+   "dtype": "i8",
+   "words": 1,
+   "hex": "4420823cfde6f1c26b30f90ec7dd01e4"
+  },
+  "y": {
+   "dtype": "i8",
+   "words": 1,
+   "hex": "887534a20f0b0d04c36ed80e71e0fd77"
+  },
+  "w": {
+   "dtype": "i8",
+   "words": 1,
+   "hex": "b07670eb940bd5335f973daad8619b91"
+  }
+ },
+ "preload": {},
+ "dump": [
+  "7:32",
+  "46:32"
+ ],
+ "expect": {
+  "asm_warnings": [],
+  "diagnostics": [],
+  "words": {
+   "7:32": "cc95b6de0cf1fec62e9ed11c38bdfe5b",
+   "46:32": "7c0b26c9a0fcd3f98d350ec6101e99ec"
+  },
+  "decoded": null
+ },
+ "golden": {
+  "source": "hand",
+  "generator": "gen/control.py:barrier_pipeline",
+  "seed": 1
+ },
+ "budget": {
+  "cycles": 84
+ }
+}

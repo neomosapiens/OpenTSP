@@ -1,0 +1,32 @@
+# Instruction catalogue entry. Sail (model/) is normative; test/isa_db/check_isa_db.py
+# checks this file against the model's encdec and assembly mappings.
+$schema: opentsp.isa-db.instruction
+spec_version: '0.1'
+name: Read
+mnemonic: read
+long_name: SRAM read
+slice: MEM
+units:
+- MEM_W
+- MEM_E
+timing: MEM
+encoding:
+  width: 64
+  match: 0001000000-00000----------------------00000000000000000000000000
+  variables:
+  - name: addr
+    location: 47-32
+    kind: sram_addr
+    max_expr: sram_words-1
+  - name: dst
+    location: 31-26
+    kind: stream
+  - name: thread
+    location: '53'
+    kind: imm1
+assembly: read {addr}, {dst}, {thread}
+operation: 'Reads word addr (plus the AGT offset; outside the segment: OTS-E-OPR-001) of the issuing slice onto
+  stream dst (plus the AGT StreamStep offset). Tiles outside the SetVL length or not in liquid thread `thread` (Config
+  SL) drive zero. Loopable. A Write of the same liquid thread in the same parcel dispatches with it if the banks
+  differ (else OTS-E-MEM-001; references of different threads never clash). ISCA20 Table I.'
+definedBy: ref

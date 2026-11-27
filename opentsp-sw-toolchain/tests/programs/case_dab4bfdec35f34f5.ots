@@ -1,0 +1,4 @@
+.arch opentsp-tsa
+.profile ref
+.section text
+.section text

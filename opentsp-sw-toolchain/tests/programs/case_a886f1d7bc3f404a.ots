@@ -1,0 +1,5 @@
+.arch opentsp-tsa
+.profile ref
+.section text
+bundle @cycle=4294967296 {
+}

@@ -1,0 +1,78 @@
+{
+ "schema": "opentsp.program-case",
+ "version": 1,
+ "spec_version": "0.1",
+ "name": "control/repeat",
+ "profile": "mini",
+ "program": "repeat.mini.ots",
+ "tags": [
+  "sim",
+  "e2e"
+ ],
+ "weights": {
+  "x": {
+   "dtype": "i8",
+   "words": 1,
+   "hex": "4420823cfde6f1c26b30f90ec7dd01e4"
+  },
+  "y0": {
+   "dtype": "i8",
+   "words": 1,
+   "hex": "887534a20f0b0d04c36ed80e71e0fd77"
+  },
+  "y1": {
+   "dtype": "i8",
+   "words": 1,
+   "hex": "b07670eb940bd5335f973daad8619b91"
+  },
+  "y2": {
+   "dtype": "i8",
+   "words": 1,
+   "hex": "ffc911f57cced458bbbf2ce03753c9bd"
+  },
+  "y3": {
+   "dtype": "i8",
+   "words": 1,
+   "hex": "fa0ff0169dc9575674066676cfb0b4eb"
+  }
+ },
+ "preload": {},
+ "dump": [
+  "44:48",
+  "44:49",
+  "44:50",
+  "44:51",
+  "45:48"
+ ],
+ "expect": {
+  "asm_warnings": [],
+  "diagnostics": [
+   {
+    "cycle": 20,
+    "queue": 90,
+    "code": "OTS-E-RES-001"
+   },
+   {
+    "cycle": 21,
+    "queue": 91,
+    "code": "OTS-E-RES-001"
+   }
+  ],
+  "words": {
+   "44:48": "cc95b6de0cf1fec62e9ed11c38bdfe5b",
+   "44:49": "f496f22791f1c6f5cac736b89f3e9c75",
+   "44:50": "43e9933179b4c51a26ef25eefe30caa1",
+   "44:51": "3e2f72529aaf4818df365f84968db5cf",
+   "45:48": "3e2f72529aaf4818df365f84968db5cf"
+  },
+  "decoded": null
+ },
+ "golden": {
+  "source": "hand",
+  "generator": "gen/control.py:repeat",
+  "seed": 1
+ },
+ "budget": {
+  "cycles": 37
+ }
+}

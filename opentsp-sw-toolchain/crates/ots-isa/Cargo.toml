@@ -1,0 +1,12 @@
+[package]
+name = "ots-isa"
+version = "0.1.0"
+edition = "2021"
+description = "Instruction tables, decoder, encoder and text layer for opentsp specification 0.1, generated from encoding.json"
+
+[dependencies]
+ots-profile = { path = "../ots-profile" }
+sha2 = "0.10"
+
+[build-dependencies]
+serde_json = "1"

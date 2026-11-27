@@ -1,0 +1,7 @@
+.arch opentsp-tsa
+.profile ref
+.section text
+bundle @cycle=5 {
+}
+bundle @cycle=5 {
+}

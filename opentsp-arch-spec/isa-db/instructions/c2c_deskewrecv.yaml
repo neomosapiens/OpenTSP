@@ -1,0 +1,39 @@
+# Instruction catalogue entry. Sail (model/) is normative; test/isa_db/check_isa_db.py
+# checks this file against the model's encdec and assembly mappings.
+$schema: opentsp.isa-db.instruction
+spec_version: '0.1'
+name: DeskewRecv
+mnemonic: deskew_recv
+long_name: Deskew and receive (the polling loop at program start)
+slice: C2C
+units:
+- C2C_W_RX
+- C2C_E_RX
+timing: C2C
+encoding:
+  width: 32
+  match: 0101001001----------------------
+  variables:
+  - name: chip_id
+    location: 21-16
+    kind: chip_id
+    hi_location: 2-0
+  - name: stream
+    location: 15-10
+    kind: stream
+  - name: link
+    location: 9-6
+    kind: link_id
+    hi_location: 5-3
+assembly: deskew_recv {chip_id}, {link}, {stream}
+operation: 'The data-dependent polling loop of ISCA22 sec. 3.2 (Fig. 7(b)) as one instruction: the queue is held
+  until the next HAC epoch boundary after the dispatch (cycle mod c2c.hac_period = 0, as Deskew); if a vector has
+  arrived on link `link` by then the instruction is a Receive dispatched at that boundary (same operands, same effect,
+  same diagnostics after the dispatch), else the queue stays held and the vector is looked for again at the following
+  boundary, and so on; no diagnostic is reported while it waits, and a vector that never comes leaves the queue
+  held for the rest of the run (as an unreleased Sync). link >= c2c.links or chip_id not the link''s peer is OTS-E-OPR-001,
+  and a stream whose only writers are at or downstream of the C2C queue is OTS-E-DIR-001, each reported at the dispatch
+  (the diagnostics of Receive that do not depend on the arrival) and then the instruction holds nothing and has
+  no effect. The child therefore leaves the loop floor(L / c2c.hac_period) + 1 epochs after the parent''s Transmit
+  (ISCA22 sec. 3.2). Implementation choice: the loop as one instruction (the ISA has no branch).'
+definedBy: ref

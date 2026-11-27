@@ -1,0 +1,6 @@
+# Binary files (those that contain a NUL byte) that may hold the vendor-name term, one per line:
+#   <repo-relative path> | <reason>
+# Every other file, binary or text, is scanned; a line without a reason is an error.
+docs/media/gpt2-four-chip.gif | GIF LZW bitstream rendered from the screencast. Text scanning of compressed pixels produces incidental matches. The filename and README remain checked.
+docs/media/gpt2-four-chip.mp4 | H.264 bitstream. Decoding compressed pixels as text produces incidental matches; the filename and README remain checked.
+opentsp-vllm/demo/gpt2-program-sources.zip | DEFLATE-compressed fixed schedules and SRAM layout inputs. Text scanning of compressed bytes produces incidental matches. Qualification inspects the archive members and the builder verifies all payload seals.

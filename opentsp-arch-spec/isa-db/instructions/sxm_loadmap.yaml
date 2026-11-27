@@ -1,0 +1,29 @@
+# Instruction catalogue entry. Sail (model/) is normative; test/isa_db/check_isa_db.py
+# checks this file against the model's encdec and assembly mappings.
+$schema: opentsp.isa-db.instruction
+spec_version: '0.1'
+name: LoadMap
+mnemonic: loadmap
+long_name: Load map
+slice: SXM
+units:
+- SXM_W_PRM
+- SXM_W_DST
+- SXM_E_PRM
+- SXM_E_DST
+timing: SXM
+encoding:
+  width: 64
+  match: 010000010100000000------000000----000000000000000000000000000000
+  variables:
+  - name: src
+    location: 45-40
+    kind: stream
+  - name: map
+    location: 33-30
+    kind: map_id
+assembly: loadmap {map}, {src}
+operation: m[l] = src[l]. Records with the map whether it is bijective (the entries below vlanes are distinct);
+  the map is ready for a Permute geometry.superlanes cycles after this execute cycle, and for a Distribute the next
+  cycle.
+definedBy: ref

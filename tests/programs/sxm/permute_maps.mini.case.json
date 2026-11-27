@@ -1,0 +1,68 @@
+{
+ "schema": "opentsp.program-case",
+ "version": 1,
+ "spec_version": "0.1",
+ "name": "sxm/permute_maps",
+ "profile": "mini",
+ "program": "permute_maps.mini.ots",
+ "tags": [
+  "sim"
+ ],
+ "weights": {
+  "x": {
+   "dtype": "i8",
+   "words": 1,
+   "hex": "7f64a2f9733d8603e628d2413b16d173"
+  },
+  "m00": {
+   "dtype": "i8",
+   "words": 1,
+   "hex": "010b070c0e0a0f03040508000902060d"
+  },
+  "m10": {
+   "dtype": "i8",
+   "words": 1,
+   "hex": "00c60901cc07060d0f0b0c080ae10e05"
+  },
+  "m20": {
+   "dtype": "i8",
+   "words": 1,
+   "hex": "0a0b080d0e000907060f0103020c0405"
+  },
+  "m30": {
+   "dtype": "i8",
+   "words": 1,
+   "hex": "05060a0b08040700010402030d0e090c"
+  }
+ },
+ "preload": {},
+ "dump": [
+  "44:32",
+  "45:32",
+  "46:32"
+ ],
+ "expect": {
+  "asm_warnings": [],
+  "diagnostics": [
+   {
+    "cycle": 61,
+    "queue": 124,
+    "code": "OTS-E-SXM-001"
+   }
+  ],
+  "words": {
+   "44:32": "6441033bd1d273f9733de67f28a28616",
+   "45:32": "7f0028640003861673413be6d200d13d",
+   "46:32": "d241e616d17f2803867364f9a23b733d"
+  },
+  "decoded": null
+ },
+ "golden": {
+  "source": "hand",
+  "generator": "gen/sxm.py:permute_maps",
+  "seed": 1
+ },
+ "budget": {
+  "cycles": 112
+ }
+}

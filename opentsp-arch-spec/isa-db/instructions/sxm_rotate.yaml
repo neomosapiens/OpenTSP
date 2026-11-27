@@ -1,0 +1,33 @@
+# Instruction catalogue entry. Sail (model/) is normative; test/isa_db/check_isa_db.py
+# checks this file against the model's encdec and assembly mappings.
+$schema: opentsp.isa-db.instruction
+spec_version: '0.1'
+name: Rotate
+mnemonic: rotate
+long_name: Tile rotate
+slice: SXM
+units:
+- SXM_W_TSP
+- SXM_E_TSP
+timing: SXM
+encoding:
+  width: 64
+  match: 010000001100----------------------000000000000000000000000000000
+  variables:
+  - name: dst
+    location: 51-46
+    kind: stream
+  - name: src
+    location: 45-40
+    kind: stream
+  - name: n
+    location: 39-30
+    kind: tile_size
+    values:
+    - 3
+    - 4
+assembly: rotate {src}, {n}, {dst}
+operation: 'Per superlane g, lanes 0..n^2-1 of src form an n x n tile (row r at lanes r*n..r*n+n-1). Output t =
+  tr*n + tc goes to stream dst+t: lane 16g + r*n + c = src lane 16g + ((r+tr) mod n)*n + (c+tc) mod n for r, c <
+  n, other lanes zero (a cyclic 2-D shift of the tile). dst + n^2 > 32 is OTS-E-OPR-002. ISCA20 Table I.'
+definedBy: ref

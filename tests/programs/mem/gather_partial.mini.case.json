@@ -1,0 +1,99 @@
+{
+ "schema": "opentsp.program-case",
+ "version": 1,
+ "spec_version": "0.1",
+ "name": "mem/gather_partial",
+ "profile": "mini",
+ "program": "gather_partial.mini.ots",
+ "tags": [
+  "sim"
+ ],
+ "weights": {
+  "tbl": {
+   "dtype": "i8",
+   "words": 8,
+   "hex": "4420823cfde6f1c26b30f90ec7dd01e4887534a20f0b0d04c36ed80e71e0fd77b07670eb940bd5335f973daad8619b91ffc911f57cced458bbbf2ce03753c9bdfa0ff0169dc9575674066676cfb0b4eb8902c44269da1cf6ba66d3f8b6d4b100a9ea0e755a5c2e8210242a08e7078f7f89385eb09423555182568b96e8a4fef2"
+  },
+  "old": {
+   "dtype": "i8",
+   "words": 8,
+   "hex": "3a0c9fc5afd7608437816bdd0a7309cb4a1252e4da70e6720fcaa4da1e98406c189c24279e9851d5814204136feb5713c166b13269dd63fc35c797ff08a6cd90095066a745addb6d8831c2b0f87821142b4456556d89aa82bcadae3a9578fa4535a414d025c24b40ae3ac127722988ba973aea8d37179706072ed33a14607ad7"
+  },
+  "mixed": {
+   "dtype": "i8",
+   "words": 1,
+   "hex": "0401e6557b5134dec19681f4a1336aa2"
+  },
+  "good": {
+   "dtype": "i8",
+   "words": 1,
+   "hex": "47000597a3e6c8a0cc2020a2e939806e"
+  },
+  "v": {
+   "dtype": "i8",
+   "words": 1,
+   "hex": "b6845d6a9d657eb8298f2de52ead74c7"
+  },
+  "m2": {
+   "dtype": "i8",
+   "words": 1,
+   "hex": "0401a75fa29b7dab332f7d700a7ccd25"
+  }
+ },
+ "preload": {},
+ "dump": [
+  "44:48",
+  "44:49",
+  "44:50",
+  "44:64",
+  "44:65",
+  "44:66",
+  "44:67",
+  "44:68",
+  "44:69",
+  "44:70",
+  "44:71"
+ ],
+ "expect": {
+  "asm_warnings": [],
+  "diagnostics": [
+   {
+    "cycle": 12,
+    "queue": 0,
+    "code": "OTS-E-OPR-001"
+   },
+   {
+    "cycle": 16,
+    "queue": 0,
+    "code": "OTS-E-OPR-001"
+   },
+   {
+    "cycle": 28,
+    "queue": 44,
+    "code": "OTS-E-OPR-001"
+   }
+  ],
+  "words": {
+   "44:48": "00000000000000000000000000000000",
+   "44:49": "00000000000000000000000000000000",
+   "44:50": "89000000000000000000000000000000",
+   "44:64": "3a0c9fc5afd7608437816bdd0a7309cb",
+   "44:65": "4a1252e4da70e6720fcaa4da1e98406c",
+   "44:66": "189c24279e9851d5814204136feb5713",
+   "44:67": "c166b13269dd63fc35c797ff08a6cd90",
+   "44:68": "095066a745addb6d8831c2b0f8782114",
+   "44:69": "2b4456556d89aa82bcadae3a9578fa45",
+   "44:70": "35a414d025c24b40ae3ac127722988ba",
+   "44:71": "973aea8d37179706072ed33a14607ad7"
+  },
+  "decoded": null
+ },
+ "golden": {
+  "source": "hand",
+  "generator": "gen/mem.py:gather_partial",
+  "seed": 1
+ },
+ "budget": {
+  "cycles": 47
+ }
+}

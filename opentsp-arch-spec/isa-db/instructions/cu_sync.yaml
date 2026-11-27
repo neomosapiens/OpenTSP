@@ -1,0 +1,19 @@
+# Instruction catalogue entry. Sail (model/) is normative; test/isa_db/check_isa_db.py
+# checks this file against the model's encdec and assembly mappings.
+$schema: opentsp.isa-db.instruction
+spec_version: '0.1'
+name: Sync
+mnemonic: sync
+long_name: Barrier sync
+slice: CU
+units:
+- any
+timing: CU
+encoding:
+  width: 32
+  match: '00000000010000000000000000000000'
+  variables: []
+assembly: sync
+operation: 'Parks the queue (control channel: every data queue) until the first Notify at or after it + 35 cycles.
+  ISCA20 sec. III-A2.'
+definedBy: ref

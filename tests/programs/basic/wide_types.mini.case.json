@@ -1,0 +1,191 @@
+{
+ "schema": "opentsp.program-case",
+ "version": 1,
+ "spec_version": "0.1",
+ "name": "basic/wide_types",
+ "profile": "mini",
+ "program": "wide_types.mini.ots",
+ "tags": [
+  "sim"
+ ],
+ "weights": {
+  "xi16p0": {
+   "dtype": "raw",
+   "words": 1,
+   "hex": "ff22f3066652bb51cdecf6e7d2acaeda"
+  },
+  "xi16p1": {
+   "dtype": "raw",
+   "words": 1,
+   "hex": "64f93d0328411673988824a4ef523072"
+  },
+  "yi16p0": {
+   "dtype": "raw",
+   "words": 1,
+   "hex": "a9cda0d44878455f24ee33e4caca4cc1"
+  },
+  "yi16p1": {
+   "dtype": "raw",
+   "words": 1,
+   "hex": "f2bfafcff05e9fecedc5d153bac1c6e8"
+  },
+  "xi32p0": {
+   "dtype": "raw",
+   "words": 1,
+   "hex": "2a026232352ea49a483a0aa845242e0c"
+  },
+  "xi32p1": {
+   "dtype": "raw",
+   "words": 1,
+   "hex": "fa2c021d323c9cc2994cd576192d0c70"
+  },
+  "xi32p2": {
+   "dtype": "raw",
+   "words": 1,
+   "hex": "d1b2f30e97e67fc34a69e2d6b99eda18"
+  },
+  "xi32p3": {
+   "dtype": "raw",
+   "words": 1,
+   "hex": "240c95875d40560951d4f3499fcd9ff4"
+  },
+  "yi32p0": {
+   "dtype": "raw",
+   "words": 1,
+   "hex": "0b815da55584ec92f331454d76c74dd7"
+  },
+  "yi32p1": {
+   "dtype": "raw",
+   "words": 1,
+   "hex": "828eb56925a4fdf716e697defc79a697"
+  },
+  "yi32p2": {
+   "dtype": "raw",
+   "words": 1,
+   "hex": "16502032641593261317e0c88c35ef11"
+  },
+  "yi32p3": {
+   "dtype": "raw",
+   "words": 1,
+   "hex": "7aa2e2e767b400c385408fc7fffc9d7b"
+  },
+  "xf32p0": {
+   "dtype": "raw",
+   "words": 1,
+   "hex": "0000ec2c3f8489af835ae40361d08512"
+  },
+  "xf32p1": {
+   "dtype": "raw",
+   "words": 1,
+   "hex": "0000467190260ed4ce6a766a11a8cbfb"
+  },
+  "xf32p2": {
+   "dtype": "raw",
+   "words": 1,
+   "hex": "0000c5a314fc428ecfe34ef585c33a87"
+  },
+  "xf32p3": {
+   "dtype": "raw",
+   "words": 1,
+   "hex": "00804243bc40433c3dc3403fc1bfc5c2"
+  },
+  "yf32p0": {
+   "dtype": "raw",
+   "words": 1,
+   "hex": "00005e8a0563fbfeef93459c09916623"
+  },
+  "yf32p1": {
+   "dtype": "raw",
+   "words": 1,
+   "hex": "0000326714e8a625f3148cd50c5944b9"
+  },
+  "yf32p2": {
+   "dtype": "raw",
+   "words": 1,
+   "hex": "000070bc238052dc6aa49bd1e77b133d"
+  },
+  "yf32p3": {
+   "dtype": "raw",
+   "words": 1,
+   "hex": "0080c3be404044b93f41bec44443bfc4"
+  }
+ },
+ "preload": {},
+ "dump": [
+  "44:32",
+  "45:32",
+  "48:32",
+  "49:32",
+  "52:32",
+  "53:32",
+  "44:33",
+  "45:33",
+  "46:33",
+  "47:33",
+  "48:33",
+  "49:33",
+  "50:33",
+  "51:33",
+  "52:33",
+  "53:33",
+  "54:33",
+  "55:33",
+  "44:34",
+  "45:34",
+  "46:34",
+  "47:34",
+  "48:34",
+  "49:34",
+  "50:34",
+  "51:34",
+  "52:34",
+  "53:34",
+  "54:34",
+  "55:34"
+ ],
+ "expect": {
+  "asm_warnings": [],
+  "diagnostics": [],
+  "words": {
+   "44:32": "a8ef93daaeca00b0f1da29cb9c76fa9b",
+   "45:32": "57b8edd2189fb65f854ef6f8aa14f65b",
+   "48:32": "565553321eda76f2a9fec30308e26219",
+   "49:32": "72398e3338e27786abc2535135906a8a",
+   "52:32": "573ae0f8b070670fd46802bcb4b8a85a",
+   "53:32": "baded45afcba457745e733c2cfe70726",
+   "44:33": "3583bfd78ab2902c3b6b4ff5bbeb7be3",
+   "45:33": "7cbab78657e09abab0326c5415a6b207",
+   "46:33": "e8021340fbfb13ea5d81c39f46d3c92a",
+   "47:33": "9eaf786ec4f457ccd61483119fc93d6f",
+   "48:33": "1f81058de0aab8085509c55bcf5de135",
+   "49:33": "789d4db30c979ecb82663d981cb365d8",
+   "50:33": "bb61d2db33d0eb9c3751020d2c68ea06",
+   "51:33": "aa6ab39ff68c5546cc946482a0d10179",
+   "52:33": "ce029a3a99b830d4581ab288cefcd614",
+   "53:33": "13492753547f7b91afb35160911a7d2e",
+   "54:33": "abd137d6290a9e4353d98ca7edbf6d69",
+   "55:33": "b93e1aa7dd3dcda35b9b867b60610d9f",
+   "44:34": "0000e81275744f17e0115b41c33fb985",
+   "45:34": "00008e427f87956476290598f7d2d4b8",
+   "46:34": "00000da3223e818b82d93bd1e4793a4e",
+   "47:34": "0080c3434041443c3fc340c44443c5c4",
+   "48:34": "0000ea46954259471fa36df74fe351c1",
+   "49:34": "00006aa0a87c2345faabe81220e0c2b9",
+   "50:34": "0000a9a32376229250ed61d2e97c3a2c",
+   "51:34": "00004343c040c43cbfc34044c4c3c544",
+   "52:34": "00004e6eed4d80f2c7693953e0f88c67",
+   "53:34": "0000199246f0aea7b8c2e628311ae98d",
+   "54:34": "0000b9f0bdfd1ff5be117a49f0c0d649",
+   "55:34": "0000c6c2bc4148b63dc6bfc5c6c34447"
+  },
+  "decoded": null
+ },
+ "golden": {
+  "source": "hand",
+  "generator": "gen/basic.py:wide_types",
+  "seed": 1
+ },
+ "budget": {
+  "cycles": 59
+ }
+}

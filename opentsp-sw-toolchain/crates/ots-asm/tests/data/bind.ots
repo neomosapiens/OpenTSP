@@ -1,0 +1,9 @@
+.arch opentsp-tsa
+.profile ref
+.extern w0, slice=7, addr=0x20, size=0x3
+.extern f, slice=60, addr=0xf0, size=0x2
+.extern abcdefghijklmno, slice=4, addr=0x0, size=0x1
+.section text
+bundle @cycle=33 {
+  MEM[7]: read w0+0x2, E:0, 0x0
+}

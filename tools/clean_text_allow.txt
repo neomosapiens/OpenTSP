@@ -1,0 +1,11 @@
+# Bounded exemptions for license text and the policy's own negative controls.
+LICENSE-APACHE-2.0 | Unmodified Apache license text.
+opentsp-vllm/LICENSE-APACHE-2.0 | Unmodified Apache license text.
+tools/clean_text_patterns.txt | Detector regular expressions.
+tools/clean_text_allow.txt | Detector exemption reasons.
+tests/infra/test_check_clean_text.py | Synthetic negative controls, not project history.
+tools/check_source_policy.py | Source-reference detector expressions.
+tests/infra/test_source_policy.py | Synthetic reference/license distinction controls.
+opentsp-arch-spec/LICENSE-APACHE-2.0 | Unmodified Apache license text.
+opentsp-iss/LICENSE-APACHE-2.0 | Unmodified Apache license text.
+opentsp-sw-toolchain/LICENSE-APACHE-2.0 | Unmodified Apache license text.

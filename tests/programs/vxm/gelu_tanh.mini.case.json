@@ -1,0 +1,193 @@
+{
+ "schema": "opentsp.program-case",
+ "version": 1,
+ "spec_version": "0.1",
+ "name": "vxm/gelu_tanh",
+ "profile": "mini",
+ "program": "gelu_tanh.mini.ots",
+ "tags": [
+  "sim"
+ ],
+ "weights": {
+  "x0p0": {
+   "dtype": "raw",
+   "words": 1,
+   "hex": "00000101ff00ffff331c0427522736d0"
+  },
+  "x0p1": {
+   "dtype": "raw",
+   "words": 1,
+   "hex": "0080008003047bfb36a4433ac5b7b1a5"
+  },
+  "c02p0": {
+   "dtype": "raw",
+   "words": 1,
+   "hex": "b9b9b9b9b9b9b9b9b9b9b9b9b9b9b9b9"
+  },
+  "c02p1": {
+   "dtype": "raw",
+   "words": 1,
+   "hex": "29292929292929292929292929292929"
+  },
+  "c04p0": {
+   "dtype": "raw",
+   "words": 1,
+   "hex": "62626262626262626262626262626262"
+  },
+  "c04p1": {
+   "dtype": "raw",
+   "words": 1,
+   "hex": "3a3a3a3a3a3a3a3a3a3a3a3a3a3a3a3a"
+  },
+  "c06p0": {
+   "dtype": "raw",
+   "words": 1,
+   "hex": "00000000000000000000000000000000"
+  },
+  "c06p1": {
+   "dtype": "raw",
+   "words": 1,
+   "hex": "3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c"
+  },
+  "c07p0": {
+   "dtype": "raw",
+   "words": 1,
+   "hex": "00000000000000000000000000000000"
+  },
+  "c07p1": {
+   "dtype": "raw",
+   "words": 1,
+   "hex": "38383838383838383838383838383838"
+  },
+  "x1p0": {
+   "dtype": "raw",
+   "words": 1,
+   "hex": "00000101ff00ffff0d96ce83efb26aba"
+  },
+  "x1p1": {
+   "dtype": "raw",
+   "words": 1,
+   "hex": "00000000ff00ffff861b742233a4d558"
+  },
+  "x1p2": {
+   "dtype": "raw",
+   "words": 1,
+   "hex": "000000007f807f7f72b64b83d6f569f1"
+  },
+  "x1p3": {
+   "dtype": "raw",
+   "words": 1,
+   "hex": "0080008000007fffbfbfbdbec0403ebf"
+  },
+  "c12p0": {
+   "dtype": "raw",
+   "words": 1,
+   "hex": "13131313131313131313131313131313"
+  },
+  "c12p1": {
+   "dtype": "raw",
+   "words": 1,
+   "hex": "27272727272727272727272727272727"
+  },
+  "c12p2": {
+   "dtype": "raw",
+   "words": 1,
+   "hex": "37373737373737373737373737373737"
+  },
+  "c12p3": {
+   "dtype": "raw",
+   "words": 1,
+   "hex": "3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d3d"
+  },
+  "c14p0": {
+   "dtype": "raw",
+   "words": 1,
+   "hex": "2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a"
+  },
+  "c14p1": {
+   "dtype": "raw",
+   "words": 1,
+   "hex": "42424242424242424242424242424242"
+  },
+  "c14p2": {
+   "dtype": "raw",
+   "words": 1,
+   "hex": "4c4c4c4c4c4c4c4c4c4c4c4c4c4c4c4c"
+  },
+  "c14p3": {
+   "dtype": "raw",
+   "words": 1,
+   "hex": "3f3f3f3f3f3f3f3f3f3f3f3f3f3f3f3f"
+  },
+  "c16p0": {
+   "dtype": "raw",
+   "words": 1,
+   "hex": "00000000000000000000000000000000"
+  },
+  "c16p1": {
+   "dtype": "raw",
+   "words": 1,
+   "hex": "00000000000000000000000000000000"
+  },
+  "c16p2": {
+   "dtype": "raw",
+   "words": 1,
+   "hex": "80808080808080808080808080808080"
+  },
+  "c16p3": {
+   "dtype": "raw",
+   "words": 1,
+   "hex": "3f3f3f3f3f3f3f3f3f3f3f3f3f3f3f3f"
+  },
+  "c17p0": {
+   "dtype": "raw",
+   "words": 1,
+   "hex": "00000000000000000000000000000000"
+  },
+  "c17p1": {
+   "dtype": "raw",
+   "words": 1,
+   "hex": "00000000000000000000000000000000"
+  },
+  "c17p2": {
+   "dtype": "raw",
+   "words": 1,
+   "hex": "00000000000000000000000000000000"
+  },
+  "c17p3": {
+   "dtype": "raw",
+   "words": 1,
+   "hex": "3f3f3f3f3f3f3f3f3f3f3f3f3f3f3f3f"
+  }
+ },
+ "preload": {},
+ "dump": [
+  "44:16",
+  "45:16",
+  "48:56",
+  "49:56",
+  "50:56",
+  "51:56"
+ ],
+ "expect": {
+  "asm_warnings": [],
+  "diagnostics": [],
+  "words": {
+   "44:16": "000000000000ff00090f04cb00af89b5",
+   "45:16": "0080008002027b8034a0433880b0aca1",
+   "48:56": "000000000000ff00dd7f689500b2d174",
+   "49:56": "000000000000ff00ba05654100a40837",
+   "50:56": "0000000040407f0026e2c3d100f50a65",
+   "51:56": "0080008000007f80bebdbcbd80403ebd"
+  },
+  "decoded": null
+ },
+ "golden": {
+  "source": "numpy-twin",
+  "generator": "gen/vxm.py:gelu_tanh",
+  "seed": 1
+ },
+ "budget": {
+  "cycles": 126
+ }
+}

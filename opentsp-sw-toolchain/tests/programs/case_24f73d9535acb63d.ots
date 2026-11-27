@@ -1,0 +1,483 @@
+.arch opentsp-tsa
+.profile ref
+.section text
+bundle @cycle=0 {
+  VXM[0]: sync
+}
+bundle @cycle=2 {
+  VXM[0]: sync
+}
+bundle @cycle=4 {
+  VXM[0]: sync
+}
+bundle @cycle=6 {
+  VXM[0]: sync
+}
+bundle @cycle=8 {
+  VXM[0]: sync
+}
+bundle @cycle=10 {
+  VXM[0]: sync
+}
+bundle @cycle=12 {
+  VXM[0]: sync
+}
+bundle @cycle=14 {
+  VXM[0]: sync
+}
+bundle @cycle=16 {
+  VXM[0]: sync
+}
+bundle @cycle=18 {
+  VXM[0]: sync
+}
+bundle @cycle=20 {
+  VXM[0]: sync
+}
+bundle @cycle=22 {
+  VXM[0]: sync
+}
+bundle @cycle=24 {
+  VXM[0]: sync
+}
+bundle @cycle=26 {
+  VXM[0]: sync
+}
+bundle @cycle=28 {
+  VXM[0]: sync
+}
+bundle @cycle=30 {
+  VXM[0]: sync
+}
+bundle @cycle=32 {
+  VXM[0]: sync
+}
+bundle @cycle=34 {
+  VXM[0]: sync
+}
+bundle @cycle=36 {
+  VXM[0]: sync
+}
+bundle @cycle=38 {
+  VXM[0]: sync
+}
+bundle @cycle=40 {
+  VXM[0]: sync
+}
+bundle @cycle=42 {
+  VXM[0]: sync
+}
+bundle @cycle=44 {
+  VXM[0]: sync
+}
+bundle @cycle=46 {
+  VXM[0]: sync
+}
+bundle @cycle=48 {
+  VXM[0]: sync
+}
+bundle @cycle=50 {
+  VXM[0]: sync
+}
+bundle @cycle=52 {
+  VXM[0]: sync
+}
+bundle @cycle=54 {
+  VXM[0]: sync
+}
+bundle @cycle=56 {
+  VXM[0]: sync
+}
+bundle @cycle=58 {
+  VXM[0]: sync
+}
+bundle @cycle=60 {
+  VXM[0]: sync
+}
+bundle @cycle=62 {
+  VXM[0]: sync
+}
+bundle @cycle=64 {
+  VXM[0]: sync
+}
+bundle @cycle=66 {
+  VXM[0]: sync
+}
+bundle @cycle=68 {
+  VXM[0]: sync
+}
+bundle @cycle=70 {
+  VXM[0]: sync
+}
+bundle @cycle=72 {
+  VXM[0]: sync
+}
+bundle @cycle=74 {
+  VXM[0]: sync
+}
+bundle @cycle=76 {
+  VXM[0]: sync
+}
+bundle @cycle=78 {
+  VXM[0]: sync
+}
+bundle @cycle=80 {
+  VXM[0]: sync
+}
+bundle @cycle=82 {
+  VXM[0]: sync
+}
+bundle @cycle=84 {
+  VXM[0]: sync
+}
+bundle @cycle=86 {
+  VXM[0]: sync
+}
+bundle @cycle=88 {
+  VXM[0]: sync
+}
+bundle @cycle=90 {
+  VXM[0]: sync
+}
+bundle @cycle=92 {
+  VXM[0]: sync
+}
+bundle @cycle=94 {
+  VXM[0]: sync
+}
+bundle @cycle=96 {
+  VXM[0]: sync
+}
+bundle @cycle=98 {
+  VXM[0]: sync
+}
+bundle @cycle=100 {
+  VXM[0]: sync
+}
+bundle @cycle=102 {
+  VXM[0]: sync
+}
+bundle @cycle=104 {
+  VXM[0]: sync
+}
+bundle @cycle=106 {
+  VXM[0]: sync
+}
+bundle @cycle=108 {
+  VXM[0]: sync
+}
+bundle @cycle=110 {
+  VXM[0]: sync
+}
+bundle @cycle=112 {
+  VXM[0]: sync
+}
+bundle @cycle=114 {
+  VXM[0]: sync
+}
+bundle @cycle=116 {
+  VXM[0]: sync
+}
+bundle @cycle=118 {
+  VXM[0]: sync
+}
+bundle @cycle=120 {
+  VXM[0]: sync
+}
+bundle @cycle=122 {
+  VXM[0]: sync
+}
+bundle @cycle=124 {
+  VXM[0]: sync
+}
+bundle @cycle=126 {
+  VXM[0]: sync
+}
+bundle @cycle=128 {
+  VXM[0]: sync
+}
+bundle @cycle=130 {
+  VXM[0]: sync
+}
+bundle @cycle=132 {
+  VXM[0]: sync
+}
+bundle @cycle=134 {
+  VXM[0]: sync
+}
+bundle @cycle=136 {
+  VXM[0]: sync
+}
+bundle @cycle=138 {
+  VXM[0]: sync
+}
+bundle @cycle=140 {
+  VXM[0]: sync
+}
+bundle @cycle=142 {
+  VXM[0]: sync
+}
+bundle @cycle=144 {
+  VXM[0]: sync
+}
+bundle @cycle=146 {
+  VXM[0]: sync
+}
+bundle @cycle=148 {
+  VXM[0]: sync
+}
+bundle @cycle=150 {
+  VXM[0]: sync
+}
+bundle @cycle=152 {
+  VXM[0]: sync
+}
+bundle @cycle=154 {
+  VXM[0]: sync
+}
+bundle @cycle=156 {
+  VXM[0]: sync
+}
+bundle @cycle=158 {
+  VXM[0]: sync
+}
+bundle @cycle=160 {
+  VXM[0]: sync
+}
+bundle @cycle=162 {
+  VXM[0]: sync
+}
+bundle @cycle=164 {
+  VXM[0]: sync
+}
+bundle @cycle=166 {
+  VXM[0]: sync
+}
+bundle @cycle=168 {
+  VXM[0]: sync
+}
+bundle @cycle=170 {
+  VXM[0]: sync
+}
+bundle @cycle=172 {
+  VXM[0]: sync
+}
+bundle @cycle=174 {
+  VXM[0]: sync
+}
+bundle @cycle=176 {
+  VXM[0]: sync
+}
+bundle @cycle=178 {
+  VXM[0]: sync
+}
+bundle @cycle=180 {
+  VXM[0]: sync
+}
+bundle @cycle=182 {
+  VXM[0]: sync
+}
+bundle @cycle=184 {
+  VXM[0]: sync
+}
+bundle @cycle=186 {
+  VXM[0]: sync
+}
+bundle @cycle=188 {
+  VXM[0]: sync
+}
+bundle @cycle=190 {
+  VXM[0]: sync
+}
+bundle @cycle=192 {
+  VXM[0]: sync
+}
+bundle @cycle=194 {
+  VXM[0]: sync
+}
+bundle @cycle=196 {
+  VXM[0]: sync
+}
+bundle @cycle=198 {
+  VXM[0]: sync
+}
+bundle @cycle=200 {
+  VXM[0]: sync
+}
+bundle @cycle=202 {
+  VXM[0]: sync
+}
+bundle @cycle=204 {
+  VXM[0]: sync
+}
+bundle @cycle=206 {
+  VXM[0]: sync
+}
+bundle @cycle=208 {
+  VXM[0]: sync
+}
+bundle @cycle=210 {
+  VXM[0]: sync
+}
+bundle @cycle=212 {
+  VXM[0]: sync
+}
+bundle @cycle=214 {
+  VXM[0]: sync
+}
+bundle @cycle=216 {
+  VXM[0]: sync
+}
+bundle @cycle=218 {
+  VXM[0]: sync
+}
+bundle @cycle=220 {
+  VXM[0]: sync
+}
+bundle @cycle=222 {
+  VXM[0]: sync
+}
+bundle @cycle=224 {
+  VXM[0]: sync
+}
+bundle @cycle=226 {
+  VXM[0]: sync
+}
+bundle @cycle=228 {
+  VXM[0]: sync
+}
+bundle @cycle=230 {
+  VXM[0]: sync
+}
+bundle @cycle=232 {
+  VXM[0]: sync
+}
+bundle @cycle=234 {
+  VXM[0]: sync
+}
+bundle @cycle=236 {
+  VXM[0]: sync
+}
+bundle @cycle=238 {
+  VXM[0]: sync
+}
+bundle @cycle=240 {
+  VXM[0]: sync
+}
+bundle @cycle=242 {
+  VXM[0]: sync
+}
+bundle @cycle=244 {
+  VXM[0]: sync
+}
+bundle @cycle=246 {
+  VXM[0]: sync
+}
+bundle @cycle=248 {
+  VXM[0]: sync
+}
+bundle @cycle=250 {
+  VXM[0]: sync
+}
+bundle @cycle=252 {
+  VXM[0]: sync
+}
+bundle @cycle=254 {
+  VXM[0]: sync
+}
+bundle @cycle=256 {
+  VXM[0]: sync
+}
+bundle @cycle=258 {
+  VXM[0]: sync
+}
+bundle @cycle=260 {
+  VXM[0]: sync
+}
+bundle @cycle=262 {
+  VXM[0]: sync
+}
+bundle @cycle=264 {
+  VXM[0]: sync
+}
+bundle @cycle=266 {
+  VXM[0]: sync
+}
+bundle @cycle=268 {
+  VXM[0]: sync
+}
+bundle @cycle=270 {
+  VXM[0]: sync
+}
+bundle @cycle=272 {
+  VXM[0]: sync
+}
+bundle @cycle=274 {
+  VXM[0]: sync
+}
+bundle @cycle=276 {
+  VXM[0]: sync
+}
+bundle @cycle=278 {
+  VXM[0]: sync
+}
+bundle @cycle=280 {
+  VXM[0]: sync
+}
+bundle @cycle=282 {
+  VXM[0]: sync
+}
+bundle @cycle=284 {
+  VXM[0]: sync
+}
+bundle @cycle=286 {
+  VXM[0]: sync
+}
+bundle @cycle=288 {
+  VXM[0]: sync
+}
+bundle @cycle=290 {
+  VXM[0]: sync
+}
+bundle @cycle=292 {
+  VXM[0]: sync
+}
+bundle @cycle=294 {
+  VXM[0]: sync
+}
+bundle @cycle=296 {
+  VXM[0]: sync
+}
+bundle @cycle=298 {
+  VXM[0]: sync
+}
+bundle @cycle=300 {
+  VXM[0]: sync
+}
+bundle @cycle=302 {
+  VXM[0]: sync
+}
+bundle @cycle=304 {
+  VXM[0]: sync
+}
+bundle @cycle=306 {
+  VXM[0]: sync
+}
+bundle @cycle=308 {
+  VXM[0]: sync
+}
+bundle @cycle=310 {
+  VXM[0]: sync
+}
+bundle @cycle=312 {
+  VXM[0]: sync
+}
+bundle @cycle=314 {
+  VXM[0]: sync
+}
+bundle @cycle=316 {
+  VXM[0]: sync
+}
+bundle @cycle=318 {
+  VXM[0]: sync
+}

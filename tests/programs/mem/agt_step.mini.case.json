@@ -1,0 +1,57 @@
+{
+ "schema": "opentsp.program-case",
+ "version": 1,
+ "spec_version": "0.1",
+ "name": "mem/agt_step",
+ "profile": "mini",
+ "program": "agt_step.mini.ots",
+ "tags": [
+  "sim"
+ ],
+ "weights": {
+  "xs": {
+   "dtype": "i8",
+   "words": 7,
+   "hex": "4420823cfde6f1c26b30f90ec7dd01e4887534a20f0b0d04c36ed80e71e0fd77b07670eb940bd5335f973daad8619b91ffc911f57cced458bbbf2ce03753c9bdfa0ff0169dc9575674066676cfb0b4eb8902c44269da1cf6ba66d3f8b6d4b100a9ea0e755a5c2e8210242a08e7078f7f"
+  },
+  "ws": {
+   "dtype": "i8",
+   "words": 4,
+   "hex": "89385eb09423555182568b96e8a4fef23a0c9fc5afd7608437816bdd0a7309cb4a1252e4da70e6720fcaa4da1e98406c189c24279e9851d5814204136feb5713"
+  }
+ },
+ "preload": {},
+ "dump": [
+  "44:48",
+  "45:48",
+  "44:49",
+  "45:49",
+  "44:50",
+  "45:50",
+  "44:51",
+  "45:51"
+ ],
+ "expect": {
+  "asm_warnings": [],
+  "diagnostics": [],
+  "words": {
+   "44:48": "4420823cfde6f1c26b30f90ec7dd01e4",
+   "45:48": "189c24279e9851d5814204136feb5713",
+   "44:49": "b07670eb940bd5335f973daad8619b91",
+   "45:49": "4a1252e4da70e6720fcaa4da1e98406c",
+   "44:50": "fa0ff0169dc9575674066676cfb0b4eb",
+   "45:50": "3a0c9fc5afd7608437816bdd0a7309cb",
+   "44:51": "a9ea0e755a5c2e8210242a08e7078f7f",
+   "45:51": "89385eb09423555182568b96e8a4fef2"
+  },
+  "decoded": null
+ },
+ "golden": {
+  "source": "hand",
+  "generator": "gen/mem.py:agt_step",
+  "seed": 1
+ },
+ "budget": {
+  "cycles": 35
+ }
+}

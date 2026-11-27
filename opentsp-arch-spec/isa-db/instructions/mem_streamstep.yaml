@@ -1,0 +1,24 @@
+# Instruction catalogue entry. Sail (model/) is normative; test/isa_db/check_isa_db.py
+# checks this file against the model's encdec and assembly mappings.
+$schema: opentsp.isa-db.instruction
+spec_version: '0.1'
+name: StreamStep
+mnemonic: streamstep
+long_name: AGT stream stride
+slice: MEM
+units:
+- MEM_W
+- MEM_E
+timing: MEM
+encoding:
+  width: 64
+  match: 00010010110000000000000000000000----------------0000000000000000
+  variables:
+  - name: s
+    location: 31-16
+    kind: imm16
+    max: 31
+assembly: streamstep {s}
+operation: 'AGT configuration (optional): each reference of the current loop level advances the data stream id by
+  s (past stream 31: OTS-E-OPR-001).'
+definedBy: ref

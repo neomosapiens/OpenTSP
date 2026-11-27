@@ -1,0 +1,19 @@
+# Instruction catalogue entry. Sail (model/) is normative; test/isa_db/check_isa_db.py
+# checks this file against the model's encdec and assembly mappings.
+$schema: opentsp.isa-db.instruction
+spec_version: '0.1'
+name: Deskew
+mnemonic: deskew
+long_name: Link deskew
+slice: C2C
+units:
+- any
+timing: C2C
+encoding:
+  width: 32
+  match: '01010000100000000000000000000000'
+  variables: []
+assembly: deskew
+operation: Holds the issuing queue until the next HAC epoch boundary (cycle mod c2c.hac_period = 0; 252 cycles,
+  ISCA22 footnote 4). ISCA20 Table I; ISCA22 sec. 3.2.
+definedBy: ref

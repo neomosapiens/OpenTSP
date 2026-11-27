@@ -1,0 +1,9 @@
+.arch opentsp-tsa
+.profile ref
+.section text
+bundle @cycle=0 {
+  C2C.W.RX[0]: deskew_recv 0x1, 0x0, E:0
+}
+bundle @cycle=300 {
+  C2C.W.RX[0]: receive 0x1, 0x0, E:1
+}

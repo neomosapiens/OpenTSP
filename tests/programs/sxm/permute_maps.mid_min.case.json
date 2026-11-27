@@ -1,0 +1,73 @@
+{
+ "schema": "opentsp.program-case",
+ "version": 1,
+ "spec_version": "0.1",
+ "name": "sxm/permute_maps",
+ "profile": "test/mid_min",
+ "program": "permute_maps.mid_min.ots",
+ "tags": [
+  "sim"
+ ],
+ "weights": {
+  "x": {
+   "dtype": "i8",
+   "words": 1,
+   "hex": "7f64a2f9733d8603e628d2413b16d1734d986c88762467a452ef2c522e305a7229f24dbf20af54cfc8f0f85ec59fdfeca4ed6ec5b3d164534aba4ac1ccc641e8"
+  },
+  "m00": {
+   "dtype": "i8",
+   "words": 1,
+   "hex": "162910063c330f2d1b3f2131141f2c30110327233d38262b37182f0e203e1319091c361e00173b070d34120415251d010b0c3a3905280a081a242e353222022a"
+  },
+  "m10": {
+   "dtype": "i8",
+   "words": 1,
+   "hex": "1a3129bc082137160fe218892f382b1406093f3d2cf41f0d0ae844052836342a22131b3b11530c1c10230256bc0b0e85355d2051152defb34671260333013c32"
+  },
+  "m20": {
+   "dtype": "i8",
+   "words": 1,
+   "hex": "3a3c3d1f1b2c2307241d2f300c140337291816333b09201734061e0e1519081c3e0b312104273200121328112a0f0d103f251a2d0a2e36352b01393802052622"
+  },
+  "m30": {
+   "dtype": "i8",
+   "words": 1,
+   "hex": "0c1d2615250710112e07173f29160933272b3839120d351c193d013723203a0e00062d210b2f1e310a08323e02241405300f283618132a2c1a3b1f3c2204031b"
+  }
+ },
+ "preload": {},
+ "dump": [
+  "44:32",
+  "45:32",
+  "46:32"
+ ],
+ "expect": {
+  "asm_warnings": [],
+  "diagnostics": [
+   {
+    "cycle": 64,
+    "queue": 124,
+    "code": "OTS-E-RES-001"
+   },
+   {
+    "cycle": 73,
+    "queue": 124,
+    "code": "OTS-E-SXM-001"
+   }
+  ],
+  "words": {
+   "44:32": "67f04d86ccc5739f52e8f2ed7672c5a498f9cfbfc64a545e5352ecd1294188ef282e645a7fa4c10316b36c7324af3064413b4aba3dc8d2e62c20dfd16e4da2f8",
+   "45:32": "2cedf000e6f2536773005200ec4a5e768628e8c6c5007216d200003dc864b3f84d8852c198003b2e4dbfa2000041d100d1002900249f0000000054f9c564cc6e",
+   "46:32": "4accc67252c5bf032030eca43b76f953f05267c5c12829a4b3865ad124efe62e4141edf273cf6e7f6c88c898f873164de8af2c9fd2df64d15e64ba4aa23d544d"
+  },
+  "decoded": null
+ },
+ "golden": {
+  "source": "hand",
+  "generator": "gen/sxm.py:permute_maps",
+  "seed": 1
+ },
+ "budget": {
+  "cycles": 121
+ }
+}

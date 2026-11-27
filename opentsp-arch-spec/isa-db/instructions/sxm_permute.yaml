@@ -1,0 +1,32 @@
+# Instruction catalogue entry. Sail (model/) is normative; test/isa_db/check_isa_db.py
+# checks this file against the model's encdec and assembly mappings.
+$schema: opentsp.isa-db.instruction
+spec_version: '0.1'
+name: Permute
+mnemonic: permute
+long_name: Lane permute
+slice: SXM
+units:
+- SXM_W_PRM
+- SXM_E_PRM
+timing: SXM_CROSS
+encoding:
+  width: 64
+  match: 010000000100------------000000----000000000000000000000000000000
+  variables:
+  - name: dst
+    location: 51-46
+    kind: stream
+  - name: src
+    location: 45-40
+    kind: stream
+  - name: map
+    location: 33-30
+    kind: map_id
+assembly: permute {src}, {map}, {dst}
+operation: 'dst[l] = m[l] < vlanes ? src[m[l]] : 0; a map entry >= vlanes masks its lane (zero fill) and may repeat;
+  the entries below vlanes must be distinct, i.e. the map must be bijective, which LoadMap and LoadMapWide record
+  with the map (OTS-E-SXM-001: no effect). A map is ready for a Permute geometry.superlanes cycles after the execute
+  cycle of its LoadMap or LoadMapWide; a Permute that executes earlier is OTS-E-RES-001 (no effect). Timing class
+  SXM_CROSS, as Shift.'
+definedBy: ref

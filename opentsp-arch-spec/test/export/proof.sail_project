@@ -1,0 +1,95 @@
+// Production modules of the model for the prover backends (Lean, Rocq, Lem): tsp.sail_project without unit_tests and main.
+// export_check.sh checks that this file lists the production files of ../../model/tsp.sail_project and nothing else.
+
+// opentsp TSP Sail model: modules, files and dependencies
+// (structure follows sail-riscv model/riscv.sail_project).
+
+prelude {
+  files
+    prelude/prelude.sail,
+    prelude/errors.sail,
+}
+
+core {
+  requires prelude
+
+  files
+    core/geometry.sail,
+    core/types.sail,
+    core/diagnostics.sail,
+    core/layout.sail,
+    core/callbacks.sail,
+    core/csr.sail,
+    core/lints.sail,
+    core/ecc.sail,
+    core/streams.sail,
+    core/queues.sail,
+    core/sram.sail,
+    core/timing.sail,
+}
+
+slice_types {
+  requires prelude, core
+
+  files
+    slices/mem/mem_types.sail,
+    slices/vxm/vxm_types.sail,
+    slices/mxm/mxm_types.sail,
+    slices/sxm/sxm_types.sail,
+}
+
+sys {
+  requires prelude, core, slice_types
+
+  files
+    sys/insts_begin.sail,
+    sys/operands.sail,
+}
+
+slices {
+  requires prelude, core, numerics, slice_types, sys
+
+  cu {
+    files slices/cu/cu_iq.sail, slices/cu/cu_insts.sail
+  }
+  mem {
+    files slices/mem/mem_insts.sail
+  }
+  vxm {
+    files slices/vxm/vxm_insts.sail
+  }
+  mxm {
+    files slices/mxm/mxm_regs.sail, slices/mxm/mxm_insts.sail
+  }
+  sxm {
+    files slices/sxm/sxm_regs.sail, slices/sxm/sxm_insts.sail
+  }
+  c2c {
+    files slices/c2c/c2c_insts.sail
+  }
+  cu_mem {
+    requires cu, mem
+    files slices/cu/cu_ifetchm.sail
+  }
+}
+
+postlude {
+  requires prelude, core, slice_types, sys, slices
+
+  files
+    postlude/insts_end.sail,
+    postlude/iq.sail,
+    postlude/tick.sail,
+    postlude/timing_check.sail,
+    postlude/isa_query.sail,
+    postlude/harness_api.sail,
+}
+
+numerics {
+  requires prelude, core
+
+  files
+    core/numerics/fp.sail,
+    core/numerics/lanes.sail,
+    core/numerics/transcendental.sail,
+}

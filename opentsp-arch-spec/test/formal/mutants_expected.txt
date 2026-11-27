@@ -1,0 +1,44 @@
+# Expected outcome of the proof gate for each one-line mutant of test/formal/mutants.py. The gate is, in this order, the two
+# bounded-exhaustive C tests (srf_ring_test.sh, lanes_test.sh), the extra SMT obligations (prove_extra.sh) and the model's own
+# SMT obligations (tools/model_prove.sh) on `mini`; a mutant of kind `lean` runs the Lean check (lean_check.sh) instead.
+# `survive` means the proof gate does not kill the mutant: either no obligation reaches the code (a known gap), or the mutant
+# is equivalent under every gate that runs. `kill` is a required kill: a survivor is a regression.
+# When a check lands that kills a `survive` row, change the row to `kill`.
+mut_srf   kill      # srf_ring_test.sh: bounded-exhaustive test over the real srf_write and srf_read (p_srf_live_window still restates the arithmetic)
+mut_bank  kill      # bank_agt_clash.sh: two AGT loops in one bank
+m_s1      kill      # p_tie_f16_k1, p_tie_f16_k2, p_tie_e5m2_k3, p_tie_e4m3_k3 (test/formal/props/numerics.sail, via prove_extra.sh)
+m_s2      kill      # lanes_test.sh: every 8-bit pair and a 16-bit lattice against an independent specification (an SMT obligation over k_binary does not translate in reasonable memory)
+m_s3      kill      # unit_mini.sh / test_c2c_link_busy: busy window one cycle longer (SMT still does not reach c2c_busy)
+m_k1      kill      # p_barrier_window, p_barrier_release, p_barrier_two_generations
+m_k2      kill      # p_iq_pop_conservation
+m_n1      kill      # p_ovf_f16, p_ovf_e5m2 (props/numerics.sail)
+m_n2      kill      # p_rne_sub_*
+m_n3      kill      # p_tie_*, p_rne_*
+m_n4      kill      # p_f16_decode, p_f16_anchors, p_ovf_f16 (props/numerics.sail) and the cross-check against the solver (props/fptheory.sail)
+m_b1      kill      # p_bf16_specials (props/numerics.sail; prove_extra numerics on the three bf16 obligations)
+m_b2      kill      # p_bf16_decode, p_bf16_anchors (same)
+m_w1      kill      # p_wide_sticky (test/formal/props/wide.sail, via prove_extra.sh)
+m_w2      kill      # p_wide_replace (same)
+m_t1      kill      # unit_mini.sh mini: Permute bare-key (d_func!=SXM class); mid-line Assertion classified; land4 kill
+m_ws1     kill      # unit_mini.sh: Pattern match failure in wtype_split_backwards
+m_be1     kill      # unit_mini.sh mini_ext: Assertion test_ext_types.sail:187 blk_exp
+m_bf1     kill      # unit_mini.sh mini_ext: Assertion test_ext_types.sail:187 bfp8_exact
+m_f1      kill      # p_iq_pop_accounting (test/formal/props/frontend.sail), and p_iq_pop_conservation of the model's own gate
+m_f2      kill      # p_iq_push_accounting, and p_iq_append of the model's own gate
+m_x1      kill      # p_iq_pop_accounting fails (internal_error is translatable under the proof build symbol, so the run no longer crashes)
+m_x2      kill      # p_iq_pop_conservation
+m_r1      kill      # actual Sail-source native Resources repeat/reservation composition; source-m-r1-native.log KILL162s
+m_a1      kill      # native Numerics finite decomposition/alignment (actual source KILL175s)
+m_a2      kill      # native Numerics exact cancellation/positive-zero (actual source KILL177s)
+m_a3      kill      # native Numerics finite-product sign/class composition (actual source KILL170s)
+m_a4      kill      # actual strict SMT p_bf16_decode SAT after F32 bias mutation; full38-campaign/logs/m_a4.log KILL2086s; full ratchet qualification pending
+m_a5      kill      # lanes_test.sh: the saturating multiply (opcode 7) against the independent specification
+m_a6      kill      # lanes_test.sh: max (opcode 9)
+m_a7      kill      # lanes_test.sh: min (opcode 10)
+m_z1      kill      # unit_mini.sh: Assertion failed test_slices.sail:692 (tr_eval p<=64; /tmp/sf05-b1/m_z1_kill.log)
+m_l0      survive   # the spare-report eviction lint: no obligation over the RAS report array
+m_c1      kill      # adapted wrong corrected-row identity; actual native MxmIntegrity source-factor theorem rejects it
+m_c2      survive   # the f16 weight-row bound of the MXM check: no obligation over the check
+m_l1      kill      # the Lean push theorem (stated by the proof in test/formal/lean/proofs/IqPush.lean)
+m_l2      kill      # the Lean push theorem
+m_l3      kill      # the Lean barrier theorems

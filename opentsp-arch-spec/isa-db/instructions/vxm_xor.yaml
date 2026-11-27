@@ -1,0 +1,58 @@
+# Instruction catalogue entry. Sail (model/) is normative; test/isa_db/check_isa_db.py
+# checks this file against the model's encdec and assembly mappings.
+$schema: opentsp.isa-db.instruction
+spec_version: '0.1'
+name: Xor
+mnemonic: xor
+long_name: Vector Xor
+slice: VXM
+units:
+- VXM
+timing: VXM
+encoding:
+  width: 64
+  match: 0010001101--------------------0000000000----0--00000000000000000
+  variables:
+  - name: type
+    location: 53-52
+    kind: eltype_code
+    hi_location: 23-22
+    top_location: '17'
+    codes:
+    - 0
+    - 2
+    - 4
+    - 5
+    - 6
+    - 7
+    - 8
+    - 9
+    - 10
+  - name: dst
+    location: 51-46
+    kind: stream
+  - name: lhs
+    location: 45-40
+    kind: stream
+  - name: rhs
+    location: 39-34
+    kind: stream
+  - name: sg4
+    location: '18'
+    kind: group4
+  - name: lhs_chain
+    location: '21'
+    kind: chain
+  - name: rhs_chain
+    location: '20'
+    kind: chain
+assembly: xor.{type}{sg4} {dst}, {lhs}{lhs_chain}, {rhs}{rhs_chain}
+operation: 'Per lane: dst = lhs xor rhs in the element type; types: signed integer, unsigned integer or boolean
+  (i8, i32, u8, i16, u16, u32, b8, b16, b32). Group bit (`.sg4` after the type, bit 18): every operand is the 4-stream
+  group at its stream (SG4-aligned, else OTS-E-OPR-002) and the ALU performs 4 / width independent operations per
+  lane, one per byte (8-bit types) or halfword (16-bit types) of the group (ISCA20 sec. III-C: 32-bit operands on
+  SG4; ''four INT8 operations per cycle'' per ALU); for 32-bit types it is the plain operation. The non-group forms
+  of the same operations are the specification''s own. A source written `x.chain` (chain bit set) is the VXM result
+  committed at the VXM station in the cycle before the read (ALU chaining, ISCA20 sec. III-C); otherwise the stream
+  value that flows to the station.'
+definedBy: ref

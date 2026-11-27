@@ -1,0 +1,127 @@
+{
+ "schema": "opentsp.program-case",
+ "version": 1,
+ "spec_version": "0.1",
+ "name": "basic/vxm_chain",
+ "profile": "mini",
+ "program": "vxm_chain.mini.ots",
+ "tags": [
+  "sim"
+ ],
+ "weights": {
+  "xp0": {
+   "dtype": "raw",
+   "words": 1,
+   "hex": "fff366bbcdf6d2aea9a048452433ca4c"
+  },
+  "xp1": {
+   "dtype": "raw",
+   "words": 1,
+   "hex": "e4bda89618a46fb0722f701f6d513a46"
+  },
+  "xp2": {
+   "dtype": "raw",
+   "words": 1,
+   "hex": "22065251ece7acdacdd4785feee4cac1"
+  },
+  "xp3": {
+   "dtype": "raw",
+   "words": 1,
+   "hex": "f903417388a45272bfcf5eecc553c1e8"
+  },
+  "yp0": {
+   "dtype": "raw",
+   "words": 1,
+   "hex": "2a026232352ea49a483a0aa845242e0c"
+  },
+  "yp1": {
+   "dtype": "raw",
+   "words": 1,
+   "hex": "fa2c021d323c9cc2994cd576192d0c70"
+  },
+  "yp2": {
+   "dtype": "raw",
+   "words": 1,
+   "hex": "d1b2f30e97e67fc34a69e2d6b99eda18"
+  },
+  "yp3": {
+   "dtype": "raw",
+   "words": 1,
+   "hex": "240c95875d40560951d4f3499fcd9ff4"
+  },
+  "zp0": {
+   "dtype": "raw",
+   "words": 1,
+   "hex": "0b815da55584ec92f331454d76c74dd7"
+  },
+  "zp1": {
+   "dtype": "raw",
+   "words": 1,
+   "hex": "828eb56925a4fdf716e697defc79a697"
+  },
+  "zp2": {
+   "dtype": "raw",
+   "words": 1,
+   "hex": "16502032641593261317e0c88c35ef11"
+  },
+  "zp3": {
+   "dtype": "raw",
+   "words": 1,
+   "hex": "7aa2e2e767b400c385408fc7fffc9d7b"
+  },
+  "wp0": {
+   "dtype": "raw",
+   "words": 1,
+   "hex": "0074de640adcb989197302292e21d868"
+  },
+  "wp1": {
+   "dtype": "raw",
+   "words": 1,
+   "hex": "352a23d5a1d74757f27d50085912fc5e"
+  },
+  "wp2": {
+   "dtype": "raw",
+   "words": 1,
+   "hex": "c52f948b0b8dc8e2d220944dce1dffa9"
+  },
+  "wp3": {
+   "dtype": "raw",
+   "words": 1,
+   "hex": "3f769739cb0a6cc639a9d278eb04ca9d"
+  }
+ },
+ "preload": {},
+ "dump": [
+  "44:32",
+  "45:32",
+  "46:32",
+  "47:32",
+  "48:32",
+  "49:32",
+  "50:32",
+  "51:32"
+ ],
+ "expect": {
+  "asm_warnings": [],
+  "diagnostics": [],
+  "words": {
+   "44:32": "cbd98d45268c55a3ae828d246c86d721",
+   "45:32": "4adbb10ba87fe4841be1037d4bfa5e52",
+   "46:32": "38873a964bc5fdb7e9de640831c22c88",
+   "47:32": "897993f1f3f77b870d85a078c9ea00a1",
+   "48:32": "d6e60c86713488ac8840d048b42c4c90",
+   "49:32": "973f439f2c4c9a24404a4a53ee62088b",
+   "50:32": "89a9c73ca44dc9fc29d6b084efdb1cf0",
+   "51:32": "c3a5dd9f8fa10f83591c5dc7dce2d37e"
+  },
+  "decoded": null
+ },
+ "golden": {
+  "source": "hand",
+  "generator": "gen/basic.py:vxm_chain",
+  "seed": 1
+ },
+ "budget": {
+  "cycles": 41
+ }
+}

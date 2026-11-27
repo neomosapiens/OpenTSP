@@ -1,0 +1,36 @@
+# Instruction catalogue entry. Sail (model/) is normative; test/isa_db/check_isa_db.py
+# checks this file against the model's encdec and assembly mappings.
+$schema: opentsp.isa-db.instruction
+spec_version: '0.1'
+name: Conv_F32_F16
+mnemonic: conv_f32_f16
+long_name: Convert f32 to f16
+slice: VXM
+units:
+- VXM
+timing: VXM
+encoding:
+  width: 64
+  match: 0010100000--------------0000000000000000---000-00000000000000000
+  variables:
+  - name: type
+    location: 53-52
+    kind: eltype_code
+    hi_location: 23-22
+    top_location: '17'
+    codes:
+    - 3
+  - name: dst
+    location: 51-46
+    kind: stream
+  - name: lhs
+    location: 45-40
+    kind: stream
+  - name: lhs_chain
+    location: '21'
+    kind: chain
+assembly: conv_f32_f16.{type} {dst}, {lhs}{lhs_chain}
+operation: 'Per lane: dst = convert(lhs) from f32 to f16. The type field must equal the source type. A source written
+  `x.chain` (chain bit set) is the VXM result committed at the VXM station in the cycle before the read (ALU chaining,
+  ISCA20 sec. III-C); otherwise the stream value that flows to the station.'
+definedBy: ref

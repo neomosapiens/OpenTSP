@@ -1,0 +1,1999 @@
+schema: opentsp.provenance
+spec_version: '0.1'
+profile: ref
+sources:
+  ISCA20: 'Abts et al., Think Fast: A Tensor Streaming Processor (TSP) for Accelerating Deep Learning Workloads, ISCA 2020'
+  ISCA22: Abts et al., A Software Defined Tensor Streaming Multiprocessor for Large Scale Machine Learning, ISCA 2022
+  HC34: Abts et al., Hot Chips 34 (2022) slides
+  TPACC: 'Published TruePoint accuracy technical document, p. 5: 320-element fused dot product and single rounding in the
+    FP16 discussion'
+  ALCF24: 'Published ALCF workshop Day1 (June2024), p.25: first-generation matrix shape and density'
+config:
+  spec_version:
+    basis: decision
+    cite: OpenTSP architecture specification version 0.1
+  geometry.superlanes:
+    basis: paper
+    cite: 'ISCA20 sec. II: 20 superlanes, maxVL 320. The profile range 1..32 is an implementation choice: the largest count
+      that the 5-bit superlane field of an error record and the 9-bit lane count of Shift hold; the published chip has 20.'
+  geometry.srf_positions:
+    basis: figure
+    cite: 'ISCA20 Fig. 4: stream registers 0..44 per direction; HC34 p.31 station labels'
+  geometry.streams_per_row:
+    basis: paper
+    cite: 'ISCA20 sec. II: 32 eastward + 32 westward streams'
+  sram.slices:
+    basis: paper
+    cite: 'ISCA20 sec. II-B: 2 hemispheres x 44 slices; HC34 p.30: 88 slices'
+  geometry.mem_slices_per_hemisphere:
+    basis: decision
+    cite: 'The published sources give 44 slices per hemisphere in quads (ISCA20 sec. II-B; HC34 p.30: 88 slices; ref
+      and mini use 44). Any multiple of 4 from 4 to 44 is an opentsp profile parameter so that a smaller device can be described;
+      the queue map stays 144 ids and the slices of a smaller profile are the first ones of each hemisphere. A conformance
+      statement is per profile'
+  mxm.rows:
+    basis: decision
+    cite: 'ISCA20 section III-D: 320x320 integer planes. A multiple-of-16 row count 16..320 is an opentsp research parameter;
+      byte-plane FP16 storage halves its output rows.'
+  sram.addr_bits:
+    basis: decision
+    cite: 'ISCA20 sec. II item 5 gives 13-bit addressing (the reference profile). A width of 13 to 16 bits is an opentsp
+      profile parameter: a later published part has about 500 MB of SRAM (secondary source), which a 14-bit address (440
+      MiB) approaches, and the profiles of an earlier prototype carry addresses of up to 19 bits (not published). The encodings
+      that hold an address extend into reserved bits that are zero in every word that was legal before'
+  mxm.planes_per_hemisphere:
+    basis: decision
+    cite: 'ISCA20 section III-D and HC34 p.28: four planes, two per hemisphere. The profile range 1..2 is an implementation
+      choice: the queue map has 3 queues per plane and 144 queues in all, so the key can name 1 or 2 planes per hemisphere;
+      an f16 pair needs both planes of a hemisphere.'
+  mxm.acc_depth:
+    basis: decision
+    cite: 'ISCA20 sec. III-D (as the published filings read, each MACC has two 32-bit accumulators): the default 2. The
+      depth is not published (abstractions.mxm_accumulator_depth); 2..32 is an implementation choice, the most that the
+      5-bit ACC index (bit 12 and bits 11..8) holds.'
+  mxm.f16_rows:
+    basis: decision
+    cite: 'HC34 p.28 (one 160 x 320 f16 matrix per hemisphere, the default mxm.rows / 2) and ISCA20 sec. III-D (two 320
+      x 320 byte planes in tandem for 16-bit floating point, mxm.rows). The sources disagree (conflicts: mxm.f16_capacity);
+      the key makes each a profile. The rate is timing.mxm_abc.occupancy_f16, not this key.'
+  mxm.fp8_rate:
+    basis: decision
+    cite: No published source gives an FP8 matrix rate (the FP8 types are an implementation choice, microarchitecture.md
+      sec. 6). The default 1 is the i8 rate; 2 lets a plane accept two FP8 ABCs per cycle.
+  mxm.acc_bits:
+    basis: implementation-choice
+    cite: ISCA20 section III-D gives 32-bit accumulators (one i32 or f32 per MACC output); a published 2025 article on the
+      same chip family describes 100 bits of intermediate accumulation; no inspected paper or slide gives the width, the
+      depth or the read-out
+    why: 'The accumulator width is a profile parameter: 32 (the published accumulators only) or 128 (the extension wide_acc
+      adds the accumulator type x128). 128 is a power of two above the 100 bits described, and holds 2^-48 .. 2^79 with
+      wrap-around beyond, which covers a 320-term f16 dot product plus about 2^38 accumulations; the model keeps mxm.acc_depth
+      such accumulators per plane and lane, as for the 32-bit accumulators'
+  sram.words_per_slice:
+    basis: paper
+    cite: 'ISCA20 sec. II item 5: 13-bit addressing; HC34 p.30: 8192 addresses (ref). Any power of two from 256 to 65536
+      that sram.addr_bits can address is a profile parameter of the model; the schema ties bank_bit to it'
+  sram.bank_bit:
+    basis: decision
+    cite: ISCA20 section III-B exposes a bank bit but does not identify its address position. Choose the highest implemented
+      address bit to make banks contiguous and bank membership statically decidable without hidden hashing.
+  layout.vxm_gap:
+    basis: figure
+    cite: 'ISCA20 Fig. 4: VXM between registers 21 and 22 in both rows'
+  layout.mem_up_gap_base:
+    basis: figure
+    cite: 'ISCA20 Fig. 4: upstream-hemisphere quad q between registers 18-q and 19-q'
+  layout.mem_down_gap_base:
+    basis: figure
+    cite: 'ISCA20 Fig. 4: downstream-hemisphere quad q between registers 24+q and 25+q'
+  layout.mxm_in_gap:
+    basis: figure
+    cite: 'ISCA20 Fig. 4: LWB, IW, ABC between registers 43 and 44; HC34 p.31 label 43'
+  layout.mxm_acc_gap:
+    basis: figure
+    cite: 'ISCA20 Fig. 4: ACC between registers 2 and 3'
+  layout.sxm_dst_gap:
+    basis: slides
+    cite: 'HC34 p.31: DST at 39'
+  layout.sxm_turn_in_gap:
+    basis: slides
+    cite: 'HC34 p.31: SEL, PERM, TSP at 40. Applies to those three as drawn; the shifter is not drawn (abstractions.sxm_shf_prm_stations)'
+  layout.sxm_turn_out_gap:
+    basis: figure
+    cite: 'ISCA20 Fig. 4 / HC34 p.31: the TSP and SEL outputs enter the other row at 4. Applies to TSP and SEL only; for
+      SHF and PRM see abstractions.sxm_shf_prm_stations'
+  layout.c2c_tx_gap:
+    basis: slides
+    cite: 'HC34 p.31: TX at 38. The RX units of the hemisphere also fetch their instruction text (Ifetch) at this gap; no
+      source shows an RX read port (topology.md sec. 4)'
+  layout.c2c_rx_gap:
+    basis: slides
+    cite: 'HC34 p.31: RX at 5'
+  timing.cu.d_func:
+    basis: decision
+    cite: control instructions produce no stream output
+  timing.cu.d_skew:
+    basis: decision
+    cite: ISCA20 section III defines operand timing relative to dispatch. Choose zero CU skew; local and stream instruction
+      fetching complete after their second read.
+  timing.mem.d_func:
+    basis: decision
+    cite: 'must be >= 1 (tick drains a cycle''s commits before it dispatches that cycle, so a same-cycle commit is not
+      representable; enforced by schema.json). The floor of 1 is published: ISCA20 sec. III, "d_func functional delay -
+      each instruction requires 1 or more cycles to produce its stream output". no published value; opentsp-defined (consistent
+      with the ISCA20 Fig. 1(b) stage count)'
+  timing.mem.d_skew:
+    basis: decision
+    cite: no published value
+  timing.vxm.d_func:
+    basis: decision
+    cite: 'must be >= 1 (tick drains a cycle''s commits before it dispatches that cycle, so a same-cycle commit is not
+      representable; enforced by schema.json). The floor of 1 is published: ISCA20 sec. III, "d_func functional delay -
+      each instruction requires 1 or more cycles to produce its stream output". no published value; opentsp-defined'
+  timing.vxm.d_skew:
+    basis: decision
+    cite: ISCA20 section III defines operand timing relative to dispatch. Choose two cycles for the VXM operand-read pipeline;
+      this is not a published circuit delay.
+  timing.mxm_lw.d_func:
+    basis: decision
+    cite: 'must be >= 1 (tick drains a cycle''s commits before it dispatches that cycle, so a same-cycle commit is not
+      representable; enforced by schema.json). The floor of 1 is published: ISCA20 sec. III, "d_func functional delay -
+      each instruction requires 1 or more cycles to produce its stream output". opentsp-defined, chosen from HC34 p.28 (loads
+      320B x16 in 20 cycles). That figure is a load throughput (16 vectors over the 20 superlanes), not a published functional
+      delay'
+  timing.mxm_lw.d_skew:
+    basis: decision
+    cite: no published value
+  timing.mxm_iw.d_func:
+    basis: decision
+    cite: 'must be >= 1 (tick drains a cycle''s commits before it dispatches that cycle, so a same-cycle commit is not
+      representable; enforced by schema.json). The floor of 1 is published: ISCA20 sec. III, "d_func functional delay -
+      each instruction requires 1 or more cycles to produce its stream output". no published value; opentsp-defined'
+  timing.mxm_iw.d_skew:
+    basis: decision
+    cite: no published value
+  timing.mxm_abc.d_func:
+    basis: slides
+    cite: HC34 p.28 states 20-cycle matrix execution. The reference profile uses 20; accepted variants must also satisfy
+      the read-to-output causality bound.
+  timing.mxm_abc.d_skew:
+    basis: decision
+    cite: no published value
+  timing.mxm_acc.d_func:
+    basis: decision
+    cite: No primary source specifies a separate accumulator-output latency. Retain the configured 20-cycle accumulator
+      pipeline for compatibility with existing schedules; this is an opentsp timing choice, not evidence that ACC performs
+      a dot product.
+  timing.mxm_acc.d_skew:
+    basis: decision
+    cite: no published value
+  timing.sxm.d_func:
+    basis: decision
+    cite: 'must be >= 1 (tick drains a cycle''s commits before it dispatches that cycle, so a same-cycle commit is not
+      representable; enforced by schema.json). The floor of 1 is published: ISCA20 sec. III, "d_func functional delay -
+      each instruction requires 1 or more cycles to produce its stream output". no published value; opentsp-defined'
+  timing.sxm.d_skew:
+    basis: decision
+    cite: no published value
+  timing.sxm_cross.d_func:
+    basis: decision
+    cite: 'Derived causal lower bound from ISCA20 superlane staggering: d_func minus d_skew must be at least superlanes.
+      The default is that lower bound, not a circuit-depth measurement.'
+  timing.sxm_cross.d_skew:
+    basis: decision
+    cite: no published value
+  timing.c2c.d_func:
+    basis: decision
+    cite: 'must be >= 1 (tick drains a cycle''s commits before it dispatches that cycle, so a same-cycle commit is not
+      representable; enforced by schema.json). The floor of 1 is published: ISCA20 sec. III, "d_func functional delay -
+      each instruction requires 1 or more cycles to produce its stream output". no published value; Receive commits one
+      cycle after dispatch (opentsp-defined)'
+  timing.c2c.d_skew:
+    basis: decision
+    cite: no published value
+  timing.overrides:
+    basis: decision
+    cite: ', . ISCA20 sec. III gives each instruction its own d_func and d_skew; the inspected public sources do not publish
+      a complete per-instruction timing table. The timing table therefore has one row per catalogue entry: the entry''s
+      override here (or the override of one of its element types, an entry named <entry>.<type>, ), else its timing class''s
+      row, and the section timing_rows below records, for every one of the 78 entries, its row, the word for it (published,
+      derived or implementation choice) and the evidence. The shipped profiles override six entries whose evidence differs
+      from their class: Transpose (implementation choice, 5: its own row, as the evidence record finds no published value),
+      Permute (derived, 20: an explicit row at the floor of its range), and Exp, Log, RSqrt and TanH (implementation choice:
+      the same 5/2 as the class, but a row of their own, so that a profile can time a transcendental apart from a bitwise
+      operation). The model checks the effective table (postlude/timing_check.sail): an override names a catalogue entry
+      at most once; outside the control unit d_skew < d_func; Shift, Permute, ABC and ABC8 keep d_func minus d_skew >= geometry.superlanes
+      (RC-A2); timing.mxm_abc.occupancy_f16 is at most ABC''s d_func; Read, Write, Gather, Scatter and IfetchM share one
+      d_skew (the SRAM port and bank rule is checked at dispatch)'
+  timing.sxm_map_ready:
+    basis: decision
+    cite: 'RC-A2: map distribution must take at least the superlane count so every tile can receive its mapping before use.
+      The reference value is20, mini1; larger delays remain configurable.'
+  timing.mxm_abc.occupancy_f16:
+    basis: decision
+    cite: Shipped profiles allow one initiation per cycle. Two half-row FP16 matrices versus four integer matrices gives
+      quarter-rate arithmetic capacity. HC34 p.28 is fully pipelined; ISCA22 sections 5.2 and 5.5 disagree on orientation.
+  timing.c2c.rtdeskew_floor:
+    basis: decision
+    cite: 'IMPLEMENTATION CHOICE (; it was max(t, 1), hard-coded in the C2C slice). ISCA22 sec. 3.3: RUNTIME_DESKEW delays
+      for the target number of cycles plus or minus the HAC-SAC drift. Modelled chips share one clock, so the drift is 0
+      and RuntimeDeskew t holds its queue max(t, rtdeskew_floor) cycles; the published floor on any instruction''s delay
+      is 1 (ISCA20 sec. III), which is the shipped value: an instruction occupies at least the cycle it issues in. 1 to
+      65535'
+  c2c.links:
+    basis: paper
+    cite: 'ISCA20 sec. II: "The first TSP implementation (Figure 5) has a total of sixteen (16) ×4 links operating at 30
+      Gbps each"; ISCA22 sec. 2.2 gives 7 local + 4 global = 11 (see conflicts: c2c.links). mini keeps 16. The bound of
+      128 follows from the width of the link field of Send, Receive and Transmit (7 bits: 4 and 3 more in the low reserved
+      bits); the later generation described in the trade press has 96 links per chip (secondary source)'
+  c2c.link_latency:
+    basis: paper
+    cite: 'ISCA22 Table 2: mean C2C link latency 216.27 to 217.35 cycles; rounded to 216 (the harness''s default per-link
+      latency). Relation: 1 <= link_latency_min <= link_latency <= link_latency_max < hac_period; the Deskew scheme of microarchitecture.md
+      sec. 10 needs every link latency below the 252-cycle epoch; enforced by schema.json x-opentsp-relations'
+  c2c.link_latency_min:
+    basis: paper
+    cite: 'ISCA22 Table 2: minimum latency of the seven intra-node links, 209 to 211 cycles; the smallest, 209'
+  c2c.link_latency_max:
+    basis: paper
+    cite: 'ISCA22 Table 2: the largest measured intra-node latency is 228 cycles. The deterministic model optionally samples
+      its configured range; this is not a reproduction of measured jitter probabilities.'
+  c2c.hac_period:
+    basis: paper
+    cite: 'ISCA22 sec. 3.2 footnote 4: "the period is the epoch length or 252 clock cycles. The HAC is an 8-bit counter,
+      but 4 values are reserved for special control codes." (sec. 3.1: "a low (< 256 cycle) overflow period")'
+  c2c.cycles_per_vector:
+    basis: paper
+    cite: 'DERIVED . A link accepts one vector per cycles_per_vector cycles. ISCA22 sec. 2.3 footnote 2: "The C2C links
+      support a variety of operating speeds, however, in general we operate all the links at the same data rate of 25 Gbps
+      ... with a combined bandwidth of 100 Gbps across the four lanes in a link"; the same section says the links run "up
+      to 30 Gbps", which ISCA20 sec. II gives as the chip''s rate (sixteen x4 links "operating at 30 Gbps each"). 30 Gb/s
+      is the capability and 25 Gb/s the operating point of the system the other C2C constants measure (link_latency, _min
+      and _max come from ISCA22 Table 2, hac_period from ISCA22 footnote 4), so the serialisation time is taken at 25 Gb/s:
+      2560 bits (a 320-byte vector) / 100 Gb/s at a clock of 900 MHz (ISCA20 sec. I) = 23.04 cycles, rounded up to 24. At
+      the 30 Gb/s capability the same arithmetic gives 2560 / 120 Gb/s = 19.2, the earlier 20; a profile for a chip at full
+      rate sets 20. A Send or Transmit that finds the link busy is OTS-E-LNK-001; ref 24, mini 24'
+  c2c.rx_depth:
+    basis: decision
+    cite: ': the number of vectors a link''s receive FIFO holds; an arrival at a full FIFO is dropped (OTS-E-LNK-002). Opentsp-defined:
+      ISCA22 sec. 2.3 describes no back pressure and no buffer depth; 16 is the design choice. ref 16; mini 16'
+  barrier.release_latency:
+    basis: paper
+    cite: 'ISCA20 section III-A2: 35 cycles from notification to synchronization retirement.'
+  icu.iq_depth:
+    basis: decision
+    cite: ISCA20 section III-A3 establishes finite instruction queues and prefetching, not their exact capacity. Choose
+      a configurable byte capacity, 1280 in the shipped profiles, to expose underflow/overflow to compiler scheduling.
+  icu.fetch_staging_depth:
+    basis: decision
+    cite: No inspected primary source gives a staging depth. Choose a finite FIFO so fetch traffic cannot accumulate without
+      bound; a full FIFO rejects the fetch with a deterministic diagnostic.
+  icu.fetch_latency:
+    basis: decision
+    cite: No inspected primary source gives a fetch-fill latency. Choose a configurable delay measured from completion of
+      the two-vector payload; consume its units at the independently configured fill rate.
+  icu.fetch_bytes_per_cycle:
+    basis: decision
+    cite: 'ISCA20 sec. II-B: ''Instruction fetching ... consumes a maximum SRAM bandwidth of 144x16, or 2.25 TiB/s of maximum
+      instruction fetch bandwidth'': 16 bytes per queue per cycle, the default. : icu.fetch_bytes_per_cycle (4..64, a multiple
+      of 4) is the rate at which a fetched payload enters the IQ; padding units use their share of the rate and are dropped'
+  host.cycles_per_vector:
+    basis: implementation-choice
+    cite: 'the published TSP sources: the host interface is PCIe Gen4 x16 (ISCA20 sec. II-6; ISCA22 sec. 5.2, "900MHz with
+      PCIe Gen4 x16 host CPU interface"), a lightweight DMA engine (ISCA20 sec. II-6)'
+    why: 'the pacing is an implementation choice, derived from the published link: a Gen4 x16 link carries about 31.5 GB/s,
+      which at 900 MHz is about 35 bytes per cycle, so a 320-byte vector takes about 9.1 cycles, rounded up to 10 (an estimate
+      from the published link width and clock, not a measured or published figure); the model accepts one vector per 10
+      cycles in each direction (range 1..64); `mini` has 16-byte vectors and keeps the value 10 of `ref`, so that one program
+      has the same timing on both profiles (at the link rate its 16-byte vector would need fewer cycles; a narrow profile
+      stands for a smaller part, not for a faster link); the incoming-stream form of PciReceive and this per-vector pacing
+      are implementation choices derived from the published link'
+  host.ingress_depth:
+    basis: implementation-choice
+    cite: the published sources describe no buffer between the PCIe interface and the stream registers
+    why: 'the interface of every chip needs a bound on what its DMA engine can hold ahead of the program; 16 vectors is
+      the depth of the link receive FIFO (c2c.rx_depth); a vector that finds the FIFO full waits in the DMA engine and enters
+      the cycle after the PciReceive that frees a slot: nothing is dropped, as on a lossless PCIe link with a bus-master
+      DMA engine (the least restrictive causal rule: the engine knows the FIFO at the cycle, not the program)'
+  host.doorbells:
+    basis: implementation-choice
+    cite: the word doorbell does not occur in the published sources (the host programs a DMA engine and receives MSI-X interrupts)
+    why: HostWait needs a host-to-chip event; one CSR bit per doorbell, 16 of them (range 1..64)
+  host.remote_csr:
+    basis: implementation-choice
+    cite: 'HC34 p.45: the link packet header carries a CSR type; no published source gives a remote CSR operation'
+    why: 'whether the control unit serves csr packets (a remote CSR access of one hop, `P csr`; microarchitecture.md sec.
+      14): the packet type is published, the operations, the address and the reply are ours (remote_reply); true in ref
+      and mini'
+  ras.log_depth:
+    basis: implementation-choice
+    cite: 'ISCA20 sec. II-D: corrected errors are recorded in a control and status register for an error handler to interrogate
+      later; no depth is published'
+    why: 'the number of entries of the error log (1..8, default 8): a log has to hold more than one entry for the order
+      of events to be visible, and 8 entries (16 registers) fit below IRQ_CAUSE at 0x030; the design note allowed up to
+      64, which would overlap the IRQ registers, so the maximum is 8'
+  ras.diag_depth:
+    basis: implementation-choice
+    cite: no published source gives a diagnostic log; ISCA20 sec. II-D (a CSR for an error handler) and sec. II-6 (interrupts
+      to the host) place error information in the host interface
+    why: 'the number of entries of the diagnostic log of the CSR space (1..64, 16 in every shipped profile; ): the platform
+      error FIFO of platform.md sec. 7 is at least 16 deep and mirrors this log, so a chip that exposes only its CSR space
+      reports the codes of class data in the reporting order of microarchitecture.md sec. 8'
+  scrub.period:
+    basis: implementation-choice
+    cite: 'ISCA20 sec. II-D: corrected soft errors are recorded for an error handler (the early sign of wearout); no published
+      source mentions a scrubber'
+    why: 'the patrol scrubber of microarchitecture.md sec. 15.4: a scrub cycle every this many cycles, 0 (the value of every
+      shipped profile and test profile) = off, so that no profile changes behaviour; in a scrub cycle each MEM slice whose
+      paths issue nothing reads the word at its scrub pointer, corrects it in place and advances the pointer'
+  extensions:
+    basis: implementation-choice
+    cite: no published source names bfloat16 or an extension mechanism; ISCA20 and HC34 list the element types INT8, UINT8,
+      FLOAT16, UINT16, INT16, FLOAT32, UINT32, INT32 and the BOOL types
+    why: 'the list of extensions of the instruction set the profile declares: a word that uses an extension the profile
+      does not name does not decode (OTS-E-DEC-003), so a profile without extensions, the value in every shipped and test
+      profile but test/ext_bf16, is the base instruction set of version 0.1; the extensions of this version are bf16 (VXM
+      type code 16 behind the fifth type bit 17, MXM weight type 4 behind bit 12; microarchitecture.md sec. 5), an implementation
+      choice made to import bf16 weights without a conversion outside the ISA, wide_acc (the ACC type x128, declared together
+      with mxm.acc_bits 128; see mxm.acc_bits) and block_fp8 (the MXM type bfp8, code 5 behind bit 12; see block_fp8_format):
+      the decoder rejects each of them in a profile that does not declare it, so that a program for an extension fails to
+      decode rather than miscompute. A published 2025 article on the same chip family names block floating point for MoE
+      weights and FP8 storage of activations, without a format'
+queues:
+  total:
+    basis: paper
+    cite: 'ISCA20 sec. II: 144 independent instruction queues; HC34 p.14, p.23'
+  mem:
+    range:
+    - 0
+    - 87
+    basis: decision
+    cite: ISCA20 provides 88 MEM slices. Choose one IQ per slice and independently scheduled R/W paths so the stated different-bank
+      read/write concurrency is expressible; AGT/path encodings are opentsp choices.
+  mem_config_routing:
+    basis: decision
+    cite: Choose routing to the open configuring path; when both are open use the smaller configuration count and R on a
+      tie. This deterministic rule expresses two path configurations without an extra encoded selector.
+  vxm:
+    range:
+    - 88
+    - 103
+    basis: decision
+    cite: 'one queue per vector ALU is an opentsp mapping; the published count it follows is ISCA20 sec. III-C: 16 vector
+      ALUs per lane (HC34 p.14). No source gives the VXM''s queue split'
+  vxm_alu_kinds:
+    basis: decision
+    cite: ISCA20 section III-C gives the VXM operation families but not a complete per-ALU capability matrix. Choose uniform
+      capabilities on the 16 queues for a tractable compiler target; no area or equivalence claim follows.
+  mxm:
+    range:
+    - 104
+    - 115
+    basis: decision
+    cite: 'Choose three IQ roles for each of four planes: load/install, dot product and accumulation. This separates producer/consumer
+      stages and yields 12 queues; the exact numbering is an opentsp interface.'
+  mxm_roles:
+    basis: decision
+    cite: '3 queues per MXM plane (plane p: 104 + 3p .. 106 + 3p), named W (LW, IW), ABC and ACC; the names are labels and
+      any MXM instruction of the plane may issue on any of the three. No source assigns the 6 queues of a hemisphere to
+      planes or instructions'
+  sxm_w:
+    range:
+    - 116
+    - 129
+    basis: decision
+    cite: Choose 14 queues for the west reshape/link block, with independent shift/permute/transpose and link paths. Together
+      with MEM, VXM and MXM these fit the 144-IQ total in ISCA20; the exact split is a design choice.
+  sxm_roles:
+    basis: decision
+    cite: 'inside each 14-queue SXM block: DST 4, TSP 2, SHF 2, PRM 1, SEL 1, C2C TX 2, C2C RX 2 (offsets 0..3, 4..5, 6..7,
+      8, 9, 10..11, 12..13). It follows HC34 p.31 (Distributor 4 per hemisphere, Transposer 2 per hemisphere, one combined
+      Permuter / Shifter entry) and ISCA20 sec. III-E (two sets of lane shifters). No source gives 2 shifter queues, 1 permuter
+      queue, a select queue or the number of C2C queues'
+  sxm_e:
+    range:
+    - 130
+    - 143
+    basis: decision
+    cite: Choose a symmetric 14-queue east reshape/link block; role order mirrors the west block for a regular compiler
+      interface. The exact numbering is an opentsp interface.
+  c2c:
+    basis: decision
+    cite: HC34 p.31 shows TX/RX stations. Choose two TX and two RX queues per hemisphere, included in the reshape block;
+      all access the configured links with explicit serialization.
+  control:
+    basis: decision
+    cite: 'queue_id 0xFFFF control channel for chip-wide Sync/Notify (opentsp-defined). A convenience of the model and assembler,
+      not a published issue point: the published scheme (one notifier IQ, every other IQ parked on a Sync) needs no control
+      channel and is expressed with data-queue Sync and Notify; a control Sync can additionally park busy or looping queues'
+instructions:
+  CU:
+    basis: paper
+    cite: 'ISCA20 Table I ICU: NOP, Ifetch, Sync, Notify, Config, Repeat; ISCA20 sec. III-A: ICU instructions are common
+      to all functional slices. HC34 p.27 lists only IFETCH, NOP, SYNC and NOTIFY as common to all functional units (it
+      does not name Config or Repeat)'
+  MEM.Read:
+    basis: paper
+    cite: ISCA20 Table I
+  MEM.Write:
+    basis: paper
+    cite: ISCA20 Table I
+  MEM.StreamStep:
+    basis: decision
+    cite: Choose an unsigned 0..31 stream-ID stride per AGT level, with bounds checked per reference; no inspected primary
+      instruction table defines this exact encoding or behavior.
+  MEM.Gather:
+    basis: decision
+    cite: 'ISCA20 Table I names Gather. Choose one addressed byte per active tile and per-tile bounds effects: invalid tiles
+      produce zero, valid tiles proceed, one bounds diagnostic. This avoids a physically noncausal global precheck.'
+  MEM.Scatter:
+    basis: decision
+    cite: 'ISCA20 Table I names Scatter. Choose one addressed byte per active tile and per-tile bounds effects: invalid
+      tiles skip the write, valid tiles proceed, one bounds diagnostic.'
+  MEM.Countdown:
+    basis: decision
+    cite: HC34 p.25 names Countdown. Choose n idle cycles after each issue, default zero; the exact loop ordering and default
+      are opentsp scheduling semantics.
+  MEM.Step:
+    basis: decision
+    cite: HC34 p.25 names Step. Choose an address delta per iteration, default zero, for deterministic affine traversal.
+  MEM.Iterations:
+    basis: decision
+    cite: HC34 p.25 names Iterations. Choose the encoded count as the references per level, treating zero as one and using
+      default two when omitted; these exact defaults are interface choices.
+  MEM.SetSegment:
+    basis: decision
+    cite: Choose a per-slice upper address bound for deterministic bounds checking; it is not a memory-protection or commercial-interface
+      claim.
+  MEM.PowerConfig:
+    basis: decision
+    cite: Accept a power-configuration hint with no architectural state or timing effect; no inspected primary source defines
+      this exact instruction interface.
+  MEM.DeepSleep:
+    basis: decision
+    cite: Accept a sleep hint with no architectural sleep/wake state or timing effect; no area/power estimate or commercial
+      opcode compatibility is claimed.
+  CU.Repeat:
+    basis: decision
+    cite: ISCA20 Table I specifies repetition of the previous instruction with spacing. Choose 12 count bits and four spacing
+      bits; n means additional executions and encoded d means d+1 cycles between issues, avoiding duplicate same-cycle execution.
+  CU.SetVL:
+    basis: decision
+    cite: ISCA20 section II discusses inactive tiles, but does not establish this instruction. Choose a clamped active-superlane
+      output/storage mask; operand ECC remains active. This is not clock or power gating. The field is 6 bits and takes
+      1..32 on every profile (the most superlanes of any profile), so that a program written for more superlanes runs on
+      a narrower one.
+  CU.Ifetch:
+    basis: decision
+    cite: 'the instruction is ISCA20 Table I (Ifetch: fetch instructions from streams or local memory) and sec. III-A3:
+      ''The Ifetch instruction has a single stream operand which carries the text of the instructions in their program order,
+      filling the IQ with 640-bytes (a pair of 320-byte vectors) of instructions''. The operand is ONE stream s, any stream
+      (no even-stream rule, no OTS-E-OPR-002 for the operand), and the pair of 320-byte vectors is two consecutive vectors
+      of that one stream (a stream carries one 320-byte vector per cycle): the first is read at the Ifetch''s execute cycle
+      t, the second on the same stream at t + 1. The paper does not give the following details, which are implementation
+      choices of the specification: (1) the model latches the first beat at t and samples the second at t + 1, after external
+      events and stream commits; (2) a vector that is missing in either read is OTS-E-TIM-001 (or OTS-E-DIR-001) at its
+      sample cycle and nothing is fetched, the first vector is discarded, because the payload is the pair and a half payload
+      would shift every later parcel of the queue; (3) the payload (2 x vlanes bytes, unchanged) is complete after the second
+      vector, so its units reach the IQ from t + 1 + icu.fetch_latency, one cycle later than for the old pair at the same
+      execute cycle; an IfetchM also completes its two successive SRAM reads at t + 1 and enqueues from t + 1 + icu.fetch_latency;
+      (4) the text of a C2C RX queue is read in the same two cycles at its hemisphere''s TX gap. No published program shows
+      the cycle of the second vector'
+  C2C.Transmit:
+    basis: paper
+    cite: 'ISCA22 sec. 3: TRANSMIT sends a notification to a child through a C2C link; the notification vector contents
+      (lane 0 = 1) and the link timing details are opentsp decisions'
+  C2C.Deskew:
+    basis: paper
+    cite: 'ISCA22 sec. 3.2: pauses issue on that functional unit until the HAC overflows; issues on any data queue'
+  C2C.RuntimeDeskew:
+    basis: paper
+    cite: 'ISCA22 sec. 3.3: RUNTIME_DESKEW t delays the TSP for t +- dt; its issue on any data queue and the delay of its
+      own queue are opentsp decisions'
+  VXM:
+    basis: decision
+    cite: 'The inspected primary sources do not specify this exact interface. Implementation rationale: Retain the explicitly
+      documented opentsp behavior in microarchitecture.md as a bounded, deterministic research interface; no exact commercial
+      correspondence is asserted.'
+  MXM:
+    basis: decision
+    cite: 'The inspected primary sources do not specify this exact interface. Implementation rationale: Retain the explicitly
+      documented opentsp behavior in microarchitecture.md as a bounded, deterministic research interface; no exact commercial
+      correspondence is asserted.'
+  SXM:
+    basis: paper
+    cite: 'ISCA20 Table I, Fig. 8: Shift, Select, Permute, Distribute, Rotate, Transpose; LoadMap/LoadMapWide are opentsp
+      decisions (the map-loading mechanism is not published); the HC34 p.31 ''mapping of input + mask'' is modelled as the
+      map itself: Distribute map entries >= 16 and Permute map entries >= vlanes zero-fill their lane; the Permute entries
+      below vlanes must be distinct (a bijection, OTS-E-SXM-001) and that is the published statement, not a narrowing of
+      it: ISCA20 Table I ''Permute map: Bijective permute 320 inputs --map--> outputs'', ISCA20 sec. III-E ''the SXM provides
+      a permute instruction which employs a programmed bijection to remap the 320 lanes'', HC34 p.25 (the same Table I line),
+      while ''arbitrary mapping of input + mask'' on HC34 p.31 is the caption of the combined Permuter / Shifter box and
+      is a broader caption. Only the masking is local (entries >= vlanes are masked and may repeat). The distinctness is
+      recorded as a per-map ''bijective'' bit when LoadMap or LoadMapWide loads the map, and a map is ready for a Permute
+      geometry.superlanes cycles after the load''s execute cycle (the stagger puts the last superlane that many cycles behind
+      the first; earlier is OTS-E-RES-001), while sxselect acts per lane (a lane whose sel is above 2 is zero, one OTS-E-OPR-001);
+      Distribute is superlane-local (class sxm). its map register is written at the end of the load''s cycle and is usable
+      the next cycle, nothing is racy in hardware and no published source states a readiness rule, so none is invented (a
+      Permute differs because its map must reach every superlane); the boundary is checked by directed tests'
+  C2C:
+    basis: paper
+    cite: 'ISCA20 Table I: Deskew, Send, Receive; ISCA22 sec. 3'
+  C2C.Receive:
+    basis: decision
+    cite: '. ISCA20 Table I: "Receive a 320-byte vector, emplacing it in main memory". The model''s Receive writes the vector
+      to a stream at the RX gap and a MEM Write stores it in SRAM, the same stream data path every slice uses; the combination
+      emplaces the vector in main memory. The link field and the OPR-001/TIM-001 checks are opentsp decisions. A Receive
+      that fails any check, including a destination its RX unit cannot write (DIR-001), leaves the link FIFO unchanged (microarchitecture.md
+      sec. 8: errors have no effect)'
+  C2C.Send:
+    basis: paper
+    cite: 'ISCA20 Table I: "Send a 320-byte vector"; the link field (ISCA20 sec. II: sixteen links) and the chip_id check
+      are opentsp decisions. The widths are an opentsp widening: chip_id 9 bits and link 7 bits, the upper 3 bits of each
+      in the low reserved bits of the word (words that were legal keep their meaning); ISCA22 sec. 2.2 publishes systems
+      of 264 and 10,440 chips'
+  C2C.PciReceive:
+    basis: implementation-choice
+    cite: 'the published TSP sources: the PCIe host interface is handled in the C2C module, with a lightweight DMA engine
+      that emplaces a model onto the TSP memory (ISCA20 sec. II-6)'
+    why: 'implementation choice: the instruction, its opcode, the two steps (the instruction brings the vector from the
+      host interface onto a stream, a MEM Write commits it), the restriction of the stream to S24..S31 (the upper eight
+      streams, the same ones on both rows), the queues (the RX queues of the C2C slice, where the published interface sits)
+      and the empty-FIFO diagnostic (as Receive); the published sources give the role of the host interface, not an instruction
+      form'
+  C2C.PciSend:
+    basis: implementation-choice
+    cite: the published TSP sources give the PCIe host interface in the C2C module and the host's role of loading the model
+      and collecting results (ISCA20 sec. II-6); they give no instruction form and no pacing for the chip-to-host direction
+    why: 'an optional feature, an implementation choice: results must get back to the host, so the instruction mirrors PciReceive
+      on the TX queues, paced at host.cycles_per_vector (the same pacing as the host-to-chip direction: a PCIe link is symmetric
+      in width, which is reasoning, not a published figure)'
+  C2C.HostWait:
+    basis: implementation-choice
+    cite: the published sources give the runtime coordinating host and chip and no instruction for it
+    why: the compiler needs a way to hold a queue until the host has done something (a doorbell); it parks like a Sync that
+      the host releases
+  C2C.HostNotify:
+    basis: implementation-choice
+    cite: 'the published TSP sources: a general mechanism for passing interrupts to the host (ISCA20 sec. II-6)'
+    why: the program needs to raise an interrupt, not only the error logic; vectors 1..15, vector 0 reserved for errors
+  C2C.DeskewRecv:
+    basis: implementation-choice
+    cite: 'ISCA22 sec. 3.2 (Fig. 7(b)): the child device is placed in a polling synchronisation loop; at each epoch boundary
+      (HAC = 0) it waits to receive a vector from the parent; if the vector has not been transmitted yet the loop continues;
+      the child exits the loop floor(L / period) + 1 clock epochs after the parent''s Transmit (period 252 cycles). The
+      behaviour (the test at every boundary, the exit time) is published; the instruction form is not'
+    why: 'the ISA has no branch (microarchitecture.md sec. 1) and the loop''s only decision is whether the vector has arrived
+      at an epoch boundary, so the loop is one instruction, DeskewRecv chip, link, s (C2C opcode 9, the RX queues of the
+      C2C slice, the operands of Receive): it holds its queue to the next boundary after its dispatch (as Deskew), then
+      dispatches as a Receive at the first boundary at which a vector has arrived on the link; the diagnostics that do not
+      depend on the arrival are reported at the dispatch and leave nothing held; a vector that never comes leaves the queue
+      held for the rest of the run, as an unreleased Sync'
+conflicts:
+  sram.ports:
+    sides:
+    - source: ISCA20
+      claim: different-bank read/write concurrency
+    - source: opentsp
+      claim: one read and one write path per tile; explicit two-cycle local fetch
+    chosen: opentsp
+    reason: Implement the published bandwidth with explicit finite per-cycle resource accounting; do not infer an extra
+      read port.
+  c2c.links:
+    sides:
+    - source: ISCA22
+      claim: system and intra-node topology descriptions
+    - source: opentsp
+      claim: configurable point-to-point link count with bounded queues
+    chosen: opentsp
+    reason: Model the configured links; physical package/channel subdivisions are not additional logical routing capability.
+  timing.encoding:
+    sides:
+    - source: ISCA20
+      claim: per-instruction operand and functional timing
+    - source: opentsp
+      claim: configuration timing rows; instruction encodings contain no general delay field
+    chosen: opentsp
+    reason: Separate semantic timing from binary encoding; check causal effective rows including overrides.
+  queues.split:
+    sides:
+    - source: ISCA20
+      claim: 144 instruction queues
+    - source: opentsp
+      claim: 88 MEM,16 VXM,12 MXM,28 reshape/link queues plus a separate control convenience
+    chosen: opentsp
+    reason: The total is published; the exact role numbering is a complete deterministic interface choice, not an inferred
+      commercial ISA.
+  mxm.f16_capacity:
+    sides:
+    - source: ISCA20
+      claim: 320-element dot products using paired byte planes
+    - source: HC34
+      claim: one160x320 FP16 matrix per hemisphere; fully pipelined
+    - source: ISCA22-5.2
+      claim: K160 input,320 outputs; two FP16 suboperations per cycle
+    - source: TPACC
+      claim: explicit320-element fused dot product with one rounding step in FP16 discussion
+    - source: ALCF24
+      claim: one160x320 FP16 matrix per hemisphere; two320x320 INT8 matrices
+    - source: ISCA22-5.5
+      claim: A and B at most160x320; result AB-transpose
+    - source: opentsp
+      claim: 160 output rows x320 inputs per hemisphere, initiation interval1 in ref/mini
+    chosen: opentsp
+    reason: RC-A1 favors the directly stated320-element FP16 reduction and repeated160x320 weight shape. One-cycle initiation
+      reconciles these with quarter-rate arithmetic capacity. ISCA22 section5.2 remains contrary evidence; exact output
+      mapping/issue details are an engineering inference, not a claim of binary or circuit equivalence.
+timing_rows:
+  C2C.Deskew:
+    class: c2c
+    row:
+    - 1
+    - 0
+    word: implementation choice
+    rule: 'holds its queue to the next HAC epoch boundary, period 252 cycles: ISCA22 sec. 3.2 footnote 4, "the period is
+      the epoch length or 252 clock cycles"; c2c.hac_period'
+    rule_word: implementation choice
+    cite: The inspected primary papers and public slides do not give this instruction an exact latency.
+    why: Keep the explicitly configured opentsp pipeline row. Stream outputs must commit after execution, and cross-superlane
+      operations must satisfy physical arrival bounds; these are functional timing constraints, not measured circuit delays.
+  C2C.Receive:
+    class: c2c
+    row:
+    - 1
+    - 0
+    word: implementation choice
+    rule: link rate c2c.cycles_per_vector = 24 (ISCA22 sec. 2.3 footnote 2, 25 Gb/s per lane, four lanes, 2560 bits at 900
+      MHz = 23.04)
+    rule_word: implementation choice
+    cite: The inspected primary papers and public slides do not give this instruction an exact latency.
+    why: Keep the explicitly configured opentsp pipeline row. Stream outputs must commit after execution, and cross-superlane
+      operations must satisfy physical arrival bounds; these are functional timing constraints, not measured circuit delays.
+  C2C.RuntimeDeskew:
+    class: c2c
+    row:
+    - 1
+    - 0
+    word: implementation choice
+    rule: 'ISCA22 sec. 3.3: delays "for the target number of cycles plus or minus the HAC-SAC drift"; modelled chips have
+      no drift, the hold is max(t, timing.c2c.rtdeskew_floor), the floor an implementation choice (1)'
+    rule_word: implementation choice
+    cite: The inspected primary papers and public slides do not give this instruction an exact latency.
+    why: Keep the explicitly configured opentsp pipeline row. Stream outputs must commit after execution, and cross-superlane
+      operations must satisfy physical arrival bounds; these are functional timing constraints, not measured circuit delays.
+  C2C.Send:
+    class: c2c
+    row:
+    - 1
+    - 0
+    word: implementation choice
+    rule: link rate c2c.cycles_per_vector = 24 (as Receive)
+    rule_word: implementation choice
+    cite: The inspected primary papers and public slides do not give this instruction an exact latency.
+    why: Keep the explicitly configured opentsp pipeline row. Stream outputs must commit after execution, and cross-superlane
+      operations must satisfy physical arrival bounds; these are functional timing constraints, not measured circuit delays.
+  C2C.Transmit:
+    class: c2c
+    row:
+    - 1
+    - 0
+    word: implementation choice
+    cite: The inspected primary papers and public slides do not give this instruction an exact latency.
+    why: Keep the explicitly configured opentsp pipeline row. Stream outputs must commit after execution, and cross-superlane
+      operations must satisfy physical arrival bounds; these are functional timing constraints, not measured circuit delays.
+  C2C.PciReceive:
+    class: c2c
+    row:
+    - 1
+    - 0
+    word: implementation choice
+    rule: 'one vector per host.cycles_per_vector = 10 cycles arrives in the ingress FIFO (derived from the published PCIe
+      Gen4 x16 link at 900 MHz, see host.cycles_per_vector: about 9.1 cycles per 320-byte vector, rounded up)'
+    rule_word: implementation choice
+    cite: The inspected primary papers and public slides do not give this instruction an exact latency.
+    why: Keep the explicitly configured opentsp pipeline row. Stream outputs must commit after execution, and cross-superlane
+      operations must satisfy physical arrival bounds; these are functional timing constraints, not measured circuit delays.
+  C2C.PciSend:
+    class: c2c
+    row:
+    - 1
+    - 0
+    word: implementation choice
+    rule: 'one vector per host.cycles_per_vector = 10 cycles, the pacing of the host-to-chip direction applied to the chip-to-host
+      direction (an implementation choice: no published source gives a pacing for that direction); a second within that
+      period is OTS-E-HIO-001'
+    rule_word: implementation choice
+    cite: The inspected primary papers and public slides do not give this instruction an exact latency.
+    why: Keep the explicitly configured opentsp pipeline row. Stream outputs must commit after execution, and cross-superlane
+      operations must satisfy physical arrival bounds; these are functional timing constraints, not measured circuit delays.
+  C2C.HostWait:
+    class: cu
+    row:
+    - 0
+    - 0
+    word: implementation choice
+    rule: parks its queue until the doorbell rings; the next parcel dispatches the cycle after the ring
+    rule_word: implementation choice
+    why: Keep the explicitly configured opentsp pipeline row. Stream outputs must commit after execution, and cross-superlane
+      operations must satisfy physical arrival bounds; these are functional timing constraints, not measured circuit delays.
+    cite: The inspected primary papers and public slides do not give this instruction an exact latency.
+  C2C.HostNotify:
+    class: cu
+    row:
+    - 0
+    - 0
+    word: implementation choice
+    cite: The inspected primary papers and public slides do not give this instruction an exact latency.
+    why: Keep the explicitly configured opentsp pipeline row. Stream outputs must commit after execution, and cross-superlane
+      operations must satisfy physical arrival bounds; these are functional timing constraints, not measured circuit delays.
+  C2C.DeskewRecv:
+    class: c2c
+    row:
+    - 1
+    - 0
+    word: implementation choice
+    rule: 'holds its queue to the next HAC epoch boundary after its dispatch and dispatches as a Receive at the first boundary
+      at which a vector has arrived on the link (ISCA22 sec. 3.2: the polling loop, the exit floor(L / 252) + 1 epochs after
+      the Transmit)'
+    rule_word: implementation choice
+    cite: The inspected primary papers and public slides do not give this instruction an exact latency.
+    why: Keep the explicitly configured opentsp pipeline row. Stream outputs must commit after execution, and cross-superlane
+      operations must satisfy physical arrival bounds; these are functional timing constraints, not measured circuit delays.
+  CU.Config:
+    class: cu
+    row:
+    - 0
+    - 0
+    word: implementation choice
+    cite: The inspected primary papers and public slides do not give this instruction an exact latency.
+    why: Keep the explicitly configured opentsp pipeline row. Stream outputs must commit after execution, and cross-superlane
+      operations must satisfy physical arrival bounds; these are functional timing constraints, not measured circuit delays.
+  CU.Ifetch:
+    class: cu
+    row:
+    - 0
+    - 0
+    word: implementation choice
+    rule: Two successive values of one stream; IQ delivery starts after the second read plus icu.fetch_latency, an opentsp
+      configuration choice.
+    rule_word: implementation choice
+    cite: The inspected primary papers and public slides do not give this instruction an exact latency.
+    why: Keep the explicitly configured opentsp pipeline row. Stream outputs must commit after execution, and cross-superlane
+      operations must satisfy physical arrival bounds; these are functional timing constraints, not measured circuit delays.
+  CU.IfetchM:
+    class: cu
+    row:
+    - 0
+    - 0
+    word: implementation choice
+    rule: Two successive SRAM reads; IQ delivery starts after the second read plus icu.fetch_latency, an opentsp configuration
+      choice.
+    rule_word: implementation choice
+    cite: The inspected primary papers and public slides do not give this instruction an exact latency.
+    why: Keep the explicitly configured opentsp pipeline row. Stream outputs must commit after execution, and cross-superlane
+      operations must satisfy physical arrival bounds; these are functional timing constraints, not measured circuit delays.
+  CU.NOP:
+    class: cu
+    row:
+    - 0
+    - 0
+    word: implementation choice
+    rule: 'spacing N + 1 (ISCA20 sec. II: "intervening NOP so that N cycles separate them OpA NOP(N) OpB"; Table I: "can
+      be repeated N times to delay by N cycles"); the 16-bit count reaches "1 ns up to 65 us for a 1GHz clock", exactly
+      the separations 1 to 65536 under spacing N + 1'
+    rule_word: implementation choice
+    cite: The inspected primary papers and public slides do not give this instruction an exact latency.
+    why: Keep the explicitly configured opentsp pipeline row. Stream outputs must commit after execution, and cross-superlane
+      operations must satisfy physical arrival bounds; these are functional timing constraints, not measured circuit delays.
+  CU.Notify:
+    class: cu
+    row:
+    - 0
+    - 0
+    word: implementation choice
+    rule: 'ISCA20 sec. III-A2: "A chip-wide barrier synchronization can be accomplished in 35 clock cycles, from the time
+      the Notify is issued to the time the Sync is satisfied and retired": carried by barrier.release_latency = 35, not
+      by d_func'
+    rule_word: implementation choice
+    cite: The inspected primary papers and public slides do not give this instruction an exact latency.
+    why: Keep the explicitly configured opentsp pipeline row. Stream outputs must commit after execution, and cross-superlane
+      operations must satisfy physical arrival bounds; these are functional timing constraints, not measured circuit delays.
+  CU.Repeat:
+    class: cu
+    row:
+    - 0
+    - 0
+    word: implementation choice
+    rule: opentsp execution and resource rule; microarchitecture.md
+    rule_word: implementation choice
+    cite: The inspected primary papers and public slides do not give this instruction an exact latency.
+    why: Keep the explicitly configured opentsp pipeline row. Stream outputs must commit after execution, and cross-superlane
+      operations must satisfy physical arrival bounds; these are functional timing constraints, not measured circuit delays.
+  CU.SetVL:
+    class: cu
+    row:
+    - 0
+    - 0
+    word: implementation choice
+    cite: The inspected primary papers and public slides do not give this instruction an exact latency.
+    why: Keep the explicitly configured opentsp pipeline row. Stream outputs must commit after execution, and cross-superlane
+      operations must satisfy physical arrival bounds; these are functional timing constraints, not measured circuit delays.
+  CU.Sync:
+    class: cu
+    row:
+    - 0
+    - 0
+    word: implementation choice
+    rule: '35 cycles from Notify to Sync retired (ISCA20 sec. III-A2, as Notify): barrier.release_latency'
+    rule_word: implementation choice
+    cite: The inspected primary papers and public slides do not give this instruction an exact latency.
+    why: Keep the explicitly configured opentsp pipeline row. Stream outputs must commit after execution, and cross-superlane
+      operations must satisfy physical arrival bounds; these are functional timing constraints, not measured circuit delays.
+  MEM.Countdown:
+    class: mem
+    row:
+    - 5
+    - 0
+    word: implementation choice
+    rule: AGT reference spacing is 1 cycle when no Countdown was received and max(d, 1) + 1 cycles for an explicit Countdown
+      d, so an explicit 0 and an explicit 1 both space references by 2 cycles. This is an opentsp scheduling rule.
+    rule_word: implementation choice
+    cite: The inspected primary papers and public slides do not give this instruction an exact latency.
+    why: Keep the explicitly configured opentsp pipeline row. Stream outputs must commit after execution, and cross-superlane
+      operations must satisfy physical arrival bounds; these are functional timing constraints, not measured circuit delays.
+  MEM.DeepSleep:
+    class: mem
+    row:
+    - 5
+    - 0
+    word: implementation choice
+    cite: The inspected primary papers and public slides do not give this instruction an exact latency.
+    why: Keep the explicitly configured opentsp pipeline row. Stream outputs must commit after execution, and cross-superlane
+      operations must satisfy physical arrival bounds; these are functional timing constraints, not measured circuit delays.
+  MEM.Gather:
+    class: mem
+    row:
+    - 5
+    - 0
+    word: implementation choice
+    cite: The inspected primary papers and public slides do not give this instruction an exact latency.
+    why: Keep the explicitly configured opentsp pipeline row. Stream outputs must commit after execution, and cross-superlane
+      operations must satisfy physical arrival bounds; these are functional timing constraints, not measured circuit delays.
+  MEM.Iterations:
+    class: mem
+    row:
+    - 5
+    - 0
+    word: implementation choice
+    rule: The configured count is the number of references at that AGT level, not a latency.
+    rule_word: implementation choice
+    cite: The inspected primary papers and public slides do not give this instruction an exact latency.
+    why: Keep the explicitly configured opentsp pipeline row. Stream outputs must commit after execution, and cross-superlane
+      operations must satisfy physical arrival bounds; these are functional timing constraints, not measured circuit delays.
+  MEM.PowerConfig:
+    class: mem
+    row:
+    - 5
+    - 0
+    word: implementation choice
+    cite: The inspected primary papers and public slides do not give this instruction an exact latency.
+    why: Keep the explicitly configured opentsp pipeline row. Stream outputs must commit after execution, and cross-superlane
+      operations must satisfy physical arrival bounds; these are functional timing constraints, not measured circuit delays.
+  MEM.Read:
+    class: mem
+    row:
+    - 5
+    - 0
+    word: implementation choice
+    cite: The inspected primary papers and public slides do not give this instruction an exact latency.
+    why: Keep the explicitly configured opentsp pipeline row. Stream outputs must commit after execution, and cross-superlane
+      operations must satisfy physical arrival bounds; these are functional timing constraints, not measured circuit delays.
+  MEM.Scatter:
+    class: mem
+    row:
+    - 5
+    - 0
+    word: implementation choice
+    cite: The inspected primary papers and public slides do not give this instruction an exact latency.
+    why: Keep the explicitly configured opentsp pipeline row. Stream outputs must commit after execution, and cross-superlane
+      operations must satisfy physical arrival bounds; these are functional timing constraints, not measured circuit delays.
+  MEM.SetSegment:
+    class: mem
+    row:
+    - 5
+    - 0
+    word: implementation choice
+    cite: The inspected primary papers and public slides do not give this instruction an exact latency.
+    why: Keep the explicitly configured opentsp pipeline row. Stream outputs must commit after execution, and cross-superlane
+      operations must satisfy physical arrival bounds; these are functional timing constraints, not measured circuit delays.
+  MEM.Step:
+    class: mem
+    row:
+    - 5
+    - 0
+    word: implementation choice
+    rule: The signed address stride applied between AGT references, not a latency.
+    rule_word: implementation choice
+    cite: The inspected primary papers and public slides do not give this instruction an exact latency.
+    why: Keep the explicitly configured opentsp pipeline row. Stream outputs must commit after execution, and cross-superlane
+      operations must satisfy physical arrival bounds; these are functional timing constraints, not measured circuit delays.
+  MEM.StreamStep:
+    class: mem
+    row:
+    - 5
+    - 0
+    word: implementation choice
+    cite: The inspected primary papers and public slides do not give this instruction an exact latency.
+    why: Keep the explicitly configured opentsp pipeline row. Stream outputs must commit after execution, and cross-superlane
+      operations must satisfy physical arrival bounds; these are functional timing constraints, not measured circuit delays.
+  MEM.Write:
+    class: mem
+    row:
+    - 5
+    - 0
+    word: implementation choice
+    cite: The inspected primary papers and public slides do not give this instruction an exact latency.
+    why: Keep the explicitly configured opentsp pipeline row. Stream outputs must commit after execution, and cross-superlane
+      operations must satisfy physical arrival bounds; these are functional timing constraints, not measured circuit delays.
+  MXM.ABC8:
+    class: mxm_abc
+    row:
+    - 20
+    - 0
+    word: implementation choice
+    cite: The inspected primary papers and public slides do not give this instruction an exact latency.
+    why: Keep the explicitly configured opentsp pipeline row. Stream outputs must commit after execution, and cross-superlane
+      operations must satisfy physical arrival bounds; these are functional timing constraints, not measured circuit delays.
+  MXM.ABC:
+    class: mxm_abc
+    row:
+    - 20
+    - 0
+    word: published
+    cite: HC34 p.28 states a 20-cycle matrix execution latency. Operand skew and research-profile causality constraints
+      are defined separately by opentsp.
+  MXM.ACC:
+    class: mxm_acc
+    row:
+    - 20
+    - 0
+    word: implementation choice
+    cite: The inspected primary papers and public slides do not give this instruction an exact latency.
+    why: Keep the explicitly configured opentsp pipeline row. Stream outputs must commit after execution, and cross-superlane
+      operations must satisfy physical arrival bounds; these are functional timing constraints, not measured circuit delays.
+  MXM.IW:
+    class: mxm_iw
+    row:
+    - 1
+    - 0
+    word: implementation choice
+    cite: The inspected primary papers and public slides do not give this instruction an exact latency.
+    why: Keep the explicitly configured opentsp pipeline row. Stream outputs must commit after execution, and cross-superlane
+      operations must satisfy physical arrival bounds; these are functional timing constraints, not measured circuit delays.
+  MXM.IWS:
+    class: mxm_iw
+    row:
+    - 1
+    - 0
+    word: implementation choice
+    cite: The inspected primary papers and public slides do not give this instruction an exact latency.
+    why: Keep the explicitly configured opentsp pipeline row. Stream outputs must commit after execution, and cross-superlane
+      operations must satisfy physical arrival bounds; these are functional timing constraints, not measured circuit delays.
+  MXM.LW:
+    class: mxm_lw
+    row:
+    - 20
+    - 0
+    word: implementation choice
+    cite: The inspected primary papers and public slides do not give this instruction an exact latency.
+    why: Keep the explicitly configured opentsp pipeline row. Stream outputs must commit after execution, and cross-superlane
+      operations must satisfy physical arrival bounds; these are functional timing constraints, not measured circuit delays.
+  SXM.Distribute:
+    class: sxm
+    row:
+    - 5
+    - 0
+    word: implementation choice
+    cite: The inspected primary papers and public slides do not give this instruction an exact latency.
+    why: Keep the explicitly configured opentsp pipeline row. Stream outputs must commit after execution, and cross-superlane
+      operations must satisfy physical arrival bounds; these are functional timing constraints, not measured circuit delays.
+  SXM.LoadMap:
+    class: sxm
+    row:
+    - 5
+    - 0
+    word: implementation choice
+    rule: 'a loaded map is ready for a Permute timing.sxm_map_ready (= superlanes) cycles after the load: ISCA20 sec. II
+      "The data for successive 16-element superlanes are lagging by 1 cycle"'
+    rule_word: implementation choice
+    cite: The inspected primary papers and public slides do not give this instruction an exact latency.
+    why: Keep the explicitly configured opentsp pipeline row. Stream outputs must commit after execution, and cross-superlane
+      operations must satisfy physical arrival bounds; these are functional timing constraints, not measured circuit delays.
+  SXM.LoadMapWide:
+    class: sxm
+    row:
+    - 5
+    - 0
+    word: implementation choice
+    rule: 'as LoadMap: timing.sxm_map_ready'
+    rule_word: implementation choice
+    cite: The inspected primary papers and public slides do not give this instruction an exact latency.
+    why: Keep the explicitly configured opentsp pipeline row. Stream outputs must commit after execution, and cross-superlane
+      operations must satisfy physical arrival bounds; these are functional timing constraints, not measured circuit delays.
+  SXM.Permute:
+    class: sxm_cross
+    row:
+    - 20
+    - 0
+    word: derived
+    cite: ISCA20 staggered superlanes imply the causal floor d_func - d_skew >= superlanes. The selected latency meets this
+      floor; it is not a measured circuit depth.
+  SXM.Rotate:
+    class: sxm
+    row:
+    - 5
+    - 0
+    word: implementation choice
+    cite: The inspected primary papers and public slides do not give this instruction an exact latency.
+    why: Keep the explicitly configured opentsp pipeline row. Stream outputs must commit after execution, and cross-superlane
+      operations must satisfy physical arrival bounds; these are functional timing constraints, not measured circuit delays.
+  SXM.SelectS:
+    class: sxm
+    row:
+    - 5
+    - 0
+    word: implementation choice
+    cite: The inspected primary papers and public slides do not give this instruction an exact latency.
+    why: Keep the explicitly configured opentsp pipeline row. Stream outputs must commit after execution, and cross-superlane
+      operations must satisfy physical arrival bounds; these are functional timing constraints, not measured circuit delays.
+  SXM.Shift:
+    class: sxm_cross
+    row:
+    - 20
+    - 0
+    word: derived
+    cite: ISCA20 staggered superlanes imply the causal floor d_func - d_skew >= superlanes. The selected latency meets this
+      floor; it is not a measured circuit depth.
+  SXM.Transpose:
+    class: sxm
+    row:
+    - 5
+    - 0
+    word: implementation choice
+    cite: The inspected primary papers and public slides do not give this instruction an exact latency.
+    why: Keep the explicitly configured opentsp pipeline row. Stream outputs must commit after execution, and cross-superlane
+      operations must satisfy physical arrival bounds; these are functional timing constraints, not measured circuit delays.
+  VXM.Abs:
+    class: vxm
+    row:
+    - 5
+    - 2
+    word: implementation choice
+    cite: The inspected primary papers and public slides do not give this instruction an exact latency.
+    why: Keep the explicitly configured opentsp pipeline row. Stream outputs must commit after execution, and cross-superlane
+      operations must satisfy physical arrival bounds; these are functional timing constraints, not measured circuit delays.
+  VXM.Add:
+    class: vxm
+    row:
+    - 5
+    - 2
+    word: implementation choice
+    cite: The inspected primary papers and public slides do not give this instruction an exact latency.
+    why: Keep the explicitly configured opentsp pipeline row. Stream outputs must commit after execution, and cross-superlane
+      operations must satisfy physical arrival bounds; these are functional timing constraints, not measured circuit delays.
+  VXM.Add_mod:
+    class: vxm
+    row:
+    - 5
+    - 2
+    word: implementation choice
+    cite: The inspected primary papers and public slides do not give this instruction an exact latency.
+    why: Keep the explicitly configured opentsp pipeline row. Stream outputs must commit after execution, and cross-superlane
+      operations must satisfy physical arrival bounds; these are functional timing constraints, not measured circuit delays.
+  VXM.Add_sat:
+    class: vxm
+    row:
+    - 5
+    - 2
+    word: implementation choice
+    cite: The inspected primary papers and public slides do not give this instruction an exact latency.
+    why: Keep the explicitly configured opentsp pipeline row. Stream outputs must commit after execution, and cross-superlane
+      operations must satisfy physical arrival bounds; these are functional timing constraints, not measured circuit delays.
+  VXM.And:
+    class: vxm
+    row:
+    - 5
+    - 2
+    word: implementation choice
+    cite: The inspected primary papers and public slides do not give this instruction an exact latency.
+    why: Keep the explicitly configured opentsp pipeline row. Stream outputs must commit after execution, and cross-superlane
+      operations must satisfy physical arrival bounds; these are functional timing constraints, not measured circuit delays.
+  VXM.Cmp:
+    class: vxm
+    row:
+    - 5
+    - 2
+    word: implementation choice
+    cite: The inspected primary papers and public slides do not give this instruction an exact latency.
+    why: Keep the explicitly configured opentsp pipeline row. Stream outputs must commit after execution, and cross-superlane
+      operations must satisfy physical arrival bounds; these are functional timing constraints, not measured circuit delays.
+  VXM.Conv_F16_F32:
+    class: vxm
+    row:
+    - 5
+    - 2
+    word: implementation choice
+    cite: The inspected primary papers and public slides do not give this instruction an exact latency.
+    why: Keep the explicitly configured opentsp pipeline row. Stream outputs must commit after execution, and cross-superlane
+      operations must satisfy physical arrival bounds; these are functional timing constraints, not measured circuit delays.
+  VXM.Conv_F16_I8:
+    class: vxm
+    row:
+    - 5
+    - 2
+    word: implementation choice
+    cite: The inspected primary papers and public slides do not give this instruction an exact latency.
+    why: Keep the explicitly configured opentsp pipeline row. Stream outputs must commit after execution, and cross-superlane
+      operations must satisfy physical arrival bounds; these are functional timing constraints, not measured circuit delays.
+  VXM.Conv_F32_F16:
+    class: vxm
+    row:
+    - 5
+    - 2
+    word: implementation choice
+    cite: The inspected primary papers and public slides do not give this instruction an exact latency.
+    why: Keep the explicitly configured opentsp pipeline row. Stream outputs must commit after execution, and cross-superlane
+      operations must satisfy physical arrival bounds; these are functional timing constraints, not measured circuit delays.
+  VXM.Conv_F32_I8:
+    class: vxm
+    row:
+    - 5
+    - 2
+    word: implementation choice
+    cite: The inspected primary papers and public slides do not give this instruction an exact latency.
+    why: Keep the explicitly configured opentsp pipeline row. Stream outputs must commit after execution, and cross-superlane
+      operations must satisfy physical arrival bounds; these are functional timing constraints, not measured circuit delays.
+  VXM.Conv_I32_I8:
+    class: vxm
+    row:
+    - 5
+    - 2
+    word: implementation choice
+    cite: The inspected primary papers and public slides do not give this instruction an exact latency.
+    why: Keep the explicitly configured opentsp pipeline row. Stream outputs must commit after execution, and cross-superlane
+      operations must satisfy physical arrival bounds; these are functional timing constraints, not measured circuit delays.
+  VXM.Conv_I8_F16:
+    class: vxm
+    row:
+    - 5
+    - 2
+    word: implementation choice
+    cite: The inspected primary papers and public slides do not give this instruction an exact latency.
+    why: Keep the explicitly configured opentsp pipeline row. Stream outputs must commit after execution, and cross-superlane
+      operations must satisfy physical arrival bounds; these are functional timing constraints, not measured circuit delays.
+  VXM.Conv_I8_F32:
+    class: vxm
+    row:
+    - 5
+    - 2
+    word: implementation choice
+    cite: The inspected primary papers and public slides do not give this instruction an exact latency.
+    why: Keep the explicitly configured opentsp pipeline row. Stream outputs must commit after execution, and cross-superlane
+      operations must satisfy physical arrival bounds; these are functional timing constraints, not measured circuit delays.
+  VXM.Conv_I8_I32:
+    class: vxm
+    row:
+    - 5
+    - 2
+    word: implementation choice
+    cite: The inspected primary papers and public slides do not give this instruction an exact latency.
+    why: Keep the explicitly configured opentsp pipeline row. Stream outputs must commit after execution, and cross-superlane
+      operations must satisfy physical arrival bounds; these are functional timing constraints, not measured circuit delays.
+  VXM.Convert:
+    class: vxm
+    row:
+    - 5
+    - 2
+    word: implementation choice
+    cite: The inspected primary papers and public slides do not give this instruction an exact latency.
+    why: Keep the explicitly configured opentsp pipeline row. Stream outputs must commit after execution, and cross-superlane
+      operations must satisfy physical arrival bounds; these are functional timing constraints, not measured circuit delays.
+  VXM.Exp:
+    class: vxm
+    row:
+    - 5
+    - 2
+    word: implementation choice
+    cite: The inspected primary papers and public slides do not give this instruction an exact latency.
+    why: Keep the explicitly configured opentsp pipeline row. Stream outputs must commit after execution, and cross-superlane
+      operations must satisfy physical arrival bounds; these are functional timing constraints, not measured circuit delays.
+  VXM.Log:
+    class: vxm
+    row:
+    - 5
+    - 2
+    word: implementation choice
+    cite: The inspected primary papers and public slides do not give this instruction an exact latency.
+    why: Keep the explicitly configured opentsp pipeline row. Stream outputs must commit after execution, and cross-superlane
+      operations must satisfy physical arrival bounds; these are functional timing constraints, not measured circuit delays.
+  VXM.Mask:
+    class: vxm
+    row:
+    - 5
+    - 2
+    word: implementation choice
+    cite: The inspected primary papers and public slides do not give this instruction an exact latency.
+    why: Keep the explicitly configured opentsp pipeline row. Stream outputs must commit after execution, and cross-superlane
+      operations must satisfy physical arrival bounds; these are functional timing constraints, not measured circuit delays.
+  VXM.Max:
+    class: vxm
+    row:
+    - 5
+    - 2
+    word: implementation choice
+    cite: The inspected primary papers and public slides do not give this instruction an exact latency.
+    why: Keep the explicitly configured opentsp pipeline row. Stream outputs must commit after execution, and cross-superlane
+      operations must satisfy physical arrival bounds; these are functional timing constraints, not measured circuit delays.
+  VXM.Min:
+    class: vxm
+    row:
+    - 5
+    - 2
+    word: implementation choice
+    cite: The inspected primary papers and public slides do not give this instruction an exact latency.
+    why: Keep the explicitly configured opentsp pipeline row. Stream outputs must commit after execution, and cross-superlane
+      operations must satisfy physical arrival bounds; these are functional timing constraints, not measured circuit delays.
+  VXM.Mul:
+    class: vxm
+    row:
+    - 5
+    - 2
+    word: implementation choice
+    cite: The inspected primary papers and public slides do not give this instruction an exact latency.
+    why: Keep the explicitly configured opentsp pipeline row. Stream outputs must commit after execution, and cross-superlane
+      operations must satisfy physical arrival bounds; these are functional timing constraints, not measured circuit delays.
+  VXM.Mul_mod:
+    class: vxm
+    row:
+    - 5
+    - 2
+    word: implementation choice
+    cite: The inspected primary papers and public slides do not give this instruction an exact latency.
+    why: Keep the explicitly configured opentsp pipeline row. Stream outputs must commit after execution, and cross-superlane
+      operations must satisfy physical arrival bounds; these are functional timing constraints, not measured circuit delays.
+  VXM.Mul_sat:
+    class: vxm
+    row:
+    - 5
+    - 2
+    word: implementation choice
+    cite: The inspected primary papers and public slides do not give this instruction an exact latency.
+    why: Keep the explicitly configured opentsp pipeline row. Stream outputs must commit after execution, and cross-superlane
+      operations must satisfy physical arrival bounds; these are functional timing constraints, not measured circuit delays.
+  VXM.Neg:
+    class: vxm
+    row:
+    - 5
+    - 2
+    word: implementation choice
+    cite: The inspected primary papers and public slides do not give this instruction an exact latency.
+    why: Keep the explicitly configured opentsp pipeline row. Stream outputs must commit after execution, and cross-superlane
+      operations must satisfy physical arrival bounds; these are functional timing constraints, not measured circuit delays.
+  VXM.Not:
+    class: vxm
+    row:
+    - 5
+    - 2
+    word: implementation choice
+    cite: The inspected primary papers and public slides do not give this instruction an exact latency.
+    why: Keep the explicitly configured opentsp pipeline row. Stream outputs must commit after execution, and cross-superlane
+      operations must satisfy physical arrival bounds; these are functional timing constraints, not measured circuit delays.
+  VXM.Or:
+    class: vxm
+    row:
+    - 5
+    - 2
+    word: implementation choice
+    cite: The inspected primary papers and public slides do not give this instruction an exact latency.
+    why: Keep the explicitly configured opentsp pipeline row. Stream outputs must commit after execution, and cross-superlane
+      operations must satisfy physical arrival bounds; these are functional timing constraints, not measured circuit delays.
+  VXM.RSqrt:
+    class: vxm
+    row:
+    - 5
+    - 2
+    word: implementation choice
+    cite: The inspected primary papers and public slides do not give this instruction an exact latency.
+    why: Keep the explicitly configured opentsp pipeline row. Stream outputs must commit after execution, and cross-superlane
+      operations must satisfy physical arrival bounds; these are functional timing constraints, not measured circuit delays.
+  VXM.ReLU:
+    class: vxm
+    row:
+    - 5
+    - 2
+    word: implementation choice
+    cite: The inspected primary papers and public slides do not give this instruction an exact latency.
+    why: Keep the explicitly configured opentsp pipeline row. Stream outputs must commit after execution, and cross-superlane
+      operations must satisfy physical arrival bounds; these are functional timing constraints, not measured circuit delays.
+  VXM.Reduce:
+    class: vxm
+    row:
+    - 5
+    - 2
+    word: implementation choice
+    cite: The inspected primary papers and public slides do not give this instruction an exact latency.
+    why: Keep the explicitly configured opentsp pipeline row. Stream outputs must commit after execution, and cross-superlane
+      operations must satisfy physical arrival bounds; these are functional timing constraints, not measured circuit delays.
+  VXM.Select:
+    class: vxm
+    row:
+    - 5
+    - 2
+    word: implementation choice
+    cite: The inspected primary papers and public slides do not give this instruction an exact latency.
+    why: Keep the explicitly configured opentsp pipeline row. Stream outputs must commit after execution, and cross-superlane
+      operations must satisfy physical arrival bounds; these are functional timing constraints, not measured circuit delays.
+  VXM.Sub:
+    class: vxm
+    row:
+    - 5
+    - 2
+    word: implementation choice
+    cite: The inspected primary papers and public slides do not give this instruction an exact latency.
+    why: Keep the explicitly configured opentsp pipeline row. Stream outputs must commit after execution, and cross-superlane
+      operations must satisfy physical arrival bounds; these are functional timing constraints, not measured circuit delays.
+  VXM.Sub_mod:
+    class: vxm
+    row:
+    - 5
+    - 2
+    word: implementation choice
+    cite: The inspected primary papers and public slides do not give this instruction an exact latency.
+    why: Keep the explicitly configured opentsp pipeline row. Stream outputs must commit after execution, and cross-superlane
+      operations must satisfy physical arrival bounds; these are functional timing constraints, not measured circuit delays.
+  VXM.Sub_sat:
+    class: vxm
+    row:
+    - 5
+    - 2
+    word: implementation choice
+    cite: The inspected primary papers and public slides do not give this instruction an exact latency.
+    why: Keep the explicitly configured opentsp pipeline row. Stream outputs must commit after execution, and cross-superlane
+      operations must satisfy physical arrival bounds; these are functional timing constraints, not measured circuit delays.
+  VXM.TanH:
+    class: vxm
+    row:
+    - 5
+    - 2
+    word: implementation choice
+    cite: The inspected primary papers and public slides do not give this instruction an exact latency.
+    why: Keep the explicitly configured opentsp pipeline row. Stream outputs must commit after execution, and cross-superlane
+      operations must satisfy physical arrival bounds; these are functional timing constraints, not measured circuit delays.
+  VXM.Xor:
+    class: vxm
+    row:
+    - 5
+    - 2
+    word: implementation choice
+    cite: The inspected primary papers and public slides do not give this instruction an exact latency.
+    why: Keep the explicitly configured opentsp pipeline row. Stream outputs must commit after execution, and cross-superlane
+      operations must satisfy physical arrival bounds; these are functional timing constraints, not measured circuit delays.
+timing_bounds:
+  weight_install:
+    source: ISCA20 sec. II (memory), sec. III (matrix unit) and sec. IV (matrix operations)
+    quote: the MEM slices can read 409,600 weights from memory and install them into the four (4) 320x320 MXM arrays in
+      less than 40 cycles including SRAM and on-chip network transit delay
+    convention: not defined by the source. It may count from the first Read to the first usable ABC, from the first to the
+      last arrival of weights, or the install stages only. The model counts from the first Read of the schedule (cycle 0)
+      to the dispatch cycle of the first ABC that may use the installed weights.
+    value: under 40 cycles
+    model_value: 41 cycles on ref (first ABC at cycle 41). Derivation in profile keys, with 32 streams per row, two rows
+      and four planes installed by 2 x 32 x 320 bytes per cycle, 409,600 / 20,480 = 20 install cycles; the farthest of the
+      32 nearest MEM slices per hemisphere (quad 3, 16 gaps from the matrix input station) reaches the plane after mem.d_func
+      5 + 16 = 21 cycles; the last install (cycle 40) is followed by timing.mxm_iw.d_func 1. In profile keys the first ABC
+      is (issues - 1) + mxm_iw.d_func + mem.d_func + transit = 19 + 1 + 5 + 16 = 41 (on ref with mxm_iw.d_func 3 it is 43,
+      measured). Counted from first to last arrival the same schedule takes 20 cycles (arrivals at 21 to 40).
+    status: exceeded by 2 (recorded)
+    reproduce: 'tools/tsp_as.py asm and tsp_sim on the 80-install schedule (T = 21, ABC at A = 41): no diagnostic; the schedule
+      with A = 40 does not assemble because the activation Read shares a MEM queue slot with a weight Read (OTS-E-QUE-001),
+      which shows the generator needs a second slice and does not prove 40 impossible'
+    note: 41 exceeds 'less than 40' (at most 39) by 2 cycles. A profile with mem.d_func 3 meets the bound (the first ABC
+      at 39); test/directed/published_bounds.py runs that variant of the profile on every model_test.sh run and measures
+      39. The shipped latencies are implementation choices (timing_rows), so the profile is not changed for a loosely worded
+      figure.
+  barrier:
+    source: ISCA20 sec. III-A (instruction control unit)
+    quote: A chip-wide barrier synchronization can be accomplished in 35 clock cycles, from the time the Notify is issued
+      to the time the Sync is satisfied and retired
+    convention: from the Notify's issue to the retirement of the Sync, as the paper states it
+    value: 35 cycles
+    model_value: 35 cycles (barrier.release_latency, carried by the key and not by a d_func)
+    status: met
+  resnet50_latency:
+    source: ISCA20 sec. I (contributions) and sec. V (discussion)
+    quote: 'sec. I: ResNet50 image classification model executing a sample image query in less than 49 us, yielding 20.4K
+      IPS of batch-size1 inference throughput. sec. V: performing an inference query of the ResNet model in < 43 us, yielding
+      a throughput of 20.4K images per second ... the TSP has an inference latency of only 49 us for a single image sample'
+    convention: end-to-end latency of one image on the first silicon, including the host and any I/O the paper counts. The
+      source states 49 us (sec. I and sec. V) and, for the query itself, under 43 us (sec. V); it does not say which parts
+      of the 6 us difference it counts.
+    value: under 49 us per image (under 43 us for the query, sec. V)
+    model_value: none (the repository holds no ResNet-50 workload)
+    status: not reproduced (no ResNet-50 workload exists; a cycle count of another network says nothing about it)
+encoding:
+  all:
+    basis: decision
+    cite: 'The inspected primary papers and public slides do not specify a complete binary encoding. Every opentsp opcode
+      and field placement is an independent interface choice: 32-bit CU/MXM/C2C and 64-bit MEM/VXM/SXM instructions, with
+      explicit operand ranges and reserved bits. These widths do not assert commercial binary compatibility.'
+host:
+  csr_space:
+    basis: implementation-choice
+    cite: 'ISCA20 section II-6 and HC34 p.45 establish host access and packet categories, not this register/protocol interface.
+      Implementation rationale: 4096 registers of 64 bits, reads of an unmapped address give 0 and writes are ignored; HostWait
+      observes the doorbell, so host CSR actions can change execution timing; other CSR effects follow the platform contract'
+    why: 4096 registers of 64 bits, reads of an unmapped address give 0 and writes are ignored; HostWait observes the doorbell,
+      so host CSR actions can change execution timing; other CSR effects follow the platform contract
+  csr_map:
+    basis: implementation-choice
+    cite: 'none: no address is published'
+    why: 0x000 CHIP_ID, 0x030 IRQ_CAUSE (W1C), 0x031 IRQ_MASK (reset 0xFFFF), 0x032 IRQ_COUNT, 0x300 + i DOORBELL[i]; the
+      error registers of the RAS group take 0x010.. and are not part of this change
+  msix_numbering:
+    basis: implementation-choice
+    cite: 'the published sources: MSI-X interrupts to the host, in the event of a multi-bit memory error'
+    why: vector 0 is reserved for errors, vectors 1..15 are raised by HostNotify
+  start_cycle:
+    basis: implementation-choice
+    cite: 'ISCA20 sec. II-6: the host interface provides an entry point for bootstrapping the model execution'
+    why: the program load before cycle 0 is the DMA emplacement; `H start c` moves the entry point so that queues start
+      dispatching at cycle c
+  instruction_injection:
+    basis: implementation-choice
+    cite: 'ISCA20 section II-6 and HC34 p.45 establish host access and packet categories, not this register/protocol interface.
+      Implementation rationale: the interface is ours: `H inject` appends text units to a queue''s IQ at a cycle, with the
+      IQ overflow rule'
+    why: 'the interface is ours: `H inject` appends text units to a queue''s IQ at a cycle, with the IQ overflow rule'
+  irq_mask_reset:
+    basis: implementation-choice
+    cite: 'none: the reset value of an interrupt mask is not published'
+    why: 'IRQ_MASK resets to 0xFFFF, every vector masked in the sense of the register (bit set = delivered): the least restrictive
+      reset, so that a HostNotify of a program reaches the host with no setup by the host, the host can still mask by writing
+      the register'
+  doorbell_one_ring:
+    basis: implementation-choice
+    cite: 'the published sources: the host interface and the host''s DMA engine; no doorbell semantics are published'
+    why: a doorbell is a one-bit register; a ring is kept until a HostWait takes it, and one ring releases one HostWait
+      (a second ring while none waits is not counted again); the least state that lets the host and the program meet in
+      either order without a lost or a doubled wake-up
+  remote_reply:
+    basis: implementation-choice
+    cite: 'ISCA20 section II-6 and HC34 p.45 establish host access and packet categories, not this register/protocol interface.
+      Implementation rationale: a remote read (`P csr <cycle> <link> r <addr>`) is answered by a csr packet that returns
+      on the link the request came in and is printed as `T csr <cycle> <chip> <addr> <value>` in the section of the chip
+      that asked when it arrives; a remote write has no reply; the access takes effect on the chip at the far end of the
+      link at the packet''s arrival cycle, before that cycle''s tick'
+    why: a remote read (`P csr <cycle> <link> r <addr>`) is answered by a csr packet that returns on the link the request
+      came in and is printed as `T csr <cycle> <chip> <addr> <value>` in the section of the chip that asked when it arrives;
+      a remote write has no reply; the access takes effect on the chip at the far end of the link at the packet's arrival
+      cycle, before that cycle's tick
+  packet_types:
+    basis: implementation-choice
+    cite: 'HC34 p.45: the header flit of a link packet carries "Type (data, CSR, Sync, Ctrl)"'
+    why: 'every transfer on a link has one of the four types: Send is data, Transmit is sync, a remote CSR access is csr,
+      the control unit''s own messages are ctrl; data and sync enter the receive FIFO, csr and ctrl are consumed by the
+      receiving chip''s control unit when they arrive, so no Receive sees them and OTS-E-LNK-002 counts data and sync only
+      (the control unit is a different consumer than the receive queues, which is why the published design gives it its
+      own types); the header''s bit encoding and the content of ctrl are not published and not modelled'
+  packet_flits:
+    basis: implementation-choice
+    cite: 'HC34 p.45: a packet is a 320-byte vector in flits of 8 bytes with a header flit; the fields of csr and ctrl packets
+      are not published'
+    why: a csr packet is three flits (header; operation, chip, address, tag; value) and a ctrl packet two (header; payload);
+      a packet occupies a link for ceil(c2c.cycles_per_vector * flits / flits of a vector) cycles (a vector, 1 + vlanes
+      / 8 flits, for exactly c2c.cycles_per_vector), the same bandwidth per flit for every type and the shortest occupancy
+      that this bandwidth allows
+  link_share:
+    basis: implementation-choice
+    cite: 'ISCA22 sec. 2.3: a link never applies back pressure and software schedules both ends; the sources are silent
+      about how other traffic shares a link with the scheduled vectors'
+    why: 'a link is one serial channel (HC34 p.45), so its packets leave in the order they are made and do not overlap;
+      the control unit decides from what it knows at the cycle, never from what comes after it (a rule that looks ahead
+      for a gap would make a departure depend on a packet that arrives after it left, RV2-B-13): a csr or ctrl packet leaves
+      at the first cycle at which no earlier packet of the chip still occupies the link (typed packets share it) and no
+      vector the link accepted before is still on it. A Send or Transmit that the program releases into the cycles of a
+      packet in flight is a program error (OTS-E-LNK-003, no effect): the program is compiled for both ends of a link and
+      a collision is a compile-time error, as OTS-E-LNK-001 is for two vectors. The departure cycle is a function of the
+      packet''s ready cycle and the chip''s own schedule only, so it is the same for every way of running the chips (tests:
+      --window)'
+  link_hop:
+    basis: implementation-choice
+    cite: 'ISCA20 section II-6 and HC34 p.45 establish host access and packet categories, not this register/protocol interface.
+      Implementation rationale: no routing is modelled: every chip has its own host interface, so a host never reaches another
+      chip through the links; a csr packet is one hop (the control unit of a chip to the chip at the far end of one of its
+      links), which is all the control unit needs to read or write a neighbour''s register; the multi-hop walk over a spanning
+      tree of the earlier version had no source and is removed'
+    why: 'no routing is modelled: every chip has its own host interface, so a host never reaches another chip through the
+      links; a csr packet is one hop (the control unit of a chip to the chip at the far end of one of its links), which
+      is all the control unit needs to read or write a neighbour''s register; the multi-hop walk over a spanning tree of
+      the earlier version had no source and is removed'
+  ctrl_packet:
+    basis: implementation-choice
+    cite: HC34 p.45 (Ctrl packet type); no content or sender is published
+    why: the model has no sender of ctrl packets (the clock alignment messages would be the first); the input line `P ctrl
+      <cycle> <link>` makes the control unit of a chip send one, so that the type, its link occupancy and its consumption
+      by the control unit are exercised; the packet has no other effect
+ecc:
+  scheme:
+    basis: paper
+    cite: 'ISCA20 sec. II-D: "The error correcting code (ECC) used to protect vectors in SRAM memory is also used as they
+      flow on the stream registers on-chip"; check bits are generated "only at the producer" and stored "alongside the 128-bit
+      memory word as 9-bit ECC, 137-bits in total"; "The ECC scheme implements SECDED"; a consuming functional slice "will
+      check the ECC bits to ensure data integrity before operating on it"'
+  coverage:
+    basis: slides
+    cite: 'HC34 p.56 (SECDED ECC on all memory, stream registers and datapaths: corrects single-bit errors and detects multiple-bit
+      errors), p.57 (ECC Everywhere; stream registers of 32 x 138 bits per direction), p.59 (the 45 stream-register stations
+      per superlane are SECDED protected); ISCA22 sec. 4.5 (every single-bit error is corrected in situ, every multi-bit
+      error is detected)'
+  code_construction:
+    basis: implementation-choice
+    cite: the published TSP sources give 9 check bits for 128 data bits and the SECDED property; no parity-check matrix
+    why: 'the extended Hamming code (137, 128): data bit j at the j-th codeword position >= 3 that is not a power of two,
+      c[0..7] the Hamming checks, c[8] the overall parity; any (137, 128) SECDED code has the published behaviour, and this
+      one is the standard construction with a decoder that names the flipped bit'
+  word_layout:
+    basis: implementation-choice
+    cite: 'HC34 p.57: the stream register is 138 bits wide, of which 128 are data and 9 are the 9-bit ECC (ISCA20 sec. II-D)'
+    why: the 138th bit is the spare bit; its position (bit 137 of the word, after the check bits) and the bit numbering
+      of the injection lines (0..127 data, 128..136 c[0..8], 137 spare) are ours; the spare bit carries no code and a flip
+      of it is no ECC event
+  protection_unit:
+    basis: implementation-choice
+    cite: 'ISCA20 sec. II-D: the 128-bit memory word; the lanes of one superlane are 16 bytes'
+    why: 'one superlane word (16 lanes = 128 bits) is the unit that carries a code: a 320-lane vector holds 20 independent
+      codes, so a single flip in each superlane is corrected independently and a poison marks the superlane'
+  overlay_representation:
+    basis: implementation-choice
+    cite: 'none: the representation is a modelling device'
+    why: the model stores the data bits as stored and a 10-bit overlay per superlane (the stored check bits XOR the check
+      bits of the stored data, plus the spare bit); an overlay of zero is a valid codeword, so a program with no fault has
+      no ECC state and the fault-free path costs one comparison; test_ecc.sail proves the equivalence with an explicit encoder
+      and decoder
+  mem_read_write_unchecked:
+    basis: implementation-choice
+    cite: 'ISCA20 sec. II-D: the check is made by a slice that operates on a stream'
+    why: 'a MEM Read puts the stored word and its overlay on the stream and a MEM Write stores the stream''s bits and overlay:
+      neither operates on the value, so the code travels with the word and the first consumer that operates on it checks;
+      storing the word through an unchecked Write keeps a multi-bit error visible to later readers instead of hiding it'
+  gather_scatter_check:
+    basis: implementation-choice
+    cite: 'ISCA20 sec. II-D: a slice that operates on data checks it'
+    why: 'a Gather reads and a Scatter merges the stored word of its address, one tile per superlane; each checks the superlane
+      it uses as a consumer (the map stream and a Scatter''s data stream are checked as ordinary operands: an address with
+      a single flip is corrected, and a tile whose map superlane is uncorrectable makes no access, which keeps a wrong address
+      from reading or writing another word); a Scatter generates the code of the word it stores'
+  no_write_back:
+    basis: implementation-choice
+    cite: 'ISCA22 sec. 4.5: single-bit errors are corrected in situ (not whether the stored copy is rewritten)'
+    why: a correction is made for the reader and the stored copy keeps the flipped bit, so a correction costs no cycle and
+      changes no timing; every later reader corrects and reports it again
+  uncorrectable_poison:
+    basis: implementation-choice
+    cite: 'ISCA22 sec. 4.5: multi-bit errors are detected; the published sources give no behaviour after detection'
+    why: 'the instruction reports OTS-E-ECC-001 once and its result carries an invalid code (c[0] and c[1] inverted: syndrome
+      3, even parity; the spare bit stays clear, it belongs to the error report) in the superlanes that read the bad value,
+      so no consumer uses it silently and each reports it again; a unit whose output superlane depends on several inputs
+      (SXM Shift and Permute) poisons every output superlane; the other superlanes hold the correct result (the least restrictive
+      choice that keeps the error visible)'
+  overlay_merge:
+    basis: implementation-choice
+    cite: 'none: the sources are silent on merged streams'
+    why: 'values that are OR-merged (two liquid threads, the SEL and TSP streams of an SXM hemisphere) merge their overlays
+      by OR: a side with no fault keeps the other side''s overlay, which never turns a faulted value into a valid one'
+  diagnostic:
+    basis: implementation-choice
+    cite: ISCA20 sec. II-D (soft errors are recorded for an error handler); the published detection of multi-bit errors
+      (ISCA22 sec. 4.5)
+    why: OTS-E-ECC-001 is the deterministic stand-in for the published error report; its name, its once-per-instruction
+      rule and the T ecc trace line (corrected and uncorrectable findings) are ours; the CSR log of the events is
+  fault_injection:
+    basis: implementation-choice
+    cite: 'none: soft errors are not a function of a program'
+    why: the harness injects a flip with an F line (a bit of a stored SRAM word or of a value in a stream register at the
+      start of a cycle) so that a deterministic model can show the published behaviour; the transient or permanent kind
+      is accepted and ignored (the fault model is )
+  software_scrub:
+    basis: implementation-choice
+    cite: 'none: no published source mentions scrubbing; ISCA20 sec. II-D: corrected soft errors are ''an early sign of
+      wearout'''
+    why: a stored single-bit error stays in the SRAM (a Read does not check and no correction is written back), so a second
+      upset of the word makes it uncorrectable; the sequence MEM Read a, VXM max of the stream with itself, MEM Write a
+      removes the first error with no new hardware (the VXM checks the operand and generates fresh check bits); test/directed/ras_scrub.py
+      runs it. The hardware patrol scrubber is the key scrub.period (microarchitecture.md sec. 15.4)
+ras:
+  error_register:
+    basis: paper
+    cite: 'ISCA20 sec. II-D: soft errors "are automatically corrected and recorded in a control and status register (CSR)
+      for an error handler to interrogate later"'
+  host_interrupt:
+    basis: paper
+    cite: 'ISCA20 sec. II-6: the host interface "provides a general mechanism for passing interrupts to the host, which
+      may be necessary in the event we observe a multi-bit memory error"'
+  runtime_replay:
+    basis: paper
+    cite: 'ISCA22 sec. 4.5: multi-bit errors are detected "so that the runtime software can replay the inference"; HC34
+      p.60: one-shot replay on an error lets the runtime check whether the fault is transient or persistent'
+  csr_map:
+    basis: implementation-choice
+    cite: 'none: no register address is published'
+    why: 0x010 ERR_STATUS (W1C), 0x011 ERR_SEVERITY, 0x012 SBE_COUNT, 0x013 MBE_COUNT, 0x014 LOG_COUNT, 0x015 LOG_POP, 0x016
+      ERR_MASK, 0x020.. the log, 0x0F0/0x0F1 FIRST_ERR, 0x100 + q FETCH_RT[q]; the addresses are the design note's, the
+      log is limited to 8 entries so that it does not reach the IRQ registers at 0x030
+  err_status_bits:
+    basis: implementation-choice
+    cite: none
+    why: 'one bit per kind of event (corrected and uncorrectable data, corrected and uncorrectable text, matrix, link, spare-bit
+      report) plus bit 9 for a dropped log entry: bits 4 and 5 are set by the matrix-unit check events and bits 6 and 7
+      by the link FEC events, bit 8 exists for the feature that reports spare-bit use and reads 0 until then; ERR_SEVERITY
+      is derived (2 when bit 1, 3, 5 or 7 is set, else 1 when bit 0, 2, 4, 6 or 8 is set), so it falls when the host clears
+      ERR_STATUS'
+  counters:
+    basis: implementation-choice
+    cite: 'ISCA20 sec. II-D: corrected soft errors are ''an early sign of wearout''; no counter is published'
+    why: SBE_COUNT and MBE_COUNT count corrected and uncorrectable events, saturate at 2^32 - 1 and clear on any write;
+      every event is counted, also when the log is full
+  log_entry:
+    basis: implementation-choice
+    cite: none
+    why: word 0 = cycle, kind and queue; word 1 = the location (register, SRAM word or text word), the superlane and the
+      syndrome position; the control channel is queue 0x090 and a chip-wide event 0xFFF; a stream register is located by
+      its row, stream and the reader's gap
+  log_overflow:
+    basis: implementation-choice
+    cite: none
+    why: a new event when the log is full is dropped and sets ERR_STATUS bit 9; the counters still count; FIRST_ERR keeps
+      the first event since ERR_STATUS was last cleared to zero, also when its log entry was popped or dropped
+  fetch_rt_csr:
+    basis: implementation-choice
+    cite: 'none: the published sources do not give the register'
+    why: 'FETCH_RT[q] reads icu.fetch_latency and ignores writes: the profile key stays the authority, a writable register
+      would let the host alter timing'
+  error_interrupt:
+    basis: implementation-choice
+    cite: ISCA20 sec. II-6 (interrupts to the host); the register interface and the timing are not published
+    why: 'the interrupt is MSI-X vector 0 of the host interface (reserved for the errors): it is delivered in the cycle
+      in which an event sets a bit of ERR_STATUS that ERR_MASK enables (0 to 1 changes only; reset mask 0x0AA, the uncorrectable
+      bits), and then follows IRQ_CAUSE and IRQ_MASK like any vector; the design note lists the reset value 0x0AA and also
+      names the overflow and permission bits, the number wins'
+  no_stop:
+    basis: implementation-choice
+    cite: 'HC34 p.55: no reactive components in the hardware datapaths'
+    why: 'the chip does not stop on an uncorrectable error: no mechanism that halts a queue is published; the published
+      response is the runtime''s, after the error'
+  text_ecc:
+    basis: paper
+    cite: 'ISCA20 sec. II-D: "Any soft error upsets (SEUs) on operands or instruction text are automatically corrected and
+      recorded in a control and status register (CSR) for an error handler to interrogate later"'
+  text_ecc_coverage:
+    basis: slides
+    cite: 'HC34 p.57 (ECC Everywhere): the instruction buffers (x144) and the instruction queues (x144) are protected'
+  text_word_frame:
+    basis: implementation-choice
+    cite: 'ISCA20 sec. II-D: the 128-bit memory word; no framing of instruction text is published'
+    why: 'a text word is 16 bytes of text (four 32-bit units: one superlane of an Ifetch or IfetchM payload, or four consecutive
+      units of the initial image) and carries the 138-bit code of section 15: the same word the SRAM and the stream registers
+      protect, so a fetched payload keeps the check bits it had in the SRAM or on the stream'
+  text_check_point:
+    basis: implementation-choice
+    cite: 'none: the published sources do not say where the instruction queue is checked'
+    why: every instruction checks the one or two text words it lies in when its parcel dispatches, before its fields act
+      (the decoder sees the corrected text); an instruction that straddles a word boundary checks both words (the pair),
+      so an uncorrectable word is OTS-E-ECC-002 for every instruction with a unit in it, the timing NOP included
+  text_write_back:
+    basis: implementation-choice
+    cite: none
+    why: 'a corrected text error is written back to the queue (the word is corrected once and its code made valid), unlike
+      the data of section 15: an instruction word stays in the queue for several cycles, and counting one fault once per
+      reader would count it once per instruction of the word'
+  text_error_diagnostic:
+    basis: implementation-choice
+    cite: 'ISCA22 sec. 4.5: multi-bit errors are detected; no behaviour after detection is published'
+    why: 'OTS-E-ECC-002: an instruction in an uncorrectable text word is not executed (its fields cannot be trusted) and
+      reports the diagnostic, once per instruction; the width of the instruction is read from the raw first unit, so the
+      parcel boundaries stay as they were'
+  text_fetch_poison:
+    basis: implementation-choice
+    cite: none
+    why: an Ifetch whose operand read found an uncorrectable superlane fetches a text word with an invalid code for that
+      superlane (the poison of section 15), and an IfetchM fetches the stored word with its stored code, so a fault in the
+      data that was fetched is found when the text is used
+  text_fault_injection:
+    basis: implementation-choice
+    cite: 'none: soft errors are not a function of a program'
+    why: F iq <cycle> <queue> <word> <bit> flips a bit of a text word while it is in the queue; the word is counted from
+      0 over the queue's text in production order (the initial image, then the units of each fetched payload); a word that
+      is not in the queue at that cycle is an input error
+  mxm_events:
+    basis: implementation-choice
+    cite: 'none: HC34 p.60 says only that the matrix unit is a structure whose computation can be corrupted; no register,
+      field or interrupt for it is published'
+    why: ', : a corrected lane is a kind 5 log entry (ERR_STATUS bit 4, SBE_COUNT), an uncorrectable ABC a kind 6 entry
+      (bit 5, MBE_COUNT); queue the ABC''s, cycle its execute cycle, word 1 = plane << 16 | lane; the check locates no lane
+      of an uncorrectable ABC, so its lane field is 0xFFFF, a value no lane has; the interrupt follows ERR_MASK (reset 0x0AA:
+      an uncorrectable ABC raises MSI-X vector 0, a corrected lane does not)'
+  link_events:
+    basis: implementation-choice
+    cite: 'ISCA22 sec. 4.5: critical link errors are flagged for the runtime; no register, field or interrupt for them is
+      published'
+    why: ', : a corrected flit is a kind 7 log entry (ERR_STATUS bit 6, SBE_COUNT), an uncorrectable flit a kind 8 entry
+      (bit 7, MBE_COUNT); one flit is one event, as the link counters count it; no queue (0xFFF), cycle the arrival cycle,
+      word 1 = link << 16 | flit with the receiving chip''s link; the interrupt follows ERR_MASK (an uncorrectable flit
+      raises MSI-X vector 0 at reset, a corrected one does not); LINK_CORR and LINK_UNCORR are unchanged'
+  features_register:
+    basis: decision
+    cite: none
+    why: 'the design note''s FEATURES register (one bit per optional feature) is not implemented: with no feature gate every
+      feature is part of the base model and there is nothing for it to report'
+  replay_policy:
+    basis: implementation-choice
+    cite: ISCA22 sec. 4.5 (the runtime replays the inference after a detected multi-bit error); HC34 p.60 (one-shot replay
+      tells a transient fault from a persistent one); the mechanism is not published
+    why: 'the replay is a policy of the harness (tsp_sim --on-irq stop|continue|replay), not chip state: the chip keeps
+      no replay register and never stops itself (no_stop); stop ends the run at the end of the cycle of the first error
+      interrupt (exit 5), replay runs the same input a second time from reset with the persistent faults only and prints
+      T replay start before it and T replay resolved (exit 0) or T replay persistent (exit 5) after it; continue is the
+      default and the plain run; stop and replay need one chip'
+  fault_marks:
+    basis: implementation-choice
+    cite: 'HC34 p.60 (transient or persistent): the published slide names the distinction, not an input syntax'
+    why: 'an F line takes a last word t (transient, the default: gone in the replay, as a soft error is) or p (persistent:
+      comes again in the replay, as a hard fault does); without a replay the mark has no effect'
+  spare_report:
+    basis: implementation-choice
+    cite: 'none: the published TSP sources are not cited for this feature; HC34 p.57 gives the 138-bit stream register,
+      ISCA20 sec. II-D the ECC and the error CSR'
+    why: 'the spare bit (bit 137) of each superlane of a stream register is the error report: S[0] Gather bounds, S[1] Scatter
+      bounds, S[2] bank conflict, S[3] the even parity of S[0..2], the auxiliary information (address and streams) on the
+      spare bits of the other streams, priority Gather then Scatter then bank conflict; a fault-free system has every spare
+      bit clear, so the poison of an uncorrectable word uses the check bits alone'
+  spare_report_where:
+    basis: implementation-choice
+    cite: none
+    why: a report is written in the commit cycle of the instruction at the write gap of its slice on the row of its data
+      stream (Gather destination, Scatter source), in the superlane of each bad tile; it is a write of spare bits only,
+      kept beside the register words on their diagonal, and a reader that finds a value there sees the report with it unless
+      a nearer data write replaced the register; the auxiliary layout is S[4..16] the 13-bit address, S[17..22] the map
+      stream (row bit, id), S[23..28] the data stream
+  spare_report_consumer:
+    basis: implementation-choice
+    cite: none
+    why: 'no instruction reads a spare bit; every stream operand read whose spare bit is set is logged by its consumer:
+      the trace line T ecc <cycle> queue <q> spare <row>:<stream> sl <x> pos <S[0..3]>, a log entry of kind 9 (ERR_STATUS
+      bit 8) and no interrupt (ERR_MASK resets with bit 8 clear), so the triangulation (the consumer gives the place on
+      the row, the superlane the tile) is observable'
+  spare_report_bank:
+    basis: implementation-choice
+    cite: 'none: the published TSP sources are not cited for the layout; they give the error bit S[2], the priority and
+      that a bank conflict stores a write address and a read address'
+    why: 'a pair of MEM references that meet in a bank (OTS-E-MEM-001, neither runs) writes in the commit cycle at the write
+      gap of its slice, on the row of the R-type reference''s data stream, superlane 0 (a conflict belongs to the slice,
+      not to a tile), S[2] and the parity S[3], the 13-bit write address on S[4..16] and the 13-bit read address on S[17..29]
+      (the layout is ours; an indirect reference has no address at dispatch: zero; an IfetchM pair has no data stream: no
+      report); it has the lowest priority, so a Gather or Scatter report in the same register keeps its auxiliary data and
+      S[2] is still noted; the spare plane has 30 streams for it'
+  mxm_poison:
+    basis: implementation-choice
+    cite: ISCA22 sec. 4.5 and HC34 p.56-59 (errors are detected end to end); how a matrix product carries an uncorrectable
+      operand is not published
+    why: an uncorrectable activation poisons every superlane of the ABC product (a product lane sums over all activation
+      lanes); an uncorrectable weight row r poisons product lane r, that is superlane r / 16 (an f16 row is two buffer rows);
+      an ACC writes the poison into its result and its accumulator, and an accumulating ACC ORs the accumulator's poison
+      in; the poison of an ACC result is inherited, so only the consumer of the result reports OTS-E-ECC-001
+  c2c_poison:
+    basis: implementation-choice
+    cite: ISCA22 sec. 4.5 and HC34 p.56-59 (errors are detected end to end); the link's error code is not published
+    why: a Send whose operand has an uncorrectable superlane puts the vector on the link with the mask of those superlanes
+      (the invalid code the vector would carry), a Receive writes it poisoned in the same superlanes and reports nothing
+      itself; the consumer reports; Transmit and control packets are never poisoned
+link_fec:
+  scheme:
+    basis: paper
+    cite: 'ISCA22 sec. 4.5: "we use forward error correction (FEC) on every link to correct simple transmission errors and
+      detect uncorrectable burst errors", so the system can "correct transmission errors in situ, and flag any critical
+      errors that require the runtime system to ''replay'' the inference"; ISCA22 sec. 4: FEC "to avoid reactive link-layer
+      replay"; HC34 p.41: the FEC "corrects most transmission errors deterministically"; HC34 p.56: single-bit errors are
+      corrected and multiple-bit errors detected'
+  packet_format:
+    basis: slides
+    cite: 'HC34 p.45: a 320-byte vector in flits of 8 bytes, a header flit, body flits and a tail flit, no hardware flow
+      control and no virtual channel information'
+  flit_count:
+    basis: implementation-choice
+    cite: HC34 p.45 has five payload bytes in the header and three in the tail,39 full body flits for320 bytes.
+    why: Use vlanes/8 +1 total flits, including header and tail, for profiles whose vector length is a multiple of16.
+  flit_superlane_map:
+    basis: implementation-choice
+    cite: HC34 p.45 explicitly labels bytes0..4,5..12,13..20 and317..319.
+    why: Body flit f covers bytes5+8* through12+8*. Data fault masks include every overlapping superlane; header/tail control
+      faults conservatively invalidate the whole vector.
+  outcome_model:
+    basis: implementation-choice
+    cite: ISCA22 sec. 4.5 (simple errors corrected, burst errors detected); the FEC code is not published
+    why: 'a deterministic model has no transmission errors, so the harness marks a flit of a vector as corrected in flight
+      (the vector arrives intact) or detected and not corrected (the vector arrives with the flit''s superlanes poisoned)
+      with an F link line; the FEC code and its latency are not modelled, and the FEC adds no cycle (HC34 p.41: deterministic)'
+  counters:
+    basis: implementation-choice
+    cite: ISCA20 sec. II-D (corrections are recorded for an error handler); no address or layout is published
+    why: 'two read-only CSR arrays per chip count flits at the arrival cycle of the vector on the receiving chip''s link
+      l: LINK_CORR[l] at 0x200 + l and LINK_UNCORR[l] at 0x210 + l, the addresses of the design of the RAS group, cleared
+      by reset; the same events are also recorded in the error registers and raise the error interrupt (ras.link_events)'
+  uncorrectable_receive:
+    basis: implementation-choice
+    cite: 'ISCA22 sec. 4.5: critical errors are flagged for the runtime; the published sources give no receiver behaviour'
+    why: the Receive that takes the vector reports OTS-E-LNK-004 once, after its own checks, and still writes it with its
+      bad superlanes poisoned (the poison of the ECC, sec. 15), so the error is never silently used and the first consumer
+      reports OTS-E-ECC-001; writing it keeps the schedule of the program, which a deterministic machine cannot change after
+      the fact
+  diagnostic_code:
+    basis: implementation-choice
+    cite: 'none: the code is ours'
+    why: OTS-E-LNK-004; the design of this feature named the code OTS-E-LNK-003, which had already given to the packet-in-flight
+      rule, so the next free number is used
+  fault_injection:
+    basis: implementation-choice
+    cite: 'none: transmission errors are not a function of a program'
+    why: F link <cycle> <link> <flit> corr|uncorr marks a flit of the vector the chip sends on the link in the cycle; a
+      line that marks no vector, a flit out of range, an unconnected link and two lines for one flit are input errors; the
+      transient or permanent kind is accepted and ignored (the fault model is )
+mxm_check:
+  scheme:
+    basis: implementation-choice
+    cite: 'HC34 p.60: NaN and Inf "may arise due to SDC or SEUs in SRAMs or critical hardware structures (ie. matrix unit)";
+      no ISCA20, ISCA22 or HC34 page describes a check on a matrix product'
+    why: ', completed in the base model with no gate : the omitted-features list names a matrix-unit computation check by
+      expected and actual sums, with location and correction; the model''s form is in microarchitecture.md sec. 18'
+  sums:
+    basis: implementation-choice
+    cite: 'none: the check is ours'
+    why: Detect every final multirow error. Primary row-major exact products are compared with independently recomputed
+      column-major nominal row products from captured operands; zero changed rows is clean, one identifies that exact row,
+      two or more is uncorrectable. Faults affect primary sums only; checker/captured operands are trusted. Redundant physical
+      compute, protection, area, energy and timing costs require separate circuit implementation and are not measured here.
+  correction:
+    basis: implementation-choice
+    cite: 'none: the check is ours'
+    why: 'a corrected lane has the fault-free product (the model''s arithmetic is exact), printed as T ecc <cycle> queue
+      <q> mxm corr plane <p> lane <r>; the correction costs no cycle: the check runs inside the ABC''s d_func, by which
+      time every superlane''s activation has arrived'
+  uncorrectable:
+    basis: implementation-choice
+    cite: 'none: the code is ours'
+    why: OTS-E-ECC-003 at the ABC's execute cycle after its own checks; the ABC has no effect (its result entry is not added),
+      so a dependent ACC reports OTS-E-RES-001 and nothing wrong is used silently; re-execution is the runtime's decision
+  trigger:
+    basis: implementation-choice
+    cite: 'none: a deterministic model has no computation errors'
+    why: the check runs only for an ABC with an injected fault pending for its plane; without F mxm lines the actual sums
+      equal the expected ones and the trace is identical
+  fault_injection:
+    basis: implementation-choice
+    cite: 'none: computation errors are not a function of a program'
+    why: F mxm <cycle> <plane> <lane> <bit> flips a bit (0..95) of the exact 96-bit sum of a lane of the ABC executing on
+      the plane in the cycle; a plane or lane or bit out of range, an ABC that does not execute (input error after the cycle,
+      exit 2) and two lines for one bit are input errors; a lane above the installed rows carries no product, so it has
+      no effect; F mxmw (weight flips) is not implemented
+abstractions:
+  c2c_program_alignment:
+    basis: decision
+    cite: 'ISCA22 sec. 3.2: the child device is placed in a polling synchronisation loop and "If that vector has not been
+      transmitted yet, the loop will continue". The polling loop is modelled by the instruction DeskewRecv (C2C.DeskewRecv:
+      an implementation choice, the ISA has no branch) and a program-start skew by the harness input line H start of each
+      chip. Every chip still starts with the same HAC phase (the HAC is the cycle count mod c2c.hac_period), the HAC alignment
+      protocol is not modelled (microarchitecture.md sec. 10)'
+  hac_sac_drift:
+    basis: decision
+    cite: 'ISCA22 sec. 3.3: RUNTIME_DESKEW delays for the target number of cycles plus or minus the HAC-SAC drift. Modelled
+      chips share one clock, so the drift is 0 and RuntimeDeskew t holds max(t, timing.c2c.rtdeskew_floor) cycles, floor
+      1'
+  liquid_threads:
+    basis: decision
+    cite: 'The inspected ISCA20, ISCA22 and HC34 material does not specify this complete behavior. Implementation rationale:
+      Use two disjoint tile groups of a single IQ; this exposes per-tile concurrency without an unspecified second instruction
+      stream.'
+  mxm_accumulator_depth:
+    basis: decision
+    cite: 'The inspected ISCA20, ISCA22 and HC34 material does not specify this complete behavior. Implementation rationale:
+      Retain two vector accumulators, matching replace/add scheduling and bounded state; no hidden result stack is introduced.'
+  error_reporting:
+    basis: decision
+    cite: 'The inspected ISCA20, ISCA22 and HC34 material does not specify this complete behavior. Implementation rationale:
+      Retain the explicitly documented opentsp behavior in microarchitecture.md as a bounded, deterministic research interface;
+      no exact commercial correspondence is asserted.'
+  sxm_39_to_3:
+    basis: decision
+    cite: 'ISCA20 Fig. 4: an arrow from register 39 back to the ACC end (register 3) of the opposite row; HC34 p.31: an
+      arrow from register 39 to register 3 on the other row. No instruction, timing or control for the path is published,
+      so the specification does not model it and defines no instruction for it (microarchitecture.md sec. 9). Candidate
+      reading: the ISCA20 arrowhead ends on the ACC unit, which suggests an ACC stream input (for example accumulating an
+      incoming stream); no instruction for it is published, so the decision stands'
+  sxm_or_merge:
+    basis: figure
+    cite: 'HC34 p.31: the SEL and TSP outputs enter an OR box whose output enters register 5 of the other row (PERM and
+      DST do not feed it); ISCA20 Fig. 4: the SXM outputs join the row after register 4. A SEL write and a TSP write of
+      one hemisphere to one stream in one commit cycle store their bitwise OR, with no OTS-E-SRF-002. Restricting the merge
+      to exactly that pair (any other group, three or more writers included, is SRF-002) is an opentsp decision: the sources
+      give only the label. topology.md sec. 4; microarchitecture.md sec. 2'
+  vxm_lut_configuration:
+    basis: decision
+    cite: 'The inspected ISCA20, ISCA22 and HC34 material does not specify this complete behavior. Implementation rationale:
+      Use deterministic mathematical operations rather than expose an unspecified LUT-update ISA. Numeric accuracy and timing
+      feasibility are separate obligations.'
+  sxm_switch_control:
+    basis: decision
+    cite: 'The inspected ISCA20, ISCA22 and HC34 material does not specify this complete behavior. Implementation rationale:
+      Use explicitly loaded maps; permutation validates bijectivity while distribution permits fanout. This gives the compiler
+      a complete map contract without inventing hidden routing state.'
+  sxm_shf_prm_stations:
+    basis: decision
+    cite: . ISCA20 Fig. 4 draws outputs crossing to the other row only from TSP and SEL; HC34 p.31 draws SEL and TSP into
+      the OR and no outgoing arrow from PERM; neither figure draws a shifter. HC34 p.31 does draw PERM's input at 40. The
+      published figures therefore do not place the SHF stations or the PRM output. opentsp places SHF at read gap 40 and
+      write gap 4 and PRM's output at gap 4, the stations of the other turn-round units, so that every turn-round unit has
+      the same timing (topology.md sec. 4)
+  fp8_format:
+    basis: implementation-choice
+    cite: the published sources (ISCA20, ISCA22, HC34, the SHIP paper) name no 8-bit float format and no instruction on
+      one; HC34 p.26 says the VXM "supports a superset of all data types"
+    why: ', completed in the base model with no feature gate : two formats, e4m3 (type code 11: bias 7, no infinity, only
+      0x7F and 0xFF are NaN, maximum 448, overflow and infinity saturate) and e5m2 (type code 12: bias 15, IEEE style, maximum
+      57344, overflow gives infinity), because these are the two 8-bit float formats of machine-learning practice and one
+      byte per element keeps the stream layout of i8; round to nearest even, subnormals kept, one canonical NaN per format
+      (0x7F, 0x7E); legal on Add, Sub, Mul, Max, Min, Cmp, Mask, Select, Neg, Abs, ReLU, Convert and Reduce, illegal on
+      the bitwise, sat/mod, transcendental and fixed-conversion forms; matrix products by lw.fp8/iw.fp8/iws.fp8 and abc.e4m3/abc.e5m2
+      (entry ABC8, bit 13 selects the format of both operands), the exact sum rounded once to f32, with the capacity and
+      rate of i8. An infinite input converted to e4m3 saturates to the largest finite value, as specified in microarchitecture.md
+      sec. 5'
+  wide_accumulator:
+    basis: implementation-choice
+    cite: The inspected ISCA20, ISCA22 and HC34 material gives no accumulator wider than 32 bits; a published 2025 article
+      on the same chip family describes 100 bits of intermediate accumulation without detail
+    why: 'Extension wide_acc: the accumulator type x128 of ACC adds the exact product of an f16, fp8 or bfp8 ABC (the exact
+      sum of the exact products of the row, in units of 2^-48) to a 128-bit signed fixed-point lane (replace or accumulate,
+      accumulator 0 or 1) with no rounding, and writes the read-out, the lane rounded once to f32 (round to nearest even),
+      on the four streams dst..dst+3. NaN and infinities are sticky in the lane (NaN, or +Inf plus -Inf, gives NaN; the
+      canonical NaN of f32); a zero lane is -0 only when every term was -0; the lane wraps at 128 bits (not reachable by
+      2^38 accumulations of f16 products). An integer ABC has no wide form (OTS-E-OPR-001). The wide accumulators are separate
+      from the 32-bit ones. This is the smallest form that removes the rounding of every accumulation step; the width, the
+      depth of two and the read-out are not published'
+  block_fp8_format:
+    basis: implementation-choice
+    cite: The inspected ISCA20, ISCA22 and HC34 material names no block or scaled number format; a published 2025 article
+      on the same chip family names block floating point without a format
+    why: 'Extension block_fp8: the type bfp8 (type code 1 with the extension bit 12 set) is a stream pair, as f16: the e4m3
+      elements in the first stream value and the block scales in the second (mxm.rows / 2 rows per plane, the even plane
+      of the pair, the f16 initiation interval). A block is the 16 lanes of one superlane, so the scale is per 16 elements
+      as the superlane is the unit of the stream; its scale is the low four bits of the byte at the block first lane, a
+      signed exponent -8 .. 7 (the upper four bits and the other lanes are not read, so a 4-bit scale is stored in the byte
+      of the first lane). The value of a lane is its e4m3 element times 2 to the scale of its block; the products and their
+      sum are exact (units of 2^-48) and rounded once to f32, as the f16 and fp8 forms. The range of the scale is chosen
+      so that every product sum stays inside the 96-bit exact sums of the matrix check; a scale of eight bits (a power-of-two
+      block scale as in published microscaling formats) needs a wider exact sum and is left to a later extension'
+  mxm_multiplier_modes:
+    basis: implementation-choice
+    cite: ISCA20 section III-D describes paired byte planes for FP16. It does not specify a primitive-multiplier count for
+      each exact floating product or an FP8 circuit.
+    why: The installed weight type and ABC type select the four i8/u8 sign combinations, FP16 or FP8. Paired-plane FP16
+      storage and byte-plane FP8 storage constrain this functional model; exponent handling, multiplier decomposition and
+      physical implementation costs are not modeled. Other type combinations are OTS-E-RES-001.
+  clock_period_synthesis:
+    basis: decision
+    cite: 'The inspected ISCA20, ISCA22 and HC34 material does not specify this complete behavior. Implementation rationale:
+      No programmable clock-period ISA is modeled. One fixed cycle domain keeps scheduling causal; frequency/voltage research
+      requires an explicit extension.'
+  offchip_memory:
+    basis: decision
+    cite: 'The inspected ISCA20, ISCA22 and HC34 material does not specify this complete behavior. Implementation rationale:
+      No transparent external-memory extension is modeled. Off-chip transfers use the explicit host interface and are not
+      given SRAM timing.'

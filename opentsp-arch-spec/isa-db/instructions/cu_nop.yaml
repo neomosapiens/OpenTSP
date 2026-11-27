@@ -1,0 +1,26 @@
+# Instruction catalogue entry. Sail (model/) is normative; test/isa_db/check_isa_db.py
+# checks this file against the model's encdec and assembly mappings.
+$schema: opentsp.isa-db.instruction
+spec_version: '0.1'
+name: NOP
+mnemonic: nop
+long_name: No operation
+slice: CU
+units:
+- any
+timing: CU
+encoding:
+  width: 32
+  match: 0000000000000000----------------
+  variables:
+  - name: n
+    location: 15-0
+    kind: imm16
+    not_values:
+    - 0
+assembly: nop {n}
+operation: 'A timing prefix, not a dispatched instruction: at the start of a parcel (bundle bit 0) it delays the
+  parcel by n cycles; the earliest dispatch of the next parcel is the previous parcel''s cycle + 1 + the sum of
+  the NOPs before it. It takes no dispatch slot and runs while an AGT loop or a Repeat runs. A NOP inside a bundle
+  is a slot violation (OTS-E-QUE-001). n >= 1. ISCA20 sec. III-A1.'
+definedBy: ref

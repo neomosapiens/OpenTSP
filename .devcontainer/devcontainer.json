@@ -1,0 +1,41 @@
+{
+  "name": "opentsp",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".."
+  },
+  "remoteUser": "dev",
+  "workspaceFolder": "/workspaces/opentsp",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/workspaces/opentsp,type=bind,consistency=cached",
+  "mounts": [
+    "source=opentsp-target,target=/workspaces/opentsp/target,type=volume",
+    "source=opentsp-vllm-native-target,target=/workspaces/opentsp/opentsp-vllm/native/target,type=volume",
+    "source=opentsp-cargo-registry,target=/home/dev/.cargo/registry,type=volume",
+    "source=opentsp-cargo-git,target=/home/dev/.cargo/git,type=volume",
+    "source=opentsp-uv-cache,target=/home/dev/.cache/uv,type=volume",
+    "source=opentsp-pip-cache,target=/home/dev/.cache/pip,type=volume",
+    "source=opentsp-vllm-cache,target=/home/dev/.cache/opentsp,type=volume",
+    "source=opentsp-vllm-venv,target=/home/dev/.local/opt/opentsp-vllm-venv,type=volume"
+  ],
+  "containerEnv": {
+    "OPENTSP_TOOLCHAIN": "/home/dev/.local/opt/opentsp-toolchain"
+  },
+  "runArgs": [
+    "--init",
+    "--runtime=runc",
+    "--cap-add=PERFMON"
+  ],
+  "postCreateCommand": "bash .devcontainer/post_create.sh",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "rust-lang.rust-analyzer",
+        "ms-python.python",
+        "skellock.just"
+      ],
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash"
+      }
+    }
+  }
+}

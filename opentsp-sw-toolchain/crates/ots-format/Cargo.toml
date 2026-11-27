@@ -1,0 +1,12 @@
+[package]
+name = "ots-format"
+version = "0.1.0"
+edition = "2021"
+description = "Text images, lowering, objects and weight packages of opentsp specification 0.1"
+
+[dependencies]
+ots-isa = { path = "../ots-isa" }
+ots-profile = { path = "../ots-profile" }
+sha2 = "0.10"
+serde = "1"
+serde_json = "1"

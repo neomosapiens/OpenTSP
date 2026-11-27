@@ -1,0 +1,9 @@
+.arch opentsp-tsa
+.profile ref
+.section text
+bundle @cycle=70000 {
+  VXM[0]: sync
+}
+bundle @cycle=70002 {
+  VXM[0]: sync
+}

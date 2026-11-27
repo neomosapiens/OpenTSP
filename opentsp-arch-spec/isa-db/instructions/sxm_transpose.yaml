@@ -1,0 +1,25 @@
+# Instruction catalogue entry. Sail (model/) is normative; test/isa_db/check_isa_db.py
+# checks this file against the model's encdec and assembly mappings.
+$schema: opentsp.isa-db.instruction
+spec_version: '0.1'
+name: Transpose
+mnemonic: transpose
+long_name: Superlane transpose
+slice: SXM
+units:
+- SXM_W_TSP
+- SXM_E_TSP
+timing: SXM
+encoding:
+  width: 64
+  match: 010000010000--0000--00000000000000000000000000000000000000000000
+  variables:
+  - name: dst
+    location: 51-50
+    kind: stream_group16
+  - name: src
+    location: 45-44
+    kind: stream_group16
+assembly: transpose {src}, {dst}
+operation: '16 streams to 16 streams; per superlane g: out_c[16g + r] = in_r[16g + c].'
+definedBy: ref

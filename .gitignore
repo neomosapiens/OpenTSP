@@ -1,0 +1,34 @@
+/target/
+# the binding crate's own workspace and its built module (just vllm-binding)
+/opentsp-vllm/native/target/
+/opentsp-vllm/src/opentsp_vllm/_tsp_iss*.so
+*.elf
+*.safetensors
+# Keep checked-in validation fixtures visible.
+!**/tests/data/**/*.elf
+!**/tests/data/**/*.safetensors
+
+# OS/editor noise
+.DS_Store
+**/.DS_Store
+._*
+*.swp
+*.swo
+.idea/
+.vscode/
+
+# Python build and test output
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+
+# Local env/secrets
+.env
+.env.*
+
+# Sail/Z3 typecheck cache
+sail_smt_cache
+opentsp-arch-spec/model/.props.sail_project
+opentsp-arch-spec/model/.enc.sail_project
+*.egg-info/

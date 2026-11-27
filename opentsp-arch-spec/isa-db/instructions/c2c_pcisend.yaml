@@ -1,0 +1,26 @@
+# Instruction catalogue entry. Sail (model/) is normative; test/isa_db/check_isa_db.py
+# checks this file against the model's encdec and assembly mappings.
+$schema: opentsp.isa-db.instruction
+spec_version: '0.1'
+name: PciSend
+mnemonic: pci_send
+long_name: Host send over PCIe
+slice: C2C
+units:
+- C2C_W_TX
+- C2C_E_TX
+timing: C2C
+encoding:
+  width: 32
+  match: 0101000110000000------0000000000
+  variables:
+  - name: stream
+    location: 15-10
+    kind: stream
+assembly: pci_send {stream}
+operation: 'Reads stream at the TX gap and gives the vector to the host. The PCIe interface accepts one vector per
+  host.cycles_per_vector cycles; a PciSend on an interface that accepted a vector fewer cycles before is OTS-E-HIO-001
+  and sends nothing (checked before the stream is read). Optional; an implementation choice: the instruction and
+  its pacing (the published sources give the PCIe host interface in the C2C module and the host''s role of loading
+  the model and collecting results, ISCA20 sec. II-6, and no instruction form or pacing for the chip-to-host direction).'
+definedBy: ref

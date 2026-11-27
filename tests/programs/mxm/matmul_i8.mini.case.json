@@ -1,0 +1,66 @@
+{
+ "schema": "opentsp.program-case",
+ "version": 1,
+ "spec_version": "0.1",
+ "name": "mxm/matmul_i8",
+ "profile": "mini",
+ "program": "matmul_i8.mini.ots",
+ "tags": [
+  "sim",
+  "e2e"
+ ],
+ "weights": {},
+ "preload": {
+  "0:16": "7f64a2f9733d8603e628d2413b16d173",
+  "1:16": "4d986c88762467a452ef2c522e305a72",
+  "2:16": "29f24dbf20af54cfc8f0f85ec59fdfec",
+  "3:16": "a4ed6ec5b3d164534aba4ac1ccc641e8",
+  "4:16": "aa7a512482ac320ce2827395b29d8e87",
+  "5:16": "b5b2175daebc6640241cff561a424309",
+  "6:16": "c819ca51bacce9d48a5562f328f65649",
+  "7:16": "c599399fa4ad1ecdae8c5a9f8cf098f4",
+  "8:16": "8b02967a010ed0a2dd35a0e225e9b2e7",
+  "9:16": "d5a5e467042495b46c7d13001277a6c3",
+  "10:16": "73969385b1669740c517608fcd5e48c7",
+  "11:16": "f67c0cff47f9b5fccd266f9d5717917b",
+  "12:16": "80b5453ff4aaaf765ea31497e4550b39",
+  "13:16": "8a218bcb5c570d0a39c7486c09d762c6",
+  "14:16": "99725239f3fda0a982d014d2a988cd78",
+  "15:16": "aed94eeba1929d04587c7fcae8de299d",
+  "16:48": "c40f32eccd861d1f219d22f4df345446",
+  "17:48": "565063dc4a486d1c330c55453a85546a"
+ },
+ "dump": [
+  "4:48",
+  "5:48",
+  "6:48",
+  "7:48",
+  "4:49",
+  "5:49",
+  "6:49",
+  "7:49"
+ ],
+ "expect": {
+  "asm_warnings": [],
+  "diagnostics": [],
+  "words": {
+   "4:48": "c1dc9abd2a6e0bb264b3650661790bc9",
+   "5:48": "85310aa46166236a9797d1edb2fa233b",
+   "6:48": "ff00000000000000ffffffff00ff0000",
+   "7:48": "ff00000000000000ffffffff00ff0000",
+   "4:49": "043db270108021e81cb63d57439f8f5f",
+   "5:49": "cd2864f1235718e3dfde5c20354c2af3",
+   "6:49": "ff010000000000fffefeff00000000ff",
+   "7:49": "ff000000000000ffffffff00000000ff"
+  },
+  "decoded": null
+ },
+ "golden": {
+  "source": "hand",
+  "generator": "gen/mxm.py:matmul_i8",
+  "seed": 1
+ },
+ "budget": {
+  "cycles": 123
+ }
+}

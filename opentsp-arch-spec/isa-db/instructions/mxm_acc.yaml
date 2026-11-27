@@ -1,0 +1,49 @@
+# Instruction catalogue entry. Sail (model/) is normative; test/isa_db/check_isa_db.py
+# checks this file against the model's encdec and assembly mappings.
+$schema: opentsp.isa-db.instruction
+spec_version: '0.1'
+name: ACC
+mnemonic: acc
+long_name: Accumulate
+slice: MXM
+units:
+- MXM_W
+- MXM_E
+timing: MXM_ACC
+encoding:
+  width: 32
+  match: 0011000011--------------00000000
+  variables:
+  - name: type
+    location: 21-20
+    kind: mxm_acctype
+    values:
+    - 0
+    - 2
+    - 3
+    extension_codes:
+      wide_acc:
+      - 0
+  - name: dst
+    location: 19-14
+    kind: stream
+  - name: mode
+    location: '13'
+    kind: acc_mode
+  - name: acc
+    location: '12'
+    kind: acc_index
+    hi_location: 11-8
+    max_expr: acc_depth-1
+assembly: acc.{type} {dst}, {mode}, {acc}
+operation: 'Accumulator acc (0 .. mxm.acc_depth - 1; two per MACC in the shipped profiles) = product or acc + product;
+  written to dst..dst+3. The index is bit 12 and, above it, bits 11..8 (acc = bit 12 + 2 x bits 11..8); an index
+  at or above mxm.acc_depth does not decode (OTS-E-DEC-003). Needs ABC committed. i32 follows an i8 or u8 ABC; f32
+  an f16, bf16, fp8 or bfp8 ABC. The type x128 (extension `wide_acc`, code 0; a profile that does not declare it
+  rejects the word, OTS-E-DEC-003) adds the exact product to a 128-bit fixed-point accumulator (units of 2^-48,
+  wrapping at 128 bits, special values sticky) and writes its read-out, rounded once to f32 (round to nearest even);
+  it follows an f16, fp8 or bfp8 ABC (an integer or bf16 ABC gives OTS-E-OPR-001: the exact bf16 sum is in units
+  of 2^-266) and keeps its own accumulators (mxm.acc_depth of them per plane), apart from the i32 and f32 ones.
+  With mxm.fp8_rate 2, two FP8 ABCs of one plane in one cycle leave two products of the same dispatch cycle: an
+  even accumulator reads the one of the lower queue, an odd one the one of the higher queue.'
+definedBy: ref

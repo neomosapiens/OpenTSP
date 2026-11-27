@@ -1,0 +1,32 @@
+# Instruction catalogue entry. Sail (model/) is normative; test/isa_db/check_isa_db.py
+# checks this file against the model's encdec and assembly mappings.
+$schema: opentsp.isa-db.instruction
+spec_version: '0.1'
+name: Receive
+mnemonic: receive
+long_name: Chip-to-chip receive
+slice: C2C
+units:
+- C2C_W_RX
+- C2C_E_RX
+timing: C2C
+encoding:
+  width: 32
+  match: 0101000001----------------------
+  variables:
+  - name: chip_id
+    location: 21-16
+    kind: chip_id
+    hi_location: 2-0
+  - name: stream
+    location: 15-10
+    kind: stream
+  - name: link
+    location: 9-6
+    kind: link_id
+    hi_location: 5-3
+assembly: receive {chip_id}, {link}, {stream}
+operation: 'Writes the oldest vector arrived on link `link` to stream (a MEM Write stores it: ISCA20 Table I ''emplacing
+  it in main memory'', an opentsp choice); none arrived: OTS-E-TIM-001. link >= c2c.links or chip_id not the link''s
+  peer: OTS-E-OPR-001. ISCA20 Table I; ISCA22 sec. 2.3.'
+definedBy: ref

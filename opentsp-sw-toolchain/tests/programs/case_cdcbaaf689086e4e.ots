@@ -1,0 +1,6 @@
+.arch opentsp-tsa
+.profile ref
+.section text
+bundle @cycle=3 {
+  SXM.E.SEL: host_notify 0xf
+}

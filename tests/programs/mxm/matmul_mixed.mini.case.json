@@ -1,0 +1,138 @@
+{
+ "schema": "opentsp.program-case",
+ "version": 1,
+ "spec_version": "0.1",
+ "name": "mxm/matmul_mixed",
+ "profile": "mini",
+ "program": "matmul_mixed.mini.ots",
+ "tags": [
+  "sim",
+  "e2e"
+ ],
+ "weights": {
+  "w0": {
+   "dtype": "u8",
+   "words": 1,
+   "hex": "f8c2becf931aed15f5d3ef2d059d9f3c"
+  },
+  "w1": {
+   "dtype": "u8",
+   "words": 1,
+   "hex": "36ec6d2ec75220cd240786de39920895"
+  },
+  "w2": {
+   "dtype": "u8",
+   "words": 1,
+   "hex": "0e0f160a90d0181807290b553b68e16e"
+  },
+  "w3": {
+   "dtype": "u8",
+   "words": 1,
+   "hex": "e2c9089f1a1ba37a2129c94346a6e428"
+  },
+  "w4": {
+   "dtype": "u8",
+   "words": 1,
+   "hex": "32b300b1893f0dbcff405e08089c191d"
+  },
+  "w5": {
+   "dtype": "u8",
+   "words": 1,
+   "hex": "9d92be73db872764ed7f48e3a8154984"
+  },
+  "w6": {
+   "dtype": "u8",
+   "words": 1,
+   "hex": "10998c6b50a33d6e2fe594aa616e3896"
+  },
+  "w7": {
+   "dtype": "u8",
+   "words": 1,
+   "hex": "4ac13e2ceeefe2bc0ecdb9c149eecdf4"
+  },
+  "w8": {
+   "dtype": "u8",
+   "words": 1,
+   "hex": "a06e44c94f68c14858c5ea51943007a6"
+  },
+  "w9": {
+   "dtype": "u8",
+   "words": 1,
+   "hex": "95287ea628363bb20d9987de3bbfef4a"
+  },
+  "w10": {
+   "dtype": "u8",
+   "words": 1,
+   "hex": "c19a52f073a76100b9d2b0134cb134f9"
+  },
+  "w11": {
+   "dtype": "u8",
+   "words": 1,
+   "hex": "6d5ea2f1c505644c32f7a623fa626150"
+  },
+  "w12": {
+   "dtype": "u8",
+   "words": 1,
+   "hex": "67c1080b3d2d47e41d5aa4a9093dcd95"
+  },
+  "w13": {
+   "dtype": "u8",
+   "words": 1,
+   "hex": "e712a33e0ec0a7787351ba306b7bf5c5"
+  },
+  "w14": {
+   "dtype": "u8",
+   "words": 1,
+   "hex": "347b777986c1c4077f5621411daafbb4"
+  },
+  "w15": {
+   "dtype": "u8",
+   "words": 1,
+   "hex": "27370b85a171ce5f5ee1ee40991f4217"
+  },
+  "x0": {
+   "dtype": "i8",
+   "words": 1,
+   "hex": "b7ed4d1bcc0896293826ac05c9eaf46e"
+  },
+  "x1": {
+   "dtype": "i8",
+   "words": 1,
+   "hex": "a6f20d6d7afa8ab55582301be117cd21"
+  }
+ },
+ "preload": {},
+ "dump": [
+  "4:48",
+  "5:48",
+  "6:48",
+  "7:48",
+  "4:49",
+  "5:49",
+  "6:49",
+  "7:49"
+ ],
+ "expect": {
+  "asm_warnings": [],
+  "diagnostics": [],
+  "words": {
+   "4:48": "2e957f47c02d3f2d0eb07c816f471a40",
+   "5:48": "89fafa45142831afabf00cb8e4d6ff6b",
+   "6:48": "ffffffff000000ffffff00ffffffffff",
+   "7:48": "ffffffff000000ffffff00ffffffffff",
+   "4:49": "d5cb8386ee2ec6020d5440a8eabb71ee",
+   "5:49": "6b5604cd9a7f1047729746b06f45fc2c",
+   "6:49": "ff0000fe000000ffffff00ffffffffff",
+   "7:49": "ff0000ff000000ffffff00ffffffffff"
+  },
+  "decoded": null
+ },
+ "golden": {
+  "source": "hand",
+  "generator": "gen/mxm.py:matmul_mixed",
+  "seed": 3
+ },
+ "budget": {
+  "cycles": 123
+ }
+}

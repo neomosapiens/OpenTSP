@@ -1,0 +1,65 @@
+{
+ "schema": "opentsp.program-case",
+ "version": 1,
+ "spec_version": "0.1",
+ "name": "sxm/shift_select",
+ "profile": "mini",
+ "program": "shift_select.mini.ots",
+ "tags": [
+  "sim",
+  "e2e"
+ ],
+ "weights": {
+  "x": {
+   "dtype": "i8",
+   "words": 1,
+   "hex": "7f64a2f9733d8603e628d2413b16d173"
+  },
+  "xa": {
+   "dtype": "i8",
+   "words": 1,
+   "hex": "7f64a2f9733d8603e628d2413b16d173"
+  },
+  "sel": {
+   "dtype": "i8",
+   "words": 1,
+   "hex": "00000202000002010002000101010000"
+  }
+ },
+ "preload": {},
+ "dump": [
+  "52:32",
+  "53:32",
+  "8:32",
+  "56:32",
+  "57:32",
+  "58:32",
+  "59:32",
+  "60:32",
+  "61:32"
+ ],
+ "expect": {
+  "asm_warnings": [],
+  "diagnostics": [],
+  "words": {
+   "52:32": "0000007f64a2f9733d8603e628d2413b",
+   "53:32": "f9733d8603e628d2413b16d173000000",
+   "8:32": "7f643d86733d2873e63bd2e628d2d173",
+   "56:32": "7f64a2f9733d8603e628d2413b16d173",
+   "57:32": "7f64a2f9733d8603e628d2413b16d173",
+   "58:32": "007f64a2f9733d8603e628d2413b16d1",
+   "59:32": "64a2f9733d8603e628d2413b16d17300",
+   "60:32": "0000000000000000000000000000007f",
+   "61:32": "73000000000000000000000000000000"
+  },
+  "decoded": null
+ },
+ "golden": {
+  "source": "hand",
+  "generator": "gen/sxm.py:shift_select",
+  "seed": 1
+ },
+ "budget": {
+  "cycles": 194
+ }
+}

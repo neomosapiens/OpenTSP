@@ -1,0 +1,76 @@
+# Instruction catalogue entry. Sail (model/) is normative; test/isa_db/check_isa_db.py
+# checks this file against the model's encdec and assembly mappings.
+$schema: opentsp.isa-db.instruction
+spec_version: '0.1'
+name: Convert
+mnemonic: convert
+long_name: Convert between any types
+slice: VXM
+units:
+- VXM
+timing: VXM
+encoding:
+  width: 64
+  match: 0010100010--------------000000000000-------000--0000000000000000
+  variables:
+  - name: type
+    location: 53-52
+    kind: eltype_code
+    hi_location: 23-22
+    top_location: '17'
+    codes:
+    - 0
+    - 1
+    - 2
+    - 3
+    - 4
+    - 5
+    - 6
+    - 7
+    - 8
+    - 9
+    - 10
+    - 11
+    - 12
+    - 16
+    extension_codes:
+      bf16:
+      - 16
+  - name: dst
+    location: 51-46
+    kind: stream
+  - name: lhs
+    location: 45-40
+    kind: stream
+  - name: dtype
+    location: 27-24
+    kind: eltype4
+    top_location: '16'
+    codes:
+    - 0
+    - 1
+    - 2
+    - 3
+    - 4
+    - 5
+    - 6
+    - 7
+    - 8
+    - 9
+    - 10
+    - 11
+    - 12
+    - 16
+    extension_codes:
+      bf16:
+      - 16
+  - name: lhs_chain
+    location: '21'
+    kind: chain
+assembly: convert.{type}.{dtype} {dst}, {lhs}{lhs_chain}
+operation: 'Per lane: integers saturate, floats round to nearest even, bool = value != 0; to e4m3 an overflow or
+  an infinity saturates to +-448, to e5m2 an overflow gives an infinity; a NaN gives the canonical NaN of the destination.
+  Source type in the type field, destination in bits 27..24. A source written `x.chain` (chain bit set) is the VXM
+  result committed at the VXM station in the cycle before the read (ALU chaining, ISCA20 sec. III-C); otherwise
+  the stream value that flows to the station.'
+definedBy: ref

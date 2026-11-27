@@ -1,0 +1,23 @@
+# Instruction catalogue entry. Sail (model/) is normative; test/isa_db/check_isa_db.py
+# checks this file against the model's encdec and assembly mappings.
+$schema: opentsp.isa-db.instruction
+spec_version: '0.1'
+name: Iterations
+mnemonic: iterations
+long_name: AGT loop bound
+slice: MEM
+units:
+- MEM_W
+- MEM_E
+timing: MEM
+encoding:
+  width: 64
+  match: 00010001110000000000000000000000----------------0000000000000000
+  variables:
+  - name: n
+    location: 31-16
+    kind: imm16
+assembly: iterations {n}
+operation: 'AGT configuration: the current level makes n references (n < 1 means 1; 2 when not received); up to
+  four levels, inner to outer (fields in the order Countdown, Step, StreamStep, Iterations). HC34 p.25.'
+definedBy: ref

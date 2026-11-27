@@ -1,0 +1,4584 @@
+{
+ "schema": "opentsp.isa-db.encoding",
+ "spec_version": "0.1",
+ "slice_tags": {
+  "CU": 0,
+  "MEM": 1,
+  "VXM": 2,
+  "MXM": 3,
+  "SXM": 4,
+  "C2C": 5
+ },
+ "eltype_codes": {
+  "i8": 0,
+  "f16": 1,
+  "i32": 2,
+  "f32": 3,
+  "u8": 4,
+  "i16": 5,
+  "u16": 6,
+  "u32": 7,
+  "b8": 8,
+  "b16": 9,
+  "b32": 10,
+  "e4m3": 11,
+  "e5m2": 12,
+  "bf16": 16
+ },
+ "extensions": {
+  "bf16": "bfloat16: VXM element type code 16 and MXM weight type 4; legal in a profile whose `extensions` names it, an implementation choice (microarchitecture.md sec. 5)",
+  "wide_acc": "wide accumulator: ACC type x128 (code 0); legal in a profile whose `extensions` names it together with mxm.acc_bits 128 (an implementation choice; see mxm.acc_bits)",
+  "block_fp8": "block-scaled fp8: MXM weight type bfp8 (code 5); legal in a profile whose `extensions` names it (an implementation choice; see block_fp8_format)"
+ },
+ "boolean_codes": [
+  8,
+  9,
+  10
+ ],
+ "decode_rule": {
+  "text": "Applied to the text of one queue, at the first unit of an instruction (model/postlude/iq.sail decode_text): (1) clear bit 31, the bundle bit. (2) tag = bits 30..28 of the unit: a narrow tag decodes the unit's bits 31..0 (bit 31 clear) against the width-32 entries; a wide tag takes the next unit of the queue's text as bits 31..0 and decodes the 64-bit word (unit 0 bits 30..0 as bits 62..32) against the width-64 entries; tag 6 or 7 is OTS-E-DEC-003 and consumes one unit. A word decodes to the one entry whose match pattern it matches and whose fields are all legal (field_rule); no such entry is OTS-E-DEC-003. The queue does not matter. Placement is checked after decoding: control_channel, then units (OTS-E-QUE-002).",
+  "narrow_tags": [
+   0,
+   3,
+   5
+  ],
+  "wide_tags": [
+   1,
+   2,
+   4
+  ],
+  "tag_bits": "30-28",
+  "bundle_bit": 31,
+  "steps": [
+   {
+    "width": 32,
+    "if": "tag in narrow_tags",
+    "word": "unit bits 30..0 (bit 31 cleared)"
+   },
+   {
+    "width": 64,
+    "if": "tag in wide_tags",
+    "word": "(unit bits 30..0) @ (next unit)"
+   },
+   {
+    "code": "OTS-E-DEC-003",
+    "if": "tag in {6, 7}",
+    "consumes": 1
+   }
+  ],
+  "no_match": "OTS-E-DEC-003"
+ },
+ "text_format": {
+  "text": "The text of a queue is a sequence of 32-bit units. Parcel: the instructions between two units with bundle bit 0 (inclusive); a parcel is dispatched all at once. A unit with tag 0, opcode 0 and bundle bit 0 at the start of a parcel is a NOP n (n = bits 15..0, 1..65535): not an instruction but a timing prefix: the next parcel's earliest dispatch cycle is the cycle after the previous parcel's, plus the sum of the NOP counts before it (the first parcel: cycle 0, then plus the NOPs). The unit 0xFFFFFFFF is padding and is never enqueued. A queue's initial text (the harness `Q` lines, the object's images) is at most icu.iq_depth / 4 units. Fetched text (Ifetch, IfetchM) is 2 x vlanes bytes per instruction, appended to the target queue's text at icu.fetch_bytes_per_cycle starting icu.fetch_latency cycles after the fetch. `lowering` is the normative function from a cycle view to text.",
+  "unit_bits": 32,
+  "byte_order": "little-endian",
+  "bundle_bit": 31,
+  "tag_bits": "30-28",
+  "padding": "0xFFFFFFFF",
+  "nop": {
+   "tag": 0,
+   "opcode": 0,
+   "operand": "bits 15-0, 1..65535",
+   "at": "start of a parcel, bundle bit 0"
+  },
+  "undecodable_unit": "0x6FFFFFFF",
+  "lowering": {
+   "text": "lower(entries): entries are (cycle, queue, 64-bit word). Per queue sort by cycle (source order within a cycle). A NOP entry alone in its cycle makes no parcel (the gap NOPs carry the time). For each cycle with entries, let g = cycle - previous cycle - 1 (previous = -1 before the first): emit NOP units for g (each at most 65535, none for g = 0), then the entries' units, bundle bit 1 on the first unit of every entry but the last. An entry lowers to one unit when bits 63..32 are zero and bits 31..28 are a narrow tag, to two units (high half, low half) when bits 63..60 are a wide tag, else to the unit 0x6FFFFFFF (tag 6)."
+  }
+ },
+ "field_rule": {
+  "text": "A field value x (the bits at location, with the bits at hi_location above them and then the bits at top_location above those, when present: x = word[location] | word[hi_location] << width(location) | word[top_location] << (width(location) + width(hi_location))) is legal when every key present holds: codes / values: x is listed, and when x is listed in extension_codes[e] the profile's `extensions` names e; not_values: x is not listed; min / max: the value is in range, read as two's complement when the kind is signed and as unsigned otherwise; max_expr: x <= the expression, evaluated with profile_variables (for a signed kind the expression bounds the magnitude: -e <= x <= e); bool_values: when the entry's `type` field is one of boolean_codes, x is listed there; a `name` kind: x has a name in its table. Bit ranges are written `msb-lsb` (a single bit `n`), bit 0 is the least significant bit, match patterns are MSB first.",
+  "signed_kinds": [
+   "simm16"
+  ]
+ },
+ "stream_encoding": {
+  "text": "A stream field holds 6 bits: bit 5 is the row (E = 0, W = 1), bits 4..0 the stream id 0..31 (topology.md sec. 4). A kind with `group` g holds (32 * row + id) / g, and id must be a multiple of g; stream_group16 is 2 bits: E:0 = 0, E:16 = 1, W:0 = 2, W:16 = 3.",
+  "row_bit": 5,
+  "row_codes": {
+   "E": 0,
+   "W": 1
+  },
+  "id_bits": "4-0",
+  "ids": 32
+ },
+ "profile_variables": {
+  "acc_depth": {
+   "expr": "mxm.acc_depth",
+   "meaning": "the accumulators of an MXM plane (config/<profile>.json); the ACC index is below it"
+  },
+  "sram_words": {
+   "expr": "2 ^ sram.addr_bits",
+   "meaning": "the words a slice can address (config/<profile>.json: 8192 on ref); sram.words_per_slice is at most this"
+  },
+  "vlanes": {
+   "expr": "16 * geometry.superlanes",
+   "meaning": "the configured lane count (config/<profile>.json); SetVL does not change it"
+  }
+ },
+ "agt": {
+  "text": "AGT placement (microarchitecture.md sec. 4, model/postlude/tick.sail): each dispatch path (R, W) of a MEM queue has its own AGT. A loopable reference that dispatches alone on its path (no other reference on that path in that cycle) opens that path's configuration. A configuration record in the next cycle continues it; a cycle of the queue without a configuration record ends every open configuration. Configuration records carry no path: one goes to the configuring path, and when both are configuring (a Read + Write pair) to the one with fewer configuration records so far, R on a tie, so a pair's records alternate R, W. Within a level the fields go in `config` order; a field at or before the last one written starts the next level; a fifth level, or a configuration record with no open configuration (including one in the same cycle as its reference), is OTS-E-OPR-001 at run time.",
+  "loopable": [
+   "Read",
+   "Write",
+   "Gather",
+   "Scatter"
+  ],
+  "config": [
+   "Countdown",
+   "Step",
+   "StreamStep",
+   "Iterations"
+  ],
+  "levels": 4
+ },
+ "mem_slots": {
+  "text": "Instructions per parcel (microarchitecture.md sec. 3, model/postlude/tick.sail place/classify). A queue of `units` takes, per parcel, instructions whose slots (`slot_of`) are all distinct: one Ifetch or IfetchM (slot fetch), per liquid thread one R-type reference (slot R) and one W-type reference (slot W), the slots in `per_thread` being keyed by the record's `thread` field, and one AGT configuration record (slot config). An instruction not in `slot_of` needs the whole queue and dispatches only alone. On any other queue a parcel holds one instruction. When a parcel's instructions do not fit (two in one slot, a whole-queue instruction with another, an instruction that does not decode among several), every instruction of that parcel is OTS-E-QUE-001. Bank rule (OTS-E-MEM-001 on both): an R and a W reference of the same thread in one cycle clash when they address the same bank (address bit sram.bank_bit), or when either is in `indirect` (its banks are unknown at dispatch); a word outside the slice (address >= sram.words_per_slice) addresses no bank and clashes with nothing; references of different threads never clash. An instruction in `all_threads` takes its per-thread slots on every thread, and its words (`sram_access`) clash by bank with a W reference of any thread (IfetchM, microarchitecture.md sec. 3).",
+  "units": [
+   "MEM_W",
+   "MEM_E"
+  ],
+  "slot_of": {
+   "Ifetch": [
+    "fetch"
+   ],
+   "IfetchM": [
+    "fetch",
+    "R"
+   ],
+   "Read": [
+    "R"
+   ],
+   "Gather": [
+    "R"
+   ],
+   "Write": [
+    "W"
+   ],
+   "Scatter": [
+    "W"
+   ],
+   "Countdown": [
+    "config"
+   ],
+   "Step": [
+    "config"
+   ],
+   "StreamStep": [
+    "config"
+   ],
+   "Iterations": [
+    "config"
+   ]
+  },
+  "per_thread": [
+   "R",
+   "W"
+  ],
+  "paths": {
+   "R": 0,
+   "W": 1
+  },
+  "indirect": [
+   "Gather",
+   "Scatter"
+  ],
+  "all_threads": [
+   "IfetchM"
+  ],
+  "threads": 2
+ },
+ "sram_access": {
+  "text": "Words accessed from an sram_addr operand: a .. a + words - 1 (IfetchM: a and a + 1, microarchitecture.md sec. 3); an instruction not listed accesses one word. A symbol operand needs every accessed word inside its extern (OTS-E-ASM-002).",
+  "words": {
+   "IfetchM": 2
+  }
+ },
+ "stations": {
+  "text": "Per unit (the names of `units`) and stream row, the gap at which the unit reads and writes (model/core/layout.sail; topology.md sec. 4). An expression is a configuration key, optionally '- quad' or '+ quad' with quad = (queue mod 44) div 4 for MEM; null: the unit cannot read (write) that row, and an operand there is OTS-E-DIR-001. A value outside 0..43 also means no station, and so does a MEM slice s with (s mod 44) >= geometry.mem_slices_per_hemisphere (an absent slice). A unit at gap g reads register g and writes register g + 1. C2C RX reads only for Ifetch.",
+  "CU": {
+   "read": {
+    "E": null,
+    "W": null
+   },
+   "write": {
+    "E": null,
+    "W": null
+   }
+  },
+  "VXM": {
+   "read": {
+    "E": "layout.vxm_gap",
+    "W": "layout.vxm_gap"
+   },
+   "write": {
+    "E": "layout.vxm_gap",
+    "W": "layout.vxm_gap"
+   }
+  },
+  "MEM_W": {
+   "read": {
+    "E": "layout.mem_up_gap_base - quad",
+    "W": "layout.mem_down_gap_base + quad"
+   },
+   "write": {
+    "E": "layout.mem_up_gap_base - quad",
+    "W": "layout.mem_down_gap_base + quad"
+   }
+  },
+  "MEM_E": {
+   "read": {
+    "W": "layout.mem_up_gap_base - quad",
+    "E": "layout.mem_down_gap_base + quad"
+   },
+   "write": {
+    "W": "layout.mem_up_gap_base - quad",
+    "E": "layout.mem_down_gap_base + quad"
+   }
+  },
+  "MXM_W": {
+   "read": {
+    "E": null,
+    "W": "layout.mxm_in_gap"
+   },
+   "write": {
+    "E": "layout.mxm_acc_gap",
+    "W": null
+   }
+  },
+  "MXM_E": {
+   "read": {
+    "E": "layout.mxm_in_gap",
+    "W": null
+   },
+   "write": {
+    "E": null,
+    "W": "layout.mxm_acc_gap"
+   }
+  },
+  "SXM_W_DST": {
+   "read": {
+    "E": null,
+    "W": "layout.sxm_dst_gap"
+   },
+   "write": {
+    "E": null,
+    "W": "layout.sxm_dst_gap"
+   }
+  },
+  "SXM_E_DST": {
+   "read": {
+    "E": "layout.sxm_dst_gap",
+    "W": null
+   },
+   "write": {
+    "E": "layout.sxm_dst_gap",
+    "W": null
+   }
+  },
+  "SXM_W_TSP": {
+   "read": {
+    "E": null,
+    "W": "layout.sxm_turn_in_gap"
+   },
+   "write": {
+    "E": "layout.sxm_turn_out_gap",
+    "W": null
+   }
+  },
+  "SXM_W_SHF": {
+   "read": {
+    "E": null,
+    "W": "layout.sxm_turn_in_gap"
+   },
+   "write": {
+    "E": "layout.sxm_turn_out_gap",
+    "W": null
+   }
+  },
+  "SXM_W_PRM": {
+   "read": {
+    "E": null,
+    "W": "layout.sxm_turn_in_gap"
+   },
+   "write": {
+    "E": "layout.sxm_turn_out_gap",
+    "W": null
+   }
+  },
+  "SXM_W_SEL": {
+   "read": {
+    "E": null,
+    "W": "layout.sxm_turn_in_gap"
+   },
+   "write": {
+    "E": "layout.sxm_turn_out_gap",
+    "W": null
+   }
+  },
+  "SXM_E_TSP": {
+   "read": {
+    "E": "layout.sxm_turn_in_gap",
+    "W": null
+   },
+   "write": {
+    "E": null,
+    "W": "layout.sxm_turn_out_gap"
+   }
+  },
+  "SXM_E_SHF": {
+   "read": {
+    "E": "layout.sxm_turn_in_gap",
+    "W": null
+   },
+   "write": {
+    "E": null,
+    "W": "layout.sxm_turn_out_gap"
+   }
+  },
+  "SXM_E_PRM": {
+   "read": {
+    "E": "layout.sxm_turn_in_gap",
+    "W": null
+   },
+   "write": {
+    "E": null,
+    "W": "layout.sxm_turn_out_gap"
+   }
+  },
+  "SXM_E_SEL": {
+   "read": {
+    "E": "layout.sxm_turn_in_gap",
+    "W": null
+   },
+   "write": {
+    "E": null,
+    "W": "layout.sxm_turn_out_gap"
+   }
+  },
+  "C2C_W_TX": {
+   "read": {
+    "E": null,
+    "W": "layout.c2c_tx_gap"
+   },
+   "write": {
+    "E": null,
+    "W": null
+   }
+  },
+  "C2C_E_TX": {
+   "read": {
+    "E": "layout.c2c_tx_gap",
+    "W": null
+   },
+   "write": {
+    "E": null,
+    "W": null
+   }
+  },
+  "C2C_W_RX": {
+   "read": {
+    "E": null,
+    "W": "layout.c2c_tx_gap"
+   },
+   "write": {
+    "E": "layout.c2c_rx_gap",
+    "W": null
+   }
+  },
+  "C2C_E_RX": {
+   "read": {
+    "E": "layout.c2c_tx_gap",
+    "W": null
+   },
+   "write": {
+    "E": null,
+    "W": "layout.c2c_rx_gap"
+   }
+  }
+ },
+ "control_channel": {
+  "queue": 65535,
+  "instructions": [
+   "NOP",
+   "Sync",
+   "Notify",
+   "Config"
+  ],
+  "text": "The control channel's text decodes like a data queue's; a decoded instruction not listed here is OTS-E-QUE-002 (model/postlude/tick.sail control)."
+ },
+ "units": {
+  "text": "The data queues of each unit name used in instructions[].units; `any` is every data queue 0..143 (not the control channel). An instruction on a data queue outside its units is OTS-E-QUE-002, and so is every instruction on the queue of an absent MEM slice ((queue mod 44) >= geometry.mem_slices_per_hemisphere).",
+  "MEM_W": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8,
+   9,
+   10,
+   11,
+   12,
+   13,
+   14,
+   15,
+   16,
+   17,
+   18,
+   19,
+   20,
+   21,
+   22,
+   23,
+   24,
+   25,
+   26,
+   27,
+   28,
+   29,
+   30,
+   31,
+   32,
+   33,
+   34,
+   35,
+   36,
+   37,
+   38,
+   39,
+   40,
+   41,
+   42,
+   43
+  ],
+  "MEM_E": [
+   44,
+   45,
+   46,
+   47,
+   48,
+   49,
+   50,
+   51,
+   52,
+   53,
+   54,
+   55,
+   56,
+   57,
+   58,
+   59,
+   60,
+   61,
+   62,
+   63,
+   64,
+   65,
+   66,
+   67,
+   68,
+   69,
+   70,
+   71,
+   72,
+   73,
+   74,
+   75,
+   76,
+   77,
+   78,
+   79,
+   80,
+   81,
+   82,
+   83,
+   84,
+   85,
+   86,
+   87
+  ],
+  "VXM": [
+   88,
+   89,
+   90,
+   91,
+   92,
+   93,
+   94,
+   95,
+   96,
+   97,
+   98,
+   99,
+   100,
+   101,
+   102,
+   103
+  ],
+  "MXM_W": [
+   104,
+   105,
+   106,
+   107,
+   108,
+   109
+  ],
+  "MXM_E": [
+   110,
+   111,
+   112,
+   113,
+   114,
+   115
+  ],
+  "SXM_W_DST": [
+   116,
+   117,
+   118,
+   119
+  ],
+  "SXM_W_TSP": [
+   120,
+   121
+  ],
+  "SXM_W_SHF": [
+   122,
+   123
+  ],
+  "SXM_W_PRM": [
+   124
+  ],
+  "SXM_W_SEL": [
+   125
+  ],
+  "C2C_W_TX": [
+   126,
+   127
+  ],
+  "C2C_W_RX": [
+   128,
+   129
+  ],
+  "SXM_E_DST": [
+   130,
+   131,
+   132,
+   133
+  ],
+  "SXM_E_TSP": [
+   134,
+   135
+  ],
+  "SXM_E_SHF": [
+   136,
+   137
+  ],
+  "SXM_E_PRM": [
+   138
+  ],
+  "SXM_E_SEL": [
+   139
+  ],
+  "C2C_E_TX": [
+   140,
+   141
+  ],
+  "C2C_E_RX": [
+   142,
+   143
+  ],
+  "CU": [
+   65535
+  ],
+  "any": [
+   0,
+   1,
+   2,
+   3,
+   4,
+   5,
+   6,
+   7,
+   8,
+   9,
+   10,
+   11,
+   12,
+   13,
+   14,
+   15,
+   16,
+   17,
+   18,
+   19,
+   20,
+   21,
+   22,
+   23,
+   24,
+   25,
+   26,
+   27,
+   28,
+   29,
+   30,
+   31,
+   32,
+   33,
+   34,
+   35,
+   36,
+   37,
+   38,
+   39,
+   40,
+   41,
+   42,
+   43,
+   44,
+   45,
+   46,
+   47,
+   48,
+   49,
+   50,
+   51,
+   52,
+   53,
+   54,
+   55,
+   56,
+   57,
+   58,
+   59,
+   60,
+   61,
+   62,
+   63,
+   64,
+   65,
+   66,
+   67,
+   68,
+   69,
+   70,
+   71,
+   72,
+   73,
+   74,
+   75,
+   76,
+   77,
+   78,
+   79,
+   80,
+   81,
+   82,
+   83,
+   84,
+   85,
+   86,
+   87,
+   88,
+   89,
+   90,
+   91,
+   92,
+   93,
+   94,
+   95,
+   96,
+   97,
+   98,
+   99,
+   100,
+   101,
+   102,
+   103,
+   104,
+   105,
+   106,
+   107,
+   108,
+   109,
+   110,
+   111,
+   112,
+   113,
+   114,
+   115,
+   116,
+   117,
+   118,
+   119,
+   120,
+   121,
+   122,
+   123,
+   124,
+   125,
+   126,
+   127,
+   128,
+   129,
+   130,
+   131,
+   132,
+   133,
+   134,
+   135,
+   136,
+   137,
+   138,
+   139,
+   140,
+   141,
+   142,
+   143
+  ]
+ },
+ "queues": {
+  "text": "Canonical queue names (assembly.md sec. 3); aliases are accepted on input, never printed. An index may carry leading zeros (MEM[007] = MEM[7]); any other name is OTS-E-ASM-005.",
+  "names": {
+   "MEM[0]": 0,
+   "MEM[1]": 1,
+   "MEM[2]": 2,
+   "MEM[3]": 3,
+   "MEM[4]": 4,
+   "MEM[5]": 5,
+   "MEM[6]": 6,
+   "MEM[7]": 7,
+   "MEM[8]": 8,
+   "MEM[9]": 9,
+   "MEM[10]": 10,
+   "MEM[11]": 11,
+   "MEM[12]": 12,
+   "MEM[13]": 13,
+   "MEM[14]": 14,
+   "MEM[15]": 15,
+   "MEM[16]": 16,
+   "MEM[17]": 17,
+   "MEM[18]": 18,
+   "MEM[19]": 19,
+   "MEM[20]": 20,
+   "MEM[21]": 21,
+   "MEM[22]": 22,
+   "MEM[23]": 23,
+   "MEM[24]": 24,
+   "MEM[25]": 25,
+   "MEM[26]": 26,
+   "MEM[27]": 27,
+   "MEM[28]": 28,
+   "MEM[29]": 29,
+   "MEM[30]": 30,
+   "MEM[31]": 31,
+   "MEM[32]": 32,
+   "MEM[33]": 33,
+   "MEM[34]": 34,
+   "MEM[35]": 35,
+   "MEM[36]": 36,
+   "MEM[37]": 37,
+   "MEM[38]": 38,
+   "MEM[39]": 39,
+   "MEM[40]": 40,
+   "MEM[41]": 41,
+   "MEM[42]": 42,
+   "MEM[43]": 43,
+   "MEM[44]": 44,
+   "MEM[45]": 45,
+   "MEM[46]": 46,
+   "MEM[47]": 47,
+   "MEM[48]": 48,
+   "MEM[49]": 49,
+   "MEM[50]": 50,
+   "MEM[51]": 51,
+   "MEM[52]": 52,
+   "MEM[53]": 53,
+   "MEM[54]": 54,
+   "MEM[55]": 55,
+   "MEM[56]": 56,
+   "MEM[57]": 57,
+   "MEM[58]": 58,
+   "MEM[59]": 59,
+   "MEM[60]": 60,
+   "MEM[61]": 61,
+   "MEM[62]": 62,
+   "MEM[63]": 63,
+   "MEM[64]": 64,
+   "MEM[65]": 65,
+   "MEM[66]": 66,
+   "MEM[67]": 67,
+   "MEM[68]": 68,
+   "MEM[69]": 69,
+   "MEM[70]": 70,
+   "MEM[71]": 71,
+   "MEM[72]": 72,
+   "MEM[73]": 73,
+   "MEM[74]": 74,
+   "MEM[75]": 75,
+   "MEM[76]": 76,
+   "MEM[77]": 77,
+   "MEM[78]": 78,
+   "MEM[79]": 79,
+   "MEM[80]": 80,
+   "MEM[81]": 81,
+   "MEM[82]": 82,
+   "MEM[83]": 83,
+   "MEM[84]": 84,
+   "MEM[85]": 85,
+   "MEM[86]": 86,
+   "MEM[87]": 87,
+   "VXM[0]": 88,
+   "VXM[1]": 89,
+   "VXM[2]": 90,
+   "VXM[3]": 91,
+   "VXM[4]": 92,
+   "VXM[5]": 93,
+   "VXM[6]": 94,
+   "VXM[7]": 95,
+   "VXM[8]": 96,
+   "VXM[9]": 97,
+   "VXM[10]": 98,
+   "VXM[11]": 99,
+   "VXM[12]": 100,
+   "VXM[13]": 101,
+   "VXM[14]": 102,
+   "VXM[15]": 103,
+   "MXM[0].LW": 104,
+   "MXM[0].ABC": 105,
+   "MXM[0].ACC": 106,
+   "MXM[1].LW": 107,
+   "MXM[1].ABC": 108,
+   "MXM[1].ACC": 109,
+   "MXM[2].LW": 110,
+   "MXM[2].ABC": 111,
+   "MXM[2].ACC": 112,
+   "MXM[3].LW": 113,
+   "MXM[3].ABC": 114,
+   "MXM[3].ACC": 115,
+   "SXM.W.DST[0]": 116,
+   "SXM.W.DST[1]": 117,
+   "SXM.W.DST[2]": 118,
+   "SXM.W.DST[3]": 119,
+   "SXM.W.TSP[0]": 120,
+   "SXM.W.TSP[1]": 121,
+   "SXM.W.SHF[0]": 122,
+   "SXM.W.SHF[1]": 123,
+   "SXM.W.PRM": 124,
+   "SXM.W.SEL": 125,
+   "C2C.W.TX[0]": 126,
+   "C2C.W.TX[1]": 127,
+   "C2C.W.RX[0]": 128,
+   "C2C.W.RX[1]": 129,
+   "SXM.E.DST[0]": 130,
+   "SXM.E.DST[1]": 131,
+   "SXM.E.DST[2]": 132,
+   "SXM.E.DST[3]": 133,
+   "SXM.E.TSP[0]": 134,
+   "SXM.E.TSP[1]": 135,
+   "SXM.E.SHF[0]": 136,
+   "SXM.E.SHF[1]": 137,
+   "SXM.E.PRM": 138,
+   "SXM.E.SEL": 139,
+   "C2C.E.TX[0]": 140,
+   "C2C.E.TX[1]": 141,
+   "C2C.E.RX[0]": 142,
+   "C2C.E.RX[1]": 143,
+   "CU": 65535
+  },
+  "aliases": {
+   "MEM.W[0]": 0,
+   "MEM.W[1]": 1,
+   "MEM.W[2]": 2,
+   "MEM.W[3]": 3,
+   "MEM.W[4]": 4,
+   "MEM.W[5]": 5,
+   "MEM.W[6]": 6,
+   "MEM.W[7]": 7,
+   "MEM.W[8]": 8,
+   "MEM.W[9]": 9,
+   "MEM.W[10]": 10,
+   "MEM.W[11]": 11,
+   "MEM.W[12]": 12,
+   "MEM.W[13]": 13,
+   "MEM.W[14]": 14,
+   "MEM.W[15]": 15,
+   "MEM.W[16]": 16,
+   "MEM.W[17]": 17,
+   "MEM.W[18]": 18,
+   "MEM.W[19]": 19,
+   "MEM.W[20]": 20,
+   "MEM.W[21]": 21,
+   "MEM.W[22]": 22,
+   "MEM.W[23]": 23,
+   "MEM.W[24]": 24,
+   "MEM.W[25]": 25,
+   "MEM.W[26]": 26,
+   "MEM.W[27]": 27,
+   "MEM.W[28]": 28,
+   "MEM.W[29]": 29,
+   "MEM.W[30]": 30,
+   "MEM.W[31]": 31,
+   "MEM.W[32]": 32,
+   "MEM.W[33]": 33,
+   "MEM.W[34]": 34,
+   "MEM.W[35]": 35,
+   "MEM.W[36]": 36,
+   "MEM.W[37]": 37,
+   "MEM.W[38]": 38,
+   "MEM.W[39]": 39,
+   "MEM.W[40]": 40,
+   "MEM.W[41]": 41,
+   "MEM.W[42]": 42,
+   "MEM.W[43]": 43,
+   "MEM.E[0]": 44,
+   "MEM.E[1]": 45,
+   "MEM.E[2]": 46,
+   "MEM.E[3]": 47,
+   "MEM.E[4]": 48,
+   "MEM.E[5]": 49,
+   "MEM.E[6]": 50,
+   "MEM.E[7]": 51,
+   "MEM.E[8]": 52,
+   "MEM.E[9]": 53,
+   "MEM.E[10]": 54,
+   "MEM.E[11]": 55,
+   "MEM.E[12]": 56,
+   "MEM.E[13]": 57,
+   "MEM.E[14]": 58,
+   "MEM.E[15]": 59,
+   "MEM.E[16]": 60,
+   "MEM.E[17]": 61,
+   "MEM.E[18]": 62,
+   "MEM.E[19]": 63,
+   "MEM.E[20]": 64,
+   "MEM.E[21]": 65,
+   "MEM.E[22]": 66,
+   "MEM.E[23]": 67,
+   "MEM.E[24]": 68,
+   "MEM.E[25]": 69,
+   "MEM.E[26]": 70,
+   "MEM.E[27]": 71,
+   "MEM.E[28]": 72,
+   "MEM.E[29]": 73,
+   "MEM.E[30]": 74,
+   "MEM.E[31]": 75,
+   "MEM.E[32]": 76,
+   "MEM.E[33]": 77,
+   "MEM.E[34]": 78,
+   "MEM.E[35]": 79,
+   "MEM.E[36]": 80,
+   "MEM.E[37]": 81,
+   "MEM.E[38]": 82,
+   "MEM.E[39]": 83,
+   "MEM.E[40]": 84,
+   "MEM.E[41]": 85,
+   "MEM.E[42]": 86,
+   "MEM.E[43]": 87
+  }
+ },
+ "diagnostics": {
+  "OTS-E-DEC-003": "does not decode (unknown opcode or slice tag 6, 7, reserved bit set, illegal type/mode)",
+  "OTS-E-QUE-001": "a parcel that breaks the slot rule (each of its instructions)",
+  "OTS-E-QUE-002": "instruction issued on a queue whose unit lacks it",
+  "OTS-E-TIM-001": "no value at the reader's gap in the read cycle",
+  "OTS-E-DIR-001": "the stream's only writers are at or downstream of the reader",
+  "OTS-E-SRF-002": "two writes to one row/stream/gap in one cycle",
+  "OTS-E-MEM-001": "a Read and a Write dispatched together hit the same bank",
+  "OTS-E-OPR-001": "operand value out of range (for a Gather or Scatter tile address and an sxselect sel, per tile or lane: the good ones still take effect)",
+  "OTS-E-OPR-002": "multi-stream operand not aligned to its width",
+  "OTS-E-RES-001": "MXM state, or a Permute's SXM map, used before it is ready",
+  "OTS-E-RES-002": "MXM weight buffer overfilled",
+  "OTS-E-RES-003": "two instructions change one unit-state part in one cycle",
+  "OTS-E-SXM-001": "Permute map is not bijective (a source lane repeats)",
+  "OTS-E-LNK-001": "Send or Transmit on a link that accepted a vector fewer than c2c.cycles_per_vector cycles ago",
+  "OTS-E-LNK-002": "a vector arrived at a link whose receive FIFO holds c2c.rx_depth vectors and was dropped (reported by the harness)",
+  "OTS-E-LNK-003": "Send or Transmit released into the cycles of a csr or ctrl packet in flight on the link",
+  "OTS-E-IQ-002": "fetched text arrived at a full IQ and the units that did not fit were lost (once per queue and cycle, by Enqueue)",
+  "OTS-E-IQ-003": "an Ifetch or IfetchM found the queue's fetch staging FIFO holding icu.fetch_staging_depth payloads: it fetched nothing",
+  "OTS-E-IQ-004": "text was left in an IQ at the end of the run that never completes a parcel (reported once per queue after the last cycle)",
+  "OTS-E-HIO-001": "PciSend within host.cycles_per_vector cycles of the previous one",
+  "OTS-E-ECC-001": "a stream operand had an uncorrectable (multi-bit) error in some superlane; reported once, after the instruction's own checks",
+  "OTS-E-LNK-004": "a Receive took a vector whose link transfer had an uncorrectable (detected, not corrected) FEC error; the vector is written, its bad superlanes poisoned",
+  "OTS-E-ECC-003": "the sum check of an ABC found an error it cannot correct; the ABC has no effect (microarchitecture.md sec. 18)",
+  "OTS-E-ECC-002": "a text word of the instruction had an uncorrectable (multi-bit) error: the instruction consumes its units and has no effect"
+ },
+ "operand_kinds": {
+  "acc_index": {
+   "syntax": "dec"
+  },
+  "acc_mode": {
+   "syntax": "name",
+   "names": {
+    "replace": 0,
+    "accumulate": 1
+   }
+  },
+  "chain": {
+   "syntax": "name",
+   "names": {
+    "": 0,
+    ".chain": 1
+   }
+  },
+  "chip_id": {
+   "syntax": "hex"
+  },
+  "cmp_mode": {
+   "syntax": "name",
+   "names": {
+    "eq": 0,
+    "ne": 1,
+    "lt": 2,
+    "le": 3,
+    "gt": 4,
+    "ge": 5
+   }
+  },
+  "eltype4": {
+   "syntax": "name",
+   "names": {
+    "i8": 0,
+    "f16": 1,
+    "i32": 2,
+    "f32": 3,
+    "u8": 4,
+    "i16": 5,
+    "u16": 6,
+    "u32": 7,
+    "b8": 8,
+    "b16": 9,
+    "b32": 10,
+    "e4m3": 11,
+    "e5m2": 12,
+    "bf16": 16
+   }
+  },
+  "eltype_code": {
+   "syntax": "name",
+   "names": {
+    "i8": 0,
+    "f16": 1,
+    "i32": 2,
+    "f32": 3,
+    "u8": 4,
+    "i16": 5,
+    "u16": 6,
+    "u32": 7,
+    "b8": 8,
+    "b16": 9,
+    "b32": 10,
+    "e4m3": 11,
+    "e5m2": 12,
+    "bf16": 16
+   }
+  },
+  "fp8_format": {
+   "syntax": "name",
+   "names": {
+    "e4m3": 0,
+    "e5m2": 1
+   }
+  },
+  "group4": {
+   "syntax": "name",
+   "names": {
+    "": 0,
+    ".sg4": 1
+   }
+  },
+  "imm1": {
+   "syntax": "hex"
+  },
+  "imm12": {
+   "syntax": "hex"
+  },
+  "imm16": {
+   "syntax": "hex"
+  },
+  "imm17": {
+   "syntax": "hex"
+  },
+  "imm4": {
+   "syntax": "hex"
+  },
+  "imm6": {
+   "syntax": "hex"
+  },
+  "lane_count": {
+   "syntax": "hex"
+  },
+  "link_id": {
+   "syntax": "hex"
+  },
+  "map_id": {
+   "syntax": "hex"
+  },
+  "mxm_acctype": {
+   "syntax": "name",
+   "names": {
+    "x128": 0,
+    "i32": 2,
+    "f32": 3
+   }
+  },
+  "mxm_wtype": {
+   "syntax": "name",
+   "names": {
+    "i8": 0,
+    "f16": 1,
+    "u8": 2,
+    "fp8": 3,
+    "bf16": 4,
+    "bfp8": 5
+   }
+  },
+  "reduce_op": {
+   "syntax": "name",
+   "names": {
+    "add": 0,
+    "max": 1,
+    "min": 2
+   }
+  },
+  "shift_dir": {
+   "syntax": "name",
+   "names": {
+    "up": 0,
+    "down": 1
+   }
+  },
+  "simm16": {
+   "syntax": "hex",
+   "signed": true
+  },
+  "sram_addr": {
+   "syntax": "hex",
+   "symbol": true
+  },
+  "stream": {
+   "syntax": "stream"
+  },
+  "stream_group16": {
+   "syntax": "stream",
+   "group": 16
+  },
+  "tile_size": {
+   "syntax": "hex"
+  }
+ },
+ "instructions": [
+  {
+   "slice": "CU",
+   "name": "NOP",
+   "mnemonic": "nop",
+   "units": [
+    "any"
+   ],
+   "timing": "CU",
+   "assembly": "nop {n}",
+   "width": 32,
+   "match": "0000000000000000----------------",
+   "variables": [
+    {
+     "name": "n",
+     "location": "15-0",
+     "kind": "imm16",
+     "not_values": [
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "slice": "CU",
+   "name": "Sync",
+   "mnemonic": "sync",
+   "units": [
+    "any"
+   ],
+   "timing": "CU",
+   "assembly": "sync",
+   "width": 32,
+   "match": "00000000010000000000000000000000",
+   "variables": []
+  },
+  {
+   "slice": "CU",
+   "name": "Notify",
+   "mnemonic": "notify",
+   "units": [
+    "any"
+   ],
+   "timing": "CU",
+   "assembly": "notify",
+   "width": 32,
+   "match": "00000000100000000000000000000000",
+   "variables": []
+  },
+  {
+   "slice": "CU",
+   "name": "Repeat",
+   "mnemonic": "repeat",
+   "units": [
+    "any"
+   ],
+   "timing": "CU",
+   "assembly": "repeat {n}, {d}",
+   "width": 32,
+   "match": "0000000011000000----------------",
+   "variables": [
+    {
+     "name": "n",
+     "location": "15-4",
+     "kind": "imm12",
+     "not_values": [
+      0
+     ]
+    },
+    {
+     "name": "d",
+     "location": "3-0",
+     "kind": "imm4"
+    }
+   ]
+  },
+  {
+   "slice": "CU",
+   "name": "Ifetch",
+   "mnemonic": "ifetch",
+   "units": [
+    "any"
+   ],
+   "timing": "CU",
+   "assembly": "ifetch {stream}",
+   "width": 32,
+   "match": "0000000100000000------0000000000",
+   "variables": [
+    {
+     "name": "stream",
+     "location": "15-10",
+     "kind": "stream",
+     "streams": 1,
+     "align": 1
+    }
+   ]
+  },
+  {
+   "slice": "CU",
+   "name": "Config",
+   "mnemonic": "config",
+   "units": [
+    "any"
+   ],
+   "timing": "CU",
+   "assembly": "config {v}",
+   "width": 32,
+   "match": "0000000101000000----------------",
+   "variables": [
+    {
+     "name": "v",
+     "location": "15-0",
+     "kind": "imm16"
+    }
+   ]
+  },
+  {
+   "slice": "CU",
+   "name": "SetVL",
+   "mnemonic": "setvl",
+   "units": [
+    "any"
+   ],
+   "timing": "CU",
+   "assembly": "setvl {n}",
+   "width": 32,
+   "match": "00000001100000000000000000------",
+   "variables": [
+    {
+     "name": "n",
+     "location": "5-0",
+     "kind": "imm6",
+     "not_values": [
+      0
+     ],
+     "max": 32
+    }
+   ]
+  },
+  {
+   "slice": "CU",
+   "name": "IfetchM",
+   "mnemonic": "ifetchm",
+   "units": [
+    "MEM_W",
+    "MEM_E"
+   ],
+   "timing": "CU",
+   "assembly": "ifetchm {addr}",
+   "width": 32,
+   "match": "0000000111000000----------------",
+   "variables": [
+    {
+     "name": "addr",
+     "location": "15-0",
+     "kind": "sram_addr",
+     "max_expr": "sram_words-1"
+    }
+   ]
+  },
+  {
+   "slice": "MEM",
+   "name": "Read",
+   "mnemonic": "read",
+   "units": [
+    "MEM_W",
+    "MEM_E"
+   ],
+   "timing": "MEM",
+   "assembly": "read {addr}, {dst}, {thread}",
+   "width": 64,
+   "match": "0001000000-00000----------------------00000000000000000000000000",
+   "variables": [
+    {
+     "name": "addr",
+     "location": "47-32",
+     "kind": "sram_addr",
+     "max_expr": "sram_words-1"
+    },
+    {
+     "name": "dst",
+     "location": "31-26",
+     "kind": "stream",
+     "streams": 1,
+     "align": 1
+    },
+    {
+     "name": "thread",
+     "location": "53",
+     "kind": "imm1"
+    }
+   ]
+  },
+  {
+   "slice": "MEM",
+   "name": "Write",
+   "mnemonic": "write",
+   "units": [
+    "MEM_W",
+    "MEM_E"
+   ],
+   "timing": "MEM",
+   "assembly": "write {addr}, {src}, {thread}",
+   "width": 64,
+   "match": "0001000001-00000----------------------00000000000000000000000000",
+   "variables": [
+    {
+     "name": "addr",
+     "location": "47-32",
+     "kind": "sram_addr",
+     "max_expr": "sram_words-1"
+    },
+    {
+     "name": "src",
+     "location": "31-26",
+     "kind": "stream",
+     "streams": 1,
+     "align": 1
+    },
+    {
+     "name": "thread",
+     "location": "53",
+     "kind": "imm1"
+    }
+   ]
+  },
+  {
+   "slice": "MEM",
+   "name": "Gather",
+   "mnemonic": "gather",
+   "units": [
+    "MEM_W",
+    "MEM_E"
+   ],
+   "timing": "MEM",
+   "assembly": "gather {dst}, {map}, {k}, {thread}",
+   "width": 64,
+   "match": "0001000011-0----------------000000000000000000000000000000000000",
+   "variables": [
+    {
+     "name": "dst",
+     "location": "47-42",
+     "kind": "stream",
+     "streams": 1,
+     "align": 1
+    },
+    {
+     "name": "map",
+     "location": "41-36",
+     "kind": "stream",
+     "streams": 1,
+     "align": 1
+    },
+    {
+     "name": "k",
+     "location": "51-48",
+     "kind": "imm4"
+    },
+    {
+     "name": "thread",
+     "location": "53",
+     "kind": "imm1"
+    }
+   ]
+  },
+  {
+   "slice": "MEM",
+   "name": "Scatter",
+   "mnemonic": "scatter",
+   "units": [
+    "MEM_W",
+    "MEM_E"
+   ],
+   "timing": "MEM",
+   "assembly": "scatter {src}, {map}, {k}, {thread}",
+   "width": 64,
+   "match": "0001000100-0----------------000000000000000000000000000000000000",
+   "variables": [
+    {
+     "name": "src",
+     "location": "47-42",
+     "kind": "stream",
+     "streams": 1,
+     "align": 1
+    },
+    {
+     "name": "map",
+     "location": "41-36",
+     "kind": "stream",
+     "streams": 1,
+     "align": 1
+    },
+    {
+     "name": "k",
+     "location": "51-48",
+     "kind": "imm4"
+    },
+    {
+     "name": "thread",
+     "location": "53",
+     "kind": "imm1"
+    }
+   ]
+  },
+  {
+   "slice": "MEM",
+   "name": "Countdown",
+   "mnemonic": "countdown",
+   "units": [
+    "MEM_W",
+    "MEM_E"
+   ],
+   "timing": "MEM",
+   "assembly": "countdown {d}",
+   "width": 64,
+   "match": "00010001010000000000000000000000----------------0000000000000000",
+   "variables": [
+    {
+     "name": "d",
+     "location": "31-16",
+     "kind": "imm16"
+    }
+   ]
+  },
+  {
+   "slice": "MEM",
+   "name": "Step",
+   "mnemonic": "step",
+   "units": [
+    "MEM_W",
+    "MEM_E"
+   ],
+   "timing": "MEM",
+   "assembly": "step {a}",
+   "width": 64,
+   "match": "00010001100000000000000000000000----------------0000000000000000",
+   "variables": [
+    {
+     "name": "a",
+     "location": "31-16",
+     "kind": "simm16",
+     "min": -32767,
+     "max": 32767,
+     "max_expr": "sram_words-1"
+    }
+   ]
+  },
+  {
+   "slice": "MEM",
+   "name": "Iterations",
+   "mnemonic": "iterations",
+   "units": [
+    "MEM_W",
+    "MEM_E"
+   ],
+   "timing": "MEM",
+   "assembly": "iterations {n}",
+   "width": 64,
+   "match": "00010001110000000000000000000000----------------0000000000000000",
+   "variables": [
+    {
+     "name": "n",
+     "location": "31-16",
+     "kind": "imm16"
+    }
+   ]
+  },
+  {
+   "slice": "MEM",
+   "name": "SetSegment",
+   "mnemonic": "setsegment",
+   "units": [
+    "MEM_W",
+    "MEM_E"
+   ],
+   "timing": "MEM",
+   "assembly": "setsegment {n}",
+   "width": 64,
+   "match": "0001001000000000000000000000000-----------------0000000000000000",
+   "variables": [
+    {
+     "name": "n",
+     "location": "32-16",
+     "kind": "imm17",
+     "max_expr": "sram_words"
+    }
+   ]
+  },
+  {
+   "slice": "MEM",
+   "name": "PowerConfig",
+   "mnemonic": "powerconfig",
+   "units": [
+    "MEM_W",
+    "MEM_E"
+   ],
+   "timing": "MEM",
+   "assembly": "powerconfig {v}",
+   "width": 64,
+   "match": "00010010010000000000000000000000----------------0000000000000000",
+   "variables": [
+    {
+     "name": "v",
+     "location": "31-16",
+     "kind": "imm16"
+    }
+   ]
+  },
+  {
+   "slice": "MEM",
+   "name": "DeepSleep",
+   "mnemonic": "deepsleep",
+   "units": [
+    "MEM_W",
+    "MEM_E"
+   ],
+   "timing": "MEM",
+   "assembly": "deepsleep",
+   "width": 64,
+   "match": "0001001010000000000000000000000000000000000000000000000000000000",
+   "variables": []
+  },
+  {
+   "slice": "MEM",
+   "name": "StreamStep",
+   "mnemonic": "streamstep",
+   "units": [
+    "MEM_W",
+    "MEM_E"
+   ],
+   "timing": "MEM",
+   "assembly": "streamstep {s}",
+   "width": 64,
+   "match": "00010010110000000000000000000000----------------0000000000000000",
+   "variables": [
+    {
+     "name": "s",
+     "location": "31-16",
+     "kind": "imm16",
+     "max": 31
+    }
+   ]
+  },
+  {
+   "slice": "VXM",
+   "name": "Add",
+   "mnemonic": "add",
+   "units": [
+    "VXM"
+   ],
+   "timing": "VXM",
+   "assembly": "add.{type}{sg4} {dst}, {lhs}{lhs_chain}, {rhs}{rhs_chain}",
+   "width": 64,
+   "match": "0010000000--------------------0000000000----0--00000000000000000",
+   "variables": [
+    {
+     "name": "type",
+     "location": "53-52",
+     "kind": "eltype_code",
+     "hi_location": "23-22",
+     "top_location": "17",
+     "codes": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      11,
+      12,
+      16
+     ],
+     "extension_codes": {
+      "bf16": [
+       16
+      ]
+     }
+    },
+    {
+     "name": "dst",
+     "location": "51-46",
+     "kind": "stream",
+     "streams": "sg4 ? 4 : width(type)",
+     "align": "sg4 ? 4 : width(type)"
+    },
+    {
+     "name": "lhs",
+     "location": "45-40",
+     "kind": "stream",
+     "streams": "sg4 ? 4 : width(type)",
+     "align": "sg4 ? 4 : width(type)"
+    },
+    {
+     "name": "rhs",
+     "location": "39-34",
+     "kind": "stream",
+     "streams": "sg4 ? 4 : width(type)",
+     "align": "sg4 ? 4 : width(type)"
+    },
+    {
+     "name": "sg4",
+     "location": "18",
+     "kind": "group4"
+    },
+    {
+     "name": "lhs_chain",
+     "location": "21",
+     "kind": "chain"
+    },
+    {
+     "name": "rhs_chain",
+     "location": "20",
+     "kind": "chain"
+    }
+   ]
+  },
+  {
+   "slice": "VXM",
+   "name": "Add_sat",
+   "mnemonic": "add_sat",
+   "units": [
+    "VXM"
+   ],
+   "timing": "VXM",
+   "assembly": "add_sat.{type}{sg4} {dst}, {lhs}{lhs_chain}, {rhs}{rhs_chain}",
+   "width": 64,
+   "match": "0010000001--------------------0000000000----0--00000000000000000",
+   "variables": [
+    {
+     "name": "type",
+     "location": "53-52",
+     "kind": "eltype_code",
+     "hi_location": "23-22",
+     "top_location": "17",
+     "codes": [
+      0,
+      2,
+      4,
+      5,
+      6,
+      7
+     ]
+    },
+    {
+     "name": "dst",
+     "location": "51-46",
+     "kind": "stream",
+     "streams": "sg4 ? 4 : width(type)",
+     "align": "sg4 ? 4 : width(type)"
+    },
+    {
+     "name": "lhs",
+     "location": "45-40",
+     "kind": "stream",
+     "streams": "sg4 ? 4 : width(type)",
+     "align": "sg4 ? 4 : width(type)"
+    },
+    {
+     "name": "rhs",
+     "location": "39-34",
+     "kind": "stream",
+     "streams": "sg4 ? 4 : width(type)",
+     "align": "sg4 ? 4 : width(type)"
+    },
+    {
+     "name": "sg4",
+     "location": "18",
+     "kind": "group4"
+    },
+    {
+     "name": "lhs_chain",
+     "location": "21",
+     "kind": "chain"
+    },
+    {
+     "name": "rhs_chain",
+     "location": "20",
+     "kind": "chain"
+    }
+   ]
+  },
+  {
+   "slice": "VXM",
+   "name": "Add_mod",
+   "mnemonic": "add_mod",
+   "units": [
+    "VXM"
+   ],
+   "timing": "VXM",
+   "assembly": "add_mod.{type}{sg4} {dst}, {lhs}{lhs_chain}, {rhs}{rhs_chain}",
+   "width": 64,
+   "match": "0010000010--------------------0000000000----0--00000000000000000",
+   "variables": [
+    {
+     "name": "type",
+     "location": "53-52",
+     "kind": "eltype_code",
+     "hi_location": "23-22",
+     "top_location": "17",
+     "codes": [
+      0,
+      2,
+      4,
+      5,
+      6,
+      7
+     ]
+    },
+    {
+     "name": "dst",
+     "location": "51-46",
+     "kind": "stream",
+     "streams": "sg4 ? 4 : width(type)",
+     "align": "sg4 ? 4 : width(type)"
+    },
+    {
+     "name": "lhs",
+     "location": "45-40",
+     "kind": "stream",
+     "streams": "sg4 ? 4 : width(type)",
+     "align": "sg4 ? 4 : width(type)"
+    },
+    {
+     "name": "rhs",
+     "location": "39-34",
+     "kind": "stream",
+     "streams": "sg4 ? 4 : width(type)",
+     "align": "sg4 ? 4 : width(type)"
+    },
+    {
+     "name": "sg4",
+     "location": "18",
+     "kind": "group4"
+    },
+    {
+     "name": "lhs_chain",
+     "location": "21",
+     "kind": "chain"
+    },
+    {
+     "name": "rhs_chain",
+     "location": "20",
+     "kind": "chain"
+    }
+   ]
+  },
+  {
+   "slice": "VXM",
+   "name": "Sub",
+   "mnemonic": "sub",
+   "units": [
+    "VXM"
+   ],
+   "timing": "VXM",
+   "assembly": "sub.{type}{sg4} {dst}, {lhs}{lhs_chain}, {rhs}{rhs_chain}",
+   "width": 64,
+   "match": "0010000011--------------------0000000000----0--00000000000000000",
+   "variables": [
+    {
+     "name": "type",
+     "location": "53-52",
+     "kind": "eltype_code",
+     "hi_location": "23-22",
+     "top_location": "17",
+     "codes": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      11,
+      12,
+      16
+     ],
+     "extension_codes": {
+      "bf16": [
+       16
+      ]
+     }
+    },
+    {
+     "name": "dst",
+     "location": "51-46",
+     "kind": "stream",
+     "streams": "sg4 ? 4 : width(type)",
+     "align": "sg4 ? 4 : width(type)"
+    },
+    {
+     "name": "lhs",
+     "location": "45-40",
+     "kind": "stream",
+     "streams": "sg4 ? 4 : width(type)",
+     "align": "sg4 ? 4 : width(type)"
+    },
+    {
+     "name": "rhs",
+     "location": "39-34",
+     "kind": "stream",
+     "streams": "sg4 ? 4 : width(type)",
+     "align": "sg4 ? 4 : width(type)"
+    },
+    {
+     "name": "sg4",
+     "location": "18",
+     "kind": "group4"
+    },
+    {
+     "name": "lhs_chain",
+     "location": "21",
+     "kind": "chain"
+    },
+    {
+     "name": "rhs_chain",
+     "location": "20",
+     "kind": "chain"
+    }
+   ]
+  },
+  {
+   "slice": "VXM",
+   "name": "Sub_sat",
+   "mnemonic": "sub_sat",
+   "units": [
+    "VXM"
+   ],
+   "timing": "VXM",
+   "assembly": "sub_sat.{type}{sg4} {dst}, {lhs}{lhs_chain}, {rhs}{rhs_chain}",
+   "width": 64,
+   "match": "0010000100--------------------0000000000----0--00000000000000000",
+   "variables": [
+    {
+     "name": "type",
+     "location": "53-52",
+     "kind": "eltype_code",
+     "hi_location": "23-22",
+     "top_location": "17",
+     "codes": [
+      0,
+      2,
+      4,
+      5,
+      6,
+      7
+     ]
+    },
+    {
+     "name": "dst",
+     "location": "51-46",
+     "kind": "stream",
+     "streams": "sg4 ? 4 : width(type)",
+     "align": "sg4 ? 4 : width(type)"
+    },
+    {
+     "name": "lhs",
+     "location": "45-40",
+     "kind": "stream",
+     "streams": "sg4 ? 4 : width(type)",
+     "align": "sg4 ? 4 : width(type)"
+    },
+    {
+     "name": "rhs",
+     "location": "39-34",
+     "kind": "stream",
+     "streams": "sg4 ? 4 : width(type)",
+     "align": "sg4 ? 4 : width(type)"
+    },
+    {
+     "name": "sg4",
+     "location": "18",
+     "kind": "group4"
+    },
+    {
+     "name": "lhs_chain",
+     "location": "21",
+     "kind": "chain"
+    },
+    {
+     "name": "rhs_chain",
+     "location": "20",
+     "kind": "chain"
+    }
+   ]
+  },
+  {
+   "slice": "VXM",
+   "name": "Sub_mod",
+   "mnemonic": "sub_mod",
+   "units": [
+    "VXM"
+   ],
+   "timing": "VXM",
+   "assembly": "sub_mod.{type}{sg4} {dst}, {lhs}{lhs_chain}, {rhs}{rhs_chain}",
+   "width": 64,
+   "match": "0010000101--------------------0000000000----0--00000000000000000",
+   "variables": [
+    {
+     "name": "type",
+     "location": "53-52",
+     "kind": "eltype_code",
+     "hi_location": "23-22",
+     "top_location": "17",
+     "codes": [
+      0,
+      2,
+      4,
+      5,
+      6,
+      7
+     ]
+    },
+    {
+     "name": "dst",
+     "location": "51-46",
+     "kind": "stream",
+     "streams": "sg4 ? 4 : width(type)",
+     "align": "sg4 ? 4 : width(type)"
+    },
+    {
+     "name": "lhs",
+     "location": "45-40",
+     "kind": "stream",
+     "streams": "sg4 ? 4 : width(type)",
+     "align": "sg4 ? 4 : width(type)"
+    },
+    {
+     "name": "rhs",
+     "location": "39-34",
+     "kind": "stream",
+     "streams": "sg4 ? 4 : width(type)",
+     "align": "sg4 ? 4 : width(type)"
+    },
+    {
+     "name": "sg4",
+     "location": "18",
+     "kind": "group4"
+    },
+    {
+     "name": "lhs_chain",
+     "location": "21",
+     "kind": "chain"
+    },
+    {
+     "name": "rhs_chain",
+     "location": "20",
+     "kind": "chain"
+    }
+   ]
+  },
+  {
+   "slice": "VXM",
+   "name": "Mul",
+   "mnemonic": "mul",
+   "units": [
+    "VXM"
+   ],
+   "timing": "VXM",
+   "assembly": "mul.{type}{sg4} {dst}, {lhs}{lhs_chain}, {rhs}{rhs_chain}",
+   "width": 64,
+   "match": "0010000110--------------------0000000000----0--00000000000000000",
+   "variables": [
+    {
+     "name": "type",
+     "location": "53-52",
+     "kind": "eltype_code",
+     "hi_location": "23-22",
+     "top_location": "17",
+     "codes": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      11,
+      12,
+      16
+     ],
+     "extension_codes": {
+      "bf16": [
+       16
+      ]
+     }
+    },
+    {
+     "name": "dst",
+     "location": "51-46",
+     "kind": "stream",
+     "streams": "sg4 ? 4 : width(type)",
+     "align": "sg4 ? 4 : width(type)"
+    },
+    {
+     "name": "lhs",
+     "location": "45-40",
+     "kind": "stream",
+     "streams": "sg4 ? 4 : width(type)",
+     "align": "sg4 ? 4 : width(type)"
+    },
+    {
+     "name": "rhs",
+     "location": "39-34",
+     "kind": "stream",
+     "streams": "sg4 ? 4 : width(type)",
+     "align": "sg4 ? 4 : width(type)"
+    },
+    {
+     "name": "sg4",
+     "location": "18",
+     "kind": "group4"
+    },
+    {
+     "name": "lhs_chain",
+     "location": "21",
+     "kind": "chain"
+    },
+    {
+     "name": "rhs_chain",
+     "location": "20",
+     "kind": "chain"
+    }
+   ]
+  },
+  {
+   "slice": "VXM",
+   "name": "Mul_sat",
+   "mnemonic": "mul_sat",
+   "units": [
+    "VXM"
+   ],
+   "timing": "VXM",
+   "assembly": "mul_sat.{type}{sg4} {dst}, {lhs}{lhs_chain}, {rhs}{rhs_chain}",
+   "width": 64,
+   "match": "0010000111--------------------0000000000----0--00000000000000000",
+   "variables": [
+    {
+     "name": "type",
+     "location": "53-52",
+     "kind": "eltype_code",
+     "hi_location": "23-22",
+     "top_location": "17",
+     "codes": [
+      0,
+      2,
+      4,
+      5,
+      6,
+      7
+     ]
+    },
+    {
+     "name": "dst",
+     "location": "51-46",
+     "kind": "stream",
+     "streams": "sg4 ? 4 : width(type)",
+     "align": "sg4 ? 4 : width(type)"
+    },
+    {
+     "name": "lhs",
+     "location": "45-40",
+     "kind": "stream",
+     "streams": "sg4 ? 4 : width(type)",
+     "align": "sg4 ? 4 : width(type)"
+    },
+    {
+     "name": "rhs",
+     "location": "39-34",
+     "kind": "stream",
+     "streams": "sg4 ? 4 : width(type)",
+     "align": "sg4 ? 4 : width(type)"
+    },
+    {
+     "name": "sg4",
+     "location": "18",
+     "kind": "group4"
+    },
+    {
+     "name": "lhs_chain",
+     "location": "21",
+     "kind": "chain"
+    },
+    {
+     "name": "rhs_chain",
+     "location": "20",
+     "kind": "chain"
+    }
+   ]
+  },
+  {
+   "slice": "VXM",
+   "name": "Mul_mod",
+   "mnemonic": "mul_mod",
+   "units": [
+    "VXM"
+   ],
+   "timing": "VXM",
+   "assembly": "mul_mod.{type}{sg4} {dst}, {lhs}{lhs_chain}, {rhs}{rhs_chain}",
+   "width": 64,
+   "match": "0010001000--------------------0000000000----0--00000000000000000",
+   "variables": [
+    {
+     "name": "type",
+     "location": "53-52",
+     "kind": "eltype_code",
+     "hi_location": "23-22",
+     "top_location": "17",
+     "codes": [
+      0,
+      2,
+      4,
+      5,
+      6,
+      7
+     ]
+    },
+    {
+     "name": "dst",
+     "location": "51-46",
+     "kind": "stream",
+     "streams": "sg4 ? 4 : width(type)",
+     "align": "sg4 ? 4 : width(type)"
+    },
+    {
+     "name": "lhs",
+     "location": "45-40",
+     "kind": "stream",
+     "streams": "sg4 ? 4 : width(type)",
+     "align": "sg4 ? 4 : width(type)"
+    },
+    {
+     "name": "rhs",
+     "location": "39-34",
+     "kind": "stream",
+     "streams": "sg4 ? 4 : width(type)",
+     "align": "sg4 ? 4 : width(type)"
+    },
+    {
+     "name": "sg4",
+     "location": "18",
+     "kind": "group4"
+    },
+    {
+     "name": "lhs_chain",
+     "location": "21",
+     "kind": "chain"
+    },
+    {
+     "name": "rhs_chain",
+     "location": "20",
+     "kind": "chain"
+    }
+   ]
+  },
+  {
+   "slice": "VXM",
+   "name": "Max",
+   "mnemonic": "max",
+   "units": [
+    "VXM"
+   ],
+   "timing": "VXM",
+   "assembly": "max.{type}{sg4} {dst}, {lhs}{lhs_chain}, {rhs}{rhs_chain}",
+   "width": 64,
+   "match": "0010001001--------------------0000000000----0--00000000000000000",
+   "variables": [
+    {
+     "name": "type",
+     "location": "53-52",
+     "kind": "eltype_code",
+     "hi_location": "23-22",
+     "top_location": "17",
+     "codes": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      11,
+      12,
+      16
+     ],
+     "extension_codes": {
+      "bf16": [
+       16
+      ]
+     }
+    },
+    {
+     "name": "dst",
+     "location": "51-46",
+     "kind": "stream",
+     "streams": "sg4 ? 4 : width(type)",
+     "align": "sg4 ? 4 : width(type)"
+    },
+    {
+     "name": "lhs",
+     "location": "45-40",
+     "kind": "stream",
+     "streams": "sg4 ? 4 : width(type)",
+     "align": "sg4 ? 4 : width(type)"
+    },
+    {
+     "name": "rhs",
+     "location": "39-34",
+     "kind": "stream",
+     "streams": "sg4 ? 4 : width(type)",
+     "align": "sg4 ? 4 : width(type)"
+    },
+    {
+     "name": "sg4",
+     "location": "18",
+     "kind": "group4"
+    },
+    {
+     "name": "lhs_chain",
+     "location": "21",
+     "kind": "chain"
+    },
+    {
+     "name": "rhs_chain",
+     "location": "20",
+     "kind": "chain"
+    }
+   ]
+  },
+  {
+   "slice": "VXM",
+   "name": "Min",
+   "mnemonic": "min",
+   "units": [
+    "VXM"
+   ],
+   "timing": "VXM",
+   "assembly": "min.{type}{sg4} {dst}, {lhs}{lhs_chain}, {rhs}{rhs_chain}",
+   "width": 64,
+   "match": "0010001010--------------------0000000000----0--00000000000000000",
+   "variables": [
+    {
+     "name": "type",
+     "location": "53-52",
+     "kind": "eltype_code",
+     "hi_location": "23-22",
+     "top_location": "17",
+     "codes": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      11,
+      12,
+      16
+     ],
+     "extension_codes": {
+      "bf16": [
+       16
+      ]
+     }
+    },
+    {
+     "name": "dst",
+     "location": "51-46",
+     "kind": "stream",
+     "streams": "sg4 ? 4 : width(type)",
+     "align": "sg4 ? 4 : width(type)"
+    },
+    {
+     "name": "lhs",
+     "location": "45-40",
+     "kind": "stream",
+     "streams": "sg4 ? 4 : width(type)",
+     "align": "sg4 ? 4 : width(type)"
+    },
+    {
+     "name": "rhs",
+     "location": "39-34",
+     "kind": "stream",
+     "streams": "sg4 ? 4 : width(type)",
+     "align": "sg4 ? 4 : width(type)"
+    },
+    {
+     "name": "sg4",
+     "location": "18",
+     "kind": "group4"
+    },
+    {
+     "name": "lhs_chain",
+     "location": "21",
+     "kind": "chain"
+    },
+    {
+     "name": "rhs_chain",
+     "location": "20",
+     "kind": "chain"
+    }
+   ]
+  },
+  {
+   "slice": "VXM",
+   "name": "And",
+   "mnemonic": "and",
+   "units": [
+    "VXM"
+   ],
+   "timing": "VXM",
+   "assembly": "and.{type}{sg4} {dst}, {lhs}{lhs_chain}, {rhs}{rhs_chain}",
+   "width": 64,
+   "match": "0010001011--------------------0000000000----0--00000000000000000",
+   "variables": [
+    {
+     "name": "type",
+     "location": "53-52",
+     "kind": "eltype_code",
+     "hi_location": "23-22",
+     "top_location": "17",
+     "codes": [
+      0,
+      2,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+     ]
+    },
+    {
+     "name": "dst",
+     "location": "51-46",
+     "kind": "stream",
+     "streams": "sg4 ? 4 : width(type)",
+     "align": "sg4 ? 4 : width(type)"
+    },
+    {
+     "name": "lhs",
+     "location": "45-40",
+     "kind": "stream",
+     "streams": "sg4 ? 4 : width(type)",
+     "align": "sg4 ? 4 : width(type)"
+    },
+    {
+     "name": "rhs",
+     "location": "39-34",
+     "kind": "stream",
+     "streams": "sg4 ? 4 : width(type)",
+     "align": "sg4 ? 4 : width(type)"
+    },
+    {
+     "name": "sg4",
+     "location": "18",
+     "kind": "group4"
+    },
+    {
+     "name": "lhs_chain",
+     "location": "21",
+     "kind": "chain"
+    },
+    {
+     "name": "rhs_chain",
+     "location": "20",
+     "kind": "chain"
+    }
+   ]
+  },
+  {
+   "slice": "VXM",
+   "name": "Or",
+   "mnemonic": "or",
+   "units": [
+    "VXM"
+   ],
+   "timing": "VXM",
+   "assembly": "or.{type}{sg4} {dst}, {lhs}{lhs_chain}, {rhs}{rhs_chain}",
+   "width": 64,
+   "match": "0010001100--------------------0000000000----0--00000000000000000",
+   "variables": [
+    {
+     "name": "type",
+     "location": "53-52",
+     "kind": "eltype_code",
+     "hi_location": "23-22",
+     "top_location": "17",
+     "codes": [
+      0,
+      2,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+     ]
+    },
+    {
+     "name": "dst",
+     "location": "51-46",
+     "kind": "stream",
+     "streams": "sg4 ? 4 : width(type)",
+     "align": "sg4 ? 4 : width(type)"
+    },
+    {
+     "name": "lhs",
+     "location": "45-40",
+     "kind": "stream",
+     "streams": "sg4 ? 4 : width(type)",
+     "align": "sg4 ? 4 : width(type)"
+    },
+    {
+     "name": "rhs",
+     "location": "39-34",
+     "kind": "stream",
+     "streams": "sg4 ? 4 : width(type)",
+     "align": "sg4 ? 4 : width(type)"
+    },
+    {
+     "name": "sg4",
+     "location": "18",
+     "kind": "group4"
+    },
+    {
+     "name": "lhs_chain",
+     "location": "21",
+     "kind": "chain"
+    },
+    {
+     "name": "rhs_chain",
+     "location": "20",
+     "kind": "chain"
+    }
+   ]
+  },
+  {
+   "slice": "VXM",
+   "name": "Xor",
+   "mnemonic": "xor",
+   "units": [
+    "VXM"
+   ],
+   "timing": "VXM",
+   "assembly": "xor.{type}{sg4} {dst}, {lhs}{lhs_chain}, {rhs}{rhs_chain}",
+   "width": 64,
+   "match": "0010001101--------------------0000000000----0--00000000000000000",
+   "variables": [
+    {
+     "name": "type",
+     "location": "53-52",
+     "kind": "eltype_code",
+     "hi_location": "23-22",
+     "top_location": "17",
+     "codes": [
+      0,
+      2,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+     ]
+    },
+    {
+     "name": "dst",
+     "location": "51-46",
+     "kind": "stream",
+     "streams": "sg4 ? 4 : width(type)",
+     "align": "sg4 ? 4 : width(type)"
+    },
+    {
+     "name": "lhs",
+     "location": "45-40",
+     "kind": "stream",
+     "streams": "sg4 ? 4 : width(type)",
+     "align": "sg4 ? 4 : width(type)"
+    },
+    {
+     "name": "rhs",
+     "location": "39-34",
+     "kind": "stream",
+     "streams": "sg4 ? 4 : width(type)",
+     "align": "sg4 ? 4 : width(type)"
+    },
+    {
+     "name": "sg4",
+     "location": "18",
+     "kind": "group4"
+    },
+    {
+     "name": "lhs_chain",
+     "location": "21",
+     "kind": "chain"
+    },
+    {
+     "name": "rhs_chain",
+     "location": "20",
+     "kind": "chain"
+    }
+   ]
+  },
+  {
+   "slice": "VXM",
+   "name": "Not",
+   "mnemonic": "not",
+   "units": [
+    "VXM"
+   ],
+   "timing": "VXM",
+   "assembly": "not.{type}{sg4} {dst}, {lhs}{lhs_chain}",
+   "width": 64,
+   "match": "0010001110--------------0000000000000000---00--00000000000000000",
+   "variables": [
+    {
+     "name": "type",
+     "location": "53-52",
+     "kind": "eltype_code",
+     "hi_location": "23-22",
+     "top_location": "17",
+     "codes": [
+      0,
+      2,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+     ]
+    },
+    {
+     "name": "dst",
+     "location": "51-46",
+     "kind": "stream",
+     "streams": "sg4 ? 4 : width(type)",
+     "align": "sg4 ? 4 : width(type)"
+    },
+    {
+     "name": "lhs",
+     "location": "45-40",
+     "kind": "stream",
+     "streams": "sg4 ? 4 : width(type)",
+     "align": "sg4 ? 4 : width(type)"
+    },
+    {
+     "name": "sg4",
+     "location": "18",
+     "kind": "group4"
+    },
+    {
+     "name": "lhs_chain",
+     "location": "21",
+     "kind": "chain"
+    }
+   ]
+  },
+  {
+   "slice": "VXM",
+   "name": "Neg",
+   "mnemonic": "neg",
+   "units": [
+    "VXM"
+   ],
+   "timing": "VXM",
+   "assembly": "neg.{type}{sg4} {dst}, {lhs}{lhs_chain}",
+   "width": 64,
+   "match": "0010001111--------------0000000000000000---00--00000000000000000",
+   "variables": [
+    {
+     "name": "type",
+     "location": "53-52",
+     "kind": "eltype_code",
+     "hi_location": "23-22",
+     "top_location": "17",
+     "codes": [
+      0,
+      2,
+      5,
+      1,
+      3,
+      11,
+      12,
+      16
+     ],
+     "extension_codes": {
+      "bf16": [
+       16
+      ]
+     }
+    },
+    {
+     "name": "dst",
+     "location": "51-46",
+     "kind": "stream",
+     "streams": "sg4 ? 4 : width(type)",
+     "align": "sg4 ? 4 : width(type)"
+    },
+    {
+     "name": "lhs",
+     "location": "45-40",
+     "kind": "stream",
+     "streams": "sg4 ? 4 : width(type)",
+     "align": "sg4 ? 4 : width(type)"
+    },
+    {
+     "name": "sg4",
+     "location": "18",
+     "kind": "group4"
+    },
+    {
+     "name": "lhs_chain",
+     "location": "21",
+     "kind": "chain"
+    }
+   ]
+  },
+  {
+   "slice": "VXM",
+   "name": "Abs",
+   "mnemonic": "abs",
+   "units": [
+    "VXM"
+   ],
+   "timing": "VXM",
+   "assembly": "abs.{type}{sg4} {dst}, {lhs}{lhs_chain}",
+   "width": 64,
+   "match": "0010010000--------------0000000000000000---00--00000000000000000",
+   "variables": [
+    {
+     "name": "type",
+     "location": "53-52",
+     "kind": "eltype_code",
+     "hi_location": "23-22",
+     "top_location": "17",
+     "codes": [
+      0,
+      2,
+      5,
+      1,
+      3,
+      11,
+      12,
+      16
+     ],
+     "extension_codes": {
+      "bf16": [
+       16
+      ]
+     }
+    },
+    {
+     "name": "dst",
+     "location": "51-46",
+     "kind": "stream",
+     "streams": "sg4 ? 4 : width(type)",
+     "align": "sg4 ? 4 : width(type)"
+    },
+    {
+     "name": "lhs",
+     "location": "45-40",
+     "kind": "stream",
+     "streams": "sg4 ? 4 : width(type)",
+     "align": "sg4 ? 4 : width(type)"
+    },
+    {
+     "name": "sg4",
+     "location": "18",
+     "kind": "group4"
+    },
+    {
+     "name": "lhs_chain",
+     "location": "21",
+     "kind": "chain"
+    }
+   ]
+  },
+  {
+   "slice": "VXM",
+   "name": "Mask",
+   "mnemonic": "mask",
+   "units": [
+    "VXM"
+   ],
+   "timing": "VXM",
+   "assembly": "mask.{type}{sg4} {dst}, {lhs}{lhs_chain}, {mask}{mask_chain}",
+   "width": 64,
+   "match": "0010010001--------------------0000000000----0--00000000000000000",
+   "variables": [
+    {
+     "name": "type",
+     "location": "53-52",
+     "kind": "eltype_code",
+     "hi_location": "23-22",
+     "top_location": "17",
+     "codes": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      16
+     ],
+     "extension_codes": {
+      "bf16": [
+       16
+      ]
+     }
+    },
+    {
+     "name": "dst",
+     "location": "51-46",
+     "kind": "stream",
+     "streams": "sg4 ? 4 : width(type)",
+     "align": "sg4 ? 4 : width(type)"
+    },
+    {
+     "name": "lhs",
+     "location": "45-40",
+     "kind": "stream",
+     "streams": "sg4 ? 4 : width(type)",
+     "align": "sg4 ? 4 : width(type)"
+    },
+    {
+     "name": "mask",
+     "location": "39-34",
+     "kind": "stream",
+     "streams": "sg4 ? 4 : width(type)",
+     "align": "sg4 ? 4 : width(type)"
+    },
+    {
+     "name": "sg4",
+     "location": "18",
+     "kind": "group4"
+    },
+    {
+     "name": "lhs_chain",
+     "location": "21",
+     "kind": "chain"
+    },
+    {
+     "name": "mask_chain",
+     "location": "20",
+     "kind": "chain"
+    }
+   ]
+  },
+  {
+   "slice": "VXM",
+   "name": "Select",
+   "mnemonic": "select",
+   "units": [
+    "VXM"
+   ],
+   "timing": "VXM",
+   "assembly": "select.{type}{sg4} {dst}, {lhs}{lhs_chain}, {rhs}{rhs_chain}, {mask}{mask_chain}",
+   "width": 64,
+   "match": "0010010010--------------------------0000-------00000000000000000",
+   "variables": [
+    {
+     "name": "type",
+     "location": "53-52",
+     "kind": "eltype_code",
+     "hi_location": "23-22",
+     "top_location": "17",
+     "codes": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      16
+     ],
+     "extension_codes": {
+      "bf16": [
+       16
+      ]
+     }
+    },
+    {
+     "name": "dst",
+     "location": "51-46",
+     "kind": "stream",
+     "streams": "sg4 ? 4 : width(type)",
+     "align": "sg4 ? 4 : width(type)"
+    },
+    {
+     "name": "lhs",
+     "location": "45-40",
+     "kind": "stream",
+     "streams": "sg4 ? 4 : width(type)",
+     "align": "sg4 ? 4 : width(type)"
+    },
+    {
+     "name": "rhs",
+     "location": "39-34",
+     "kind": "stream",
+     "streams": "sg4 ? 4 : width(type)",
+     "align": "sg4 ? 4 : width(type)"
+    },
+    {
+     "name": "mask",
+     "location": "33-28",
+     "kind": "stream",
+     "streams": "sg4 ? 4 : width(type)",
+     "align": "sg4 ? 4 : width(type)"
+    },
+    {
+     "name": "sg4",
+     "location": "18",
+     "kind": "group4"
+    },
+    {
+     "name": "lhs_chain",
+     "location": "21",
+     "kind": "chain"
+    },
+    {
+     "name": "rhs_chain",
+     "location": "20",
+     "kind": "chain"
+    },
+    {
+     "name": "mask_chain",
+     "location": "19",
+     "kind": "chain"
+    }
+   ]
+  },
+  {
+   "slice": "VXM",
+   "name": "Cmp",
+   "mnemonic": "cmp",
+   "units": [
+    "VXM"
+   ],
+   "timing": "VXM",
+   "assembly": "cmp.{mode}.{type}{sg4} {dst}, {lhs}{lhs_chain}, {rhs}{rhs_chain}",
+   "width": 64,
+   "match": "0010010011--------------------000000--------0--00000000000000000",
+   "variables": [
+    {
+     "name": "type",
+     "location": "53-52",
+     "kind": "eltype_code",
+     "hi_location": "23-22",
+     "top_location": "17",
+     "codes": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      16
+     ],
+     "extension_codes": {
+      "bf16": [
+       16
+      ]
+     }
+    },
+    {
+     "name": "dst",
+     "location": "51-46",
+     "kind": "stream",
+     "streams": "sg4 ? 4 : width(type)",
+     "align": "sg4 ? 4 : width(type)"
+    },
+    {
+     "name": "lhs",
+     "location": "45-40",
+     "kind": "stream",
+     "streams": "sg4 ? 4 : width(type)",
+     "align": "sg4 ? 4 : width(type)"
+    },
+    {
+     "name": "rhs",
+     "location": "39-34",
+     "kind": "stream",
+     "streams": "sg4 ? 4 : width(type)",
+     "align": "sg4 ? 4 : width(type)"
+    },
+    {
+     "name": "mode",
+     "location": "27-24",
+     "kind": "cmp_mode",
+     "values": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "bool_values": [
+      0,
+      1
+     ]
+    },
+    {
+     "name": "sg4",
+     "location": "18",
+     "kind": "group4"
+    },
+    {
+     "name": "lhs_chain",
+     "location": "21",
+     "kind": "chain"
+    },
+    {
+     "name": "rhs_chain",
+     "location": "20",
+     "kind": "chain"
+    }
+   ]
+  },
+  {
+   "slice": "VXM",
+   "name": "ReLU",
+   "mnemonic": "relu",
+   "units": [
+    "VXM"
+   ],
+   "timing": "VXM",
+   "assembly": "relu.{type}{sg4} {dst}, {lhs}{lhs_chain}",
+   "width": 64,
+   "match": "0010010100--------------0000000000000000---00--00000000000000000",
+   "variables": [
+    {
+     "name": "type",
+     "location": "53-52",
+     "kind": "eltype_code",
+     "hi_location": "23-22",
+     "top_location": "17",
+     "codes": [
+      0,
+      2,
+      5,
+      1,
+      3,
+      11,
+      12,
+      16
+     ],
+     "extension_codes": {
+      "bf16": [
+       16
+      ]
+     }
+    },
+    {
+     "name": "dst",
+     "location": "51-46",
+     "kind": "stream",
+     "streams": "sg4 ? 4 : width(type)",
+     "align": "sg4 ? 4 : width(type)"
+    },
+    {
+     "name": "lhs",
+     "location": "45-40",
+     "kind": "stream",
+     "streams": "sg4 ? 4 : width(type)",
+     "align": "sg4 ? 4 : width(type)"
+    },
+    {
+     "name": "sg4",
+     "location": "18",
+     "kind": "group4"
+    },
+    {
+     "name": "lhs_chain",
+     "location": "21",
+     "kind": "chain"
+    }
+   ]
+  },
+  {
+   "slice": "VXM",
+   "name": "TanH",
+   "mnemonic": "tanh",
+   "units": [
+    "VXM"
+   ],
+   "timing": "VXM",
+   "assembly": "tanh.{type}{sg4} {dst}, {lhs}{lhs_chain}",
+   "width": 64,
+   "match": "0010010101--------------0000000000000000---00--00000000000000000",
+   "variables": [
+    {
+     "name": "type",
+     "location": "53-52",
+     "kind": "eltype_code",
+     "hi_location": "23-22",
+     "top_location": "17",
+     "codes": [
+      0,
+      1,
+      3
+     ]
+    },
+    {
+     "name": "dst",
+     "location": "51-46",
+     "kind": "stream",
+     "streams": "sg4 ? 4 : width(type)",
+     "align": "sg4 ? 4 : width(type)"
+    },
+    {
+     "name": "lhs",
+     "location": "45-40",
+     "kind": "stream",
+     "streams": "sg4 ? 4 : width(type)",
+     "align": "sg4 ? 4 : width(type)"
+    },
+    {
+     "name": "sg4",
+     "location": "18",
+     "kind": "group4"
+    },
+    {
+     "name": "lhs_chain",
+     "location": "21",
+     "kind": "chain"
+    }
+   ]
+  },
+  {
+   "slice": "VXM",
+   "name": "Exp",
+   "mnemonic": "exp",
+   "units": [
+    "VXM"
+   ],
+   "timing": "VXM",
+   "assembly": "exp.{type}{sg4} {dst}, {lhs}{lhs_chain}",
+   "width": 64,
+   "match": "0010010110--------------0000000000000000---00--00000000000000000",
+   "variables": [
+    {
+     "name": "type",
+     "location": "53-52",
+     "kind": "eltype_code",
+     "hi_location": "23-22",
+     "top_location": "17",
+     "codes": [
+      0,
+      1,
+      3
+     ]
+    },
+    {
+     "name": "dst",
+     "location": "51-46",
+     "kind": "stream",
+     "streams": "sg4 ? 4 : width(type)",
+     "align": "sg4 ? 4 : width(type)"
+    },
+    {
+     "name": "lhs",
+     "location": "45-40",
+     "kind": "stream",
+     "streams": "sg4 ? 4 : width(type)",
+     "align": "sg4 ? 4 : width(type)"
+    },
+    {
+     "name": "sg4",
+     "location": "18",
+     "kind": "group4"
+    },
+    {
+     "name": "lhs_chain",
+     "location": "21",
+     "kind": "chain"
+    }
+   ]
+  },
+  {
+   "slice": "VXM",
+   "name": "RSqrt",
+   "mnemonic": "rsqrt",
+   "units": [
+    "VXM"
+   ],
+   "timing": "VXM",
+   "assembly": "rsqrt.{type}{sg4} {dst}, {lhs}{lhs_chain}",
+   "width": 64,
+   "match": "0010010111--------------0000000000000000---00--00000000000000000",
+   "variables": [
+    {
+     "name": "type",
+     "location": "53-52",
+     "kind": "eltype_code",
+     "hi_location": "23-22",
+     "top_location": "17",
+     "codes": [
+      0,
+      1,
+      3
+     ]
+    },
+    {
+     "name": "dst",
+     "location": "51-46",
+     "kind": "stream",
+     "streams": "sg4 ? 4 : width(type)",
+     "align": "sg4 ? 4 : width(type)"
+    },
+    {
+     "name": "lhs",
+     "location": "45-40",
+     "kind": "stream",
+     "streams": "sg4 ? 4 : width(type)",
+     "align": "sg4 ? 4 : width(type)"
+    },
+    {
+     "name": "sg4",
+     "location": "18",
+     "kind": "group4"
+    },
+    {
+     "name": "lhs_chain",
+     "location": "21",
+     "kind": "chain"
+    }
+   ]
+  },
+  {
+   "slice": "VXM",
+   "name": "Log",
+   "mnemonic": "log",
+   "units": [
+    "VXM"
+   ],
+   "timing": "VXM",
+   "assembly": "log.{type}{sg4} {dst}, {lhs}{lhs_chain}",
+   "width": 64,
+   "match": "0010011000--------------0000000000000000---00--00000000000000000",
+   "variables": [
+    {
+     "name": "type",
+     "location": "53-52",
+     "kind": "eltype_code",
+     "hi_location": "23-22",
+     "top_location": "17",
+     "codes": [
+      0,
+      1,
+      3
+     ]
+    },
+    {
+     "name": "dst",
+     "location": "51-46",
+     "kind": "stream",
+     "streams": "sg4 ? 4 : width(type)",
+     "align": "sg4 ? 4 : width(type)"
+    },
+    {
+     "name": "lhs",
+     "location": "45-40",
+     "kind": "stream",
+     "streams": "sg4 ? 4 : width(type)",
+     "align": "sg4 ? 4 : width(type)"
+    },
+    {
+     "name": "sg4",
+     "location": "18",
+     "kind": "group4"
+    },
+    {
+     "name": "lhs_chain",
+     "location": "21",
+     "kind": "chain"
+    }
+   ]
+  },
+  {
+   "slice": "VXM",
+   "name": "Conv_I8_F32",
+   "mnemonic": "conv_i8_f32",
+   "units": [
+    "VXM"
+   ],
+   "timing": "VXM",
+   "assembly": "conv_i8_f32.{type} {dst}, {lhs}{lhs_chain}",
+   "width": 64,
+   "match": "0010011001--------------0000000000000000---000-00000000000000000",
+   "variables": [
+    {
+     "name": "type",
+     "location": "53-52",
+     "kind": "eltype_code",
+     "hi_location": "23-22",
+     "top_location": "17",
+     "codes": [
+      0
+     ]
+    },
+    {
+     "name": "dst",
+     "location": "51-46",
+     "kind": "stream",
+     "streams": 4,
+     "align": 4
+    },
+    {
+     "name": "lhs",
+     "location": "45-40",
+     "kind": "stream",
+     "streams": 1,
+     "align": 1
+    },
+    {
+     "name": "lhs_chain",
+     "location": "21",
+     "kind": "chain"
+    }
+   ]
+  },
+  {
+   "slice": "VXM",
+   "name": "Conv_F32_I8",
+   "mnemonic": "conv_f32_i8",
+   "units": [
+    "VXM"
+   ],
+   "timing": "VXM",
+   "assembly": "conv_f32_i8.{type} {dst}, {lhs}{lhs_chain}",
+   "width": 64,
+   "match": "0010011010--------------0000000000000000---000-00000000000000000",
+   "variables": [
+    {
+     "name": "type",
+     "location": "53-52",
+     "kind": "eltype_code",
+     "hi_location": "23-22",
+     "top_location": "17",
+     "codes": [
+      3
+     ]
+    },
+    {
+     "name": "dst",
+     "location": "51-46",
+     "kind": "stream",
+     "streams": 1,
+     "align": 1
+    },
+    {
+     "name": "lhs",
+     "location": "45-40",
+     "kind": "stream",
+     "streams": 4,
+     "align": 4
+    },
+    {
+     "name": "lhs_chain",
+     "location": "21",
+     "kind": "chain"
+    }
+   ]
+  },
+  {
+   "slice": "VXM",
+   "name": "Conv_I8_F16",
+   "mnemonic": "conv_i8_f16",
+   "units": [
+    "VXM"
+   ],
+   "timing": "VXM",
+   "assembly": "conv_i8_f16.{type} {dst}, {lhs}{lhs_chain}",
+   "width": 64,
+   "match": "0010011011--------------0000000000000000---000-00000000000000000",
+   "variables": [
+    {
+     "name": "type",
+     "location": "53-52",
+     "kind": "eltype_code",
+     "hi_location": "23-22",
+     "top_location": "17",
+     "codes": [
+      0
+     ]
+    },
+    {
+     "name": "dst",
+     "location": "51-46",
+     "kind": "stream",
+     "streams": 2,
+     "align": 2
+    },
+    {
+     "name": "lhs",
+     "location": "45-40",
+     "kind": "stream",
+     "streams": 1,
+     "align": 1
+    },
+    {
+     "name": "lhs_chain",
+     "location": "21",
+     "kind": "chain"
+    }
+   ]
+  },
+  {
+   "slice": "VXM",
+   "name": "Conv_F16_I8",
+   "mnemonic": "conv_f16_i8",
+   "units": [
+    "VXM"
+   ],
+   "timing": "VXM",
+   "assembly": "conv_f16_i8.{type} {dst}, {lhs}{lhs_chain}",
+   "width": 64,
+   "match": "0010011100--------------0000000000000000---000-00000000000000000",
+   "variables": [
+    {
+     "name": "type",
+     "location": "53-52",
+     "kind": "eltype_code",
+     "hi_location": "23-22",
+     "top_location": "17",
+     "codes": [
+      1
+     ]
+    },
+    {
+     "name": "dst",
+     "location": "51-46",
+     "kind": "stream",
+     "streams": 1,
+     "align": 1
+    },
+    {
+     "name": "lhs",
+     "location": "45-40",
+     "kind": "stream",
+     "streams": 2,
+     "align": 2
+    },
+    {
+     "name": "lhs_chain",
+     "location": "21",
+     "kind": "chain"
+    }
+   ]
+  },
+  {
+   "slice": "VXM",
+   "name": "Conv_I8_I32",
+   "mnemonic": "conv_i8_i32",
+   "units": [
+    "VXM"
+   ],
+   "timing": "VXM",
+   "assembly": "conv_i8_i32.{type} {dst}, {lhs}{lhs_chain}",
+   "width": 64,
+   "match": "0010011101--------------0000000000000000---000-00000000000000000",
+   "variables": [
+    {
+     "name": "type",
+     "location": "53-52",
+     "kind": "eltype_code",
+     "hi_location": "23-22",
+     "top_location": "17",
+     "codes": [
+      0
+     ]
+    },
+    {
+     "name": "dst",
+     "location": "51-46",
+     "kind": "stream",
+     "streams": 4,
+     "align": 4
+    },
+    {
+     "name": "lhs",
+     "location": "45-40",
+     "kind": "stream",
+     "streams": 1,
+     "align": 1
+    },
+    {
+     "name": "lhs_chain",
+     "location": "21",
+     "kind": "chain"
+    }
+   ]
+  },
+  {
+   "slice": "VXM",
+   "name": "Conv_I32_I8",
+   "mnemonic": "conv_i32_i8",
+   "units": [
+    "VXM"
+   ],
+   "timing": "VXM",
+   "assembly": "conv_i32_i8.{type} {dst}, {lhs}{lhs_chain}",
+   "width": 64,
+   "match": "0010011110--------------0000000000000000---000-00000000000000000",
+   "variables": [
+    {
+     "name": "type",
+     "location": "53-52",
+     "kind": "eltype_code",
+     "hi_location": "23-22",
+     "top_location": "17",
+     "codes": [
+      2
+     ]
+    },
+    {
+     "name": "dst",
+     "location": "51-46",
+     "kind": "stream",
+     "streams": 1,
+     "align": 1
+    },
+    {
+     "name": "lhs",
+     "location": "45-40",
+     "kind": "stream",
+     "streams": 4,
+     "align": 4
+    },
+    {
+     "name": "lhs_chain",
+     "location": "21",
+     "kind": "chain"
+    }
+   ]
+  },
+  {
+   "slice": "VXM",
+   "name": "Conv_F16_F32",
+   "mnemonic": "conv_f16_f32",
+   "units": [
+    "VXM"
+   ],
+   "timing": "VXM",
+   "assembly": "conv_f16_f32.{type} {dst}, {lhs}{lhs_chain}",
+   "width": 64,
+   "match": "0010011111--------------0000000000000000---000-00000000000000000",
+   "variables": [
+    {
+     "name": "type",
+     "location": "53-52",
+     "kind": "eltype_code",
+     "hi_location": "23-22",
+     "top_location": "17",
+     "codes": [
+      1
+     ]
+    },
+    {
+     "name": "dst",
+     "location": "51-46",
+     "kind": "stream",
+     "streams": 4,
+     "align": 4
+    },
+    {
+     "name": "lhs",
+     "location": "45-40",
+     "kind": "stream",
+     "streams": 2,
+     "align": 2
+    },
+    {
+     "name": "lhs_chain",
+     "location": "21",
+     "kind": "chain"
+    }
+   ]
+  },
+  {
+   "slice": "VXM",
+   "name": "Conv_F32_F16",
+   "mnemonic": "conv_f32_f16",
+   "units": [
+    "VXM"
+   ],
+   "timing": "VXM",
+   "assembly": "conv_f32_f16.{type} {dst}, {lhs}{lhs_chain}",
+   "width": 64,
+   "match": "0010100000--------------0000000000000000---000-00000000000000000",
+   "variables": [
+    {
+     "name": "type",
+     "location": "53-52",
+     "kind": "eltype_code",
+     "hi_location": "23-22",
+     "top_location": "17",
+     "codes": [
+      3
+     ]
+    },
+    {
+     "name": "dst",
+     "location": "51-46",
+     "kind": "stream",
+     "streams": 2,
+     "align": 2
+    },
+    {
+     "name": "lhs",
+     "location": "45-40",
+     "kind": "stream",
+     "streams": 4,
+     "align": 4
+    },
+    {
+     "name": "lhs_chain",
+     "location": "21",
+     "kind": "chain"
+    }
+   ]
+  },
+  {
+   "slice": "VXM",
+   "name": "Reduce",
+   "mnemonic": "reduce",
+   "units": [
+    "VXM"
+   ],
+   "timing": "VXM",
+   "assembly": "reduce.{mode}.{type} {dst}, {lhs}{lhs_chain}",
+   "width": 64,
+   "match": "0010100001--------------000000000000-------000-00000000000000000",
+   "variables": [
+    {
+     "name": "type",
+     "location": "53-52",
+     "kind": "eltype_code",
+     "hi_location": "23-22",
+     "top_location": "17",
+     "codes": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      11,
+      12,
+      16
+     ],
+     "extension_codes": {
+      "bf16": [
+       16
+      ]
+     }
+    },
+    {
+     "name": "dst",
+     "location": "51-46",
+     "kind": "stream",
+     "streams": "width(type)",
+     "align": "width(type)"
+    },
+    {
+     "name": "lhs",
+     "location": "45-40",
+     "kind": "stream",
+     "streams": "width(type)",
+     "align": "width(type)"
+    },
+    {
+     "name": "mode",
+     "location": "27-24",
+     "kind": "reduce_op",
+     "values": [
+      0,
+      1,
+      2
+     ]
+    },
+    {
+     "name": "lhs_chain",
+     "location": "21",
+     "kind": "chain"
+    }
+   ]
+  },
+  {
+   "slice": "VXM",
+   "name": "Convert",
+   "mnemonic": "convert",
+   "units": [
+    "VXM"
+   ],
+   "timing": "VXM",
+   "assembly": "convert.{type}.{dtype} {dst}, {lhs}{lhs_chain}",
+   "width": 64,
+   "match": "0010100010--------------000000000000-------000--0000000000000000",
+   "variables": [
+    {
+     "name": "type",
+     "location": "53-52",
+     "kind": "eltype_code",
+     "hi_location": "23-22",
+     "top_location": "17",
+     "codes": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      16
+     ],
+     "extension_codes": {
+      "bf16": [
+       16
+      ]
+     }
+    },
+    {
+     "name": "dst",
+     "location": "51-46",
+     "kind": "stream",
+     "streams": "width(dtype)",
+     "align": "width(dtype)"
+    },
+    {
+     "name": "lhs",
+     "location": "45-40",
+     "kind": "stream",
+     "streams": "width(type)",
+     "align": "width(type)"
+    },
+    {
+     "name": "dtype",
+     "location": "27-24",
+     "kind": "eltype4",
+     "top_location": "16",
+     "codes": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11,
+      12,
+      16
+     ],
+     "extension_codes": {
+      "bf16": [
+       16
+      ]
+     }
+    },
+    {
+     "name": "lhs_chain",
+     "location": "21",
+     "kind": "chain"
+    }
+   ]
+  },
+  {
+   "slice": "MXM",
+   "name": "LW",
+   "mnemonic": "lw",
+   "units": [
+    "MXM_W",
+    "MXM_E"
+   ],
+   "timing": "MXM_LW",
+   "assembly": "lw.{type} {src}",
+   "width": 32,
+   "match": "0011000000----00000-000000000000",
+   "variables": [
+    {
+     "name": "type",
+     "location": "21-20",
+     "kind": "mxm_wtype",
+     "hi_location": "12",
+     "values": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "extension_codes": {
+      "bf16": [
+       4
+      ],
+      "block_fp8": [
+       5
+      ]
+     }
+    },
+    {
+     "name": "src",
+     "location": "19-18",
+     "kind": "stream_group16",
+     "streams": 16,
+     "align": 16
+    }
+   ]
+  },
+  {
+   "slice": "MXM",
+   "name": "IW",
+   "mnemonic": "iw",
+   "units": [
+    "MXM_W",
+    "MXM_E"
+   ],
+   "timing": "MXM_IW",
+   "assembly": "iw.{type}",
+   "width": 32,
+   "match": "0011000001--0000000-000000000000",
+   "variables": [
+    {
+     "name": "type",
+     "location": "21-20",
+     "kind": "mxm_wtype",
+     "hi_location": "12",
+     "values": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "extension_codes": {
+      "bf16": [
+       4
+      ],
+      "block_fp8": [
+       5
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "slice": "MXM",
+   "name": "IWS",
+   "mnemonic": "iw",
+   "units": [
+    "MXM_W",
+    "MXM_E"
+   ],
+   "timing": "MXM_IW",
+   "assembly": "iw.{type} {src}",
+   "width": 32,
+   "match": "0011000001----00001-000000000000",
+   "variables": [
+    {
+     "name": "type",
+     "location": "21-20",
+     "kind": "mxm_wtype",
+     "hi_location": "12",
+     "values": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+     ],
+     "extension_codes": {
+      "bf16": [
+       4
+      ],
+      "block_fp8": [
+       5
+      ]
+     }
+    },
+    {
+     "name": "src",
+     "location": "19-18",
+     "kind": "stream_group16",
+     "streams": 16,
+     "align": 16
+    }
+   ]
+  },
+  {
+   "slice": "MXM",
+   "name": "ABC",
+   "mnemonic": "abc",
+   "units": [
+    "MXM_W",
+    "MXM_E"
+   ],
+   "timing": "MXM_ABC",
+   "assembly": "abc.{type} {src}",
+   "width": 32,
+   "match": "0011000010--------0-000000000000",
+   "variables": [
+    {
+     "name": "type",
+     "location": "21-20",
+     "kind": "mxm_wtype",
+     "hi_location": "12",
+     "values": [
+      0,
+      1,
+      2,
+      4,
+      5
+     ],
+     "extension_codes": {
+      "bf16": [
+       4
+      ],
+      "block_fp8": [
+       5
+      ]
+     }
+    },
+    {
+     "name": "src",
+     "location": "19-14",
+     "kind": "stream",
+     "streams": "mxm_width(type)",
+     "align": "mxm_width(type)"
+    }
+   ]
+  },
+  {
+   "slice": "MXM",
+   "name": "ABC8",
+   "mnemonic": "abc",
+   "units": [
+    "MXM_W",
+    "MXM_E"
+   ],
+   "timing": "MXM_ABC",
+   "assembly": "abc.{fmt} {src}",
+   "width": 32,
+   "match": "001100001011-------0000000000000",
+   "variables": [
+    {
+     "name": "fmt",
+     "location": "13",
+     "kind": "fp8_format"
+    },
+    {
+     "name": "src",
+     "location": "19-14",
+     "kind": "stream",
+     "streams": 1,
+     "align": 1
+    }
+   ]
+  },
+  {
+   "slice": "MXM",
+   "name": "ACC",
+   "mnemonic": "acc",
+   "units": [
+    "MXM_W",
+    "MXM_E"
+   ],
+   "timing": "MXM_ACC",
+   "assembly": "acc.{type} {dst}, {mode}, {acc}",
+   "width": 32,
+   "match": "0011000011--------------00000000",
+   "variables": [
+    {
+     "name": "type",
+     "location": "21-20",
+     "kind": "mxm_acctype",
+     "values": [
+      0,
+      2,
+      3
+     ],
+     "extension_codes": {
+      "wide_acc": [
+       0
+      ]
+     }
+    },
+    {
+     "name": "dst",
+     "location": "19-14",
+     "kind": "stream",
+     "streams": 4,
+     "align": 4
+    },
+    {
+     "name": "mode",
+     "location": "13",
+     "kind": "acc_mode"
+    },
+    {
+     "name": "acc",
+     "location": "12",
+     "kind": "acc_index",
+     "hi_location": "11-8",
+     "max_expr": "acc_depth-1"
+    }
+   ]
+  },
+  {
+   "slice": "SXM",
+   "name": "Shift",
+   "mnemonic": "shift",
+   "units": [
+    "SXM_W_SHF",
+    "SXM_E_SHF"
+   ],
+   "timing": "SXM_CROSS",
+   "assembly": "shift {src}, {dir}, {amount}, {dst}",
+   "width": 64,
+   "match": "010000000000----------------------000000000000000000000000000000",
+   "variables": [
+    {
+     "name": "dst",
+     "location": "51-46",
+     "kind": "stream",
+     "streams": 1,
+     "align": 1
+    },
+    {
+     "name": "src",
+     "location": "45-40",
+     "kind": "stream",
+     "streams": 1,
+     "align": 1
+    },
+    {
+     "name": "dir",
+     "location": "39",
+     "kind": "shift_dir"
+    },
+    {
+     "name": "amount",
+     "location": "38-30",
+     "kind": "lane_count",
+     "max_expr": "vlanes-1"
+    }
+   ]
+  },
+  {
+   "slice": "SXM",
+   "name": "Permute",
+   "mnemonic": "permute",
+   "units": [
+    "SXM_W_PRM",
+    "SXM_E_PRM"
+   ],
+   "timing": "SXM_CROSS",
+   "assembly": "permute {src}, {map}, {dst}",
+   "width": 64,
+   "match": "010000000100------------000000----000000000000000000000000000000",
+   "variables": [
+    {
+     "name": "dst",
+     "location": "51-46",
+     "kind": "stream",
+     "streams": 1,
+     "align": 1
+    },
+    {
+     "name": "src",
+     "location": "45-40",
+     "kind": "stream",
+     "streams": 1,
+     "align": 1
+    },
+    {
+     "name": "map",
+     "location": "33-30",
+     "kind": "map_id"
+    }
+   ]
+  },
+  {
+   "slice": "SXM",
+   "name": "Distribute",
+   "mnemonic": "distribute",
+   "units": [
+    "SXM_W_DST",
+    "SXM_E_DST"
+   ],
+   "timing": "SXM",
+   "assembly": "distribute {src}, {map}, {dst}",
+   "width": 64,
+   "match": "010000001000------------000000----000000000000000000000000000000",
+   "variables": [
+    {
+     "name": "dst",
+     "location": "51-46",
+     "kind": "stream",
+     "streams": 1,
+     "align": 1
+    },
+    {
+     "name": "src",
+     "location": "45-40",
+     "kind": "stream",
+     "streams": 1,
+     "align": 1
+    },
+    {
+     "name": "map",
+     "location": "33-30",
+     "kind": "map_id"
+    }
+   ]
+  },
+  {
+   "slice": "SXM",
+   "name": "Rotate",
+   "mnemonic": "rotate",
+   "units": [
+    "SXM_W_TSP",
+    "SXM_E_TSP"
+   ],
+   "timing": "SXM",
+   "assembly": "rotate {src}, {n}, {dst}",
+   "width": 64,
+   "match": "010000001100----------------------000000000000000000000000000000",
+   "variables": [
+    {
+     "name": "dst",
+     "location": "51-46",
+     "kind": "stream",
+     "streams": "n * n",
+     "align": 1
+    },
+    {
+     "name": "src",
+     "location": "45-40",
+     "kind": "stream",
+     "streams": 1,
+     "align": 1
+    },
+    {
+     "name": "n",
+     "location": "39-30",
+     "kind": "tile_size",
+     "values": [
+      3,
+      4
+     ]
+    }
+   ]
+  },
+  {
+   "slice": "SXM",
+   "name": "Transpose",
+   "mnemonic": "transpose",
+   "units": [
+    "SXM_W_TSP",
+    "SXM_E_TSP"
+   ],
+   "timing": "SXM",
+   "assembly": "transpose {src}, {dst}",
+   "width": 64,
+   "match": "010000010000--0000--00000000000000000000000000000000000000000000",
+   "variables": [
+    {
+     "name": "dst",
+     "location": "51-50",
+     "kind": "stream_group16",
+     "streams": 16,
+     "align": 16
+    },
+    {
+     "name": "src",
+     "location": "45-44",
+     "kind": "stream_group16",
+     "streams": 16,
+     "align": 16
+    }
+   ]
+  },
+  {
+   "slice": "SXM",
+   "name": "LoadMap",
+   "mnemonic": "loadmap",
+   "units": [
+    "SXM_W_PRM",
+    "SXM_W_DST",
+    "SXM_E_PRM",
+    "SXM_E_DST"
+   ],
+   "timing": "SXM",
+   "assembly": "loadmap {map}, {src}",
+   "width": 64,
+   "match": "010000010100000000------000000----000000000000000000000000000000",
+   "variables": [
+    {
+     "name": "src",
+     "location": "45-40",
+     "kind": "stream",
+     "streams": 1,
+     "align": 1
+    },
+    {
+     "name": "map",
+     "location": "33-30",
+     "kind": "map_id"
+    }
+   ]
+  },
+  {
+   "slice": "SXM",
+   "name": "LoadMapWide",
+   "mnemonic": "loadmapwide",
+   "units": [
+    "SXM_W_PRM",
+    "SXM_W_DST",
+    "SXM_E_PRM",
+    "SXM_E_DST"
+   ],
+   "timing": "SXM",
+   "assembly": "loadmapwide {map}, {src}, {src2}",
+   "width": 64,
+   "match": "010000011000000000------000000----------000000000000000000000000",
+   "variables": [
+    {
+     "name": "src",
+     "location": "45-40",
+     "kind": "stream",
+     "streams": 1,
+     "align": 1
+    },
+    {
+     "name": "map",
+     "location": "33-30",
+     "kind": "map_id"
+    },
+    {
+     "name": "src2",
+     "location": "29-24",
+     "kind": "stream",
+     "streams": 1,
+     "align": 1
+    }
+   ]
+  },
+  {
+   "slice": "SXM",
+   "name": "SelectS",
+   "mnemonic": "sxselect",
+   "units": [
+    "SXM_W_SEL",
+    "SXM_E_SEL"
+   ],
+   "timing": "SXM",
+   "assembly": "sxselect {a}, {b}, {c}, {sel}, {dst}",
+   "width": 64,
+   "match": "010000011100------------0000000000------------------000000000000",
+   "variables": [
+    {
+     "name": "dst",
+     "location": "51-46",
+     "kind": "stream",
+     "streams": 1,
+     "align": 1
+    },
+    {
+     "name": "a",
+     "location": "45-40",
+     "kind": "stream",
+     "streams": 1,
+     "align": 1
+    },
+    {
+     "name": "b",
+     "location": "29-24",
+     "kind": "stream",
+     "streams": 1,
+     "align": 1
+    },
+    {
+     "name": "sel",
+     "location": "23-18",
+     "kind": "stream",
+     "streams": 1,
+     "align": 1
+    },
+    {
+     "name": "c",
+     "location": "17-12",
+     "kind": "stream",
+     "streams": 1,
+     "align": 1
+    }
+   ]
+  },
+  {
+   "slice": "C2C",
+   "name": "Send",
+   "mnemonic": "send",
+   "units": [
+    "C2C_W_TX",
+    "C2C_E_TX"
+   ],
+   "timing": "C2C",
+   "assembly": "send {chip_id}, {link}, {stream}",
+   "width": 32,
+   "match": "0101000000----------------------",
+   "variables": [
+    {
+     "name": "chip_id",
+     "location": "21-16",
+     "kind": "chip_id",
+     "hi_location": "2-0"
+    },
+    {
+     "name": "stream",
+     "location": "15-10",
+     "kind": "stream",
+     "streams": 1,
+     "align": 1
+    },
+    {
+     "name": "link",
+     "location": "9-6",
+     "kind": "link_id",
+     "hi_location": "5-3"
+    }
+   ]
+  },
+  {
+   "slice": "C2C",
+   "name": "Receive",
+   "mnemonic": "receive",
+   "units": [
+    "C2C_W_RX",
+    "C2C_E_RX"
+   ],
+   "timing": "C2C",
+   "assembly": "receive {chip_id}, {link}, {stream}",
+   "width": 32,
+   "match": "0101000001----------------------",
+   "variables": [
+    {
+     "name": "chip_id",
+     "location": "21-16",
+     "kind": "chip_id",
+     "hi_location": "2-0"
+    },
+    {
+     "name": "stream",
+     "location": "15-10",
+     "kind": "stream",
+     "streams": 1,
+     "align": 1
+    },
+    {
+     "name": "link",
+     "location": "9-6",
+     "kind": "link_id",
+     "hi_location": "5-3"
+    }
+   ]
+  },
+  {
+   "slice": "C2C",
+   "name": "Deskew",
+   "mnemonic": "deskew",
+   "units": [
+    "any"
+   ],
+   "timing": "C2C",
+   "assembly": "deskew",
+   "width": 32,
+   "match": "01010000100000000000000000000000",
+   "variables": []
+  },
+  {
+   "slice": "C2C",
+   "name": "Transmit",
+   "mnemonic": "transmit",
+   "units": [
+    "C2C_W_TX",
+    "C2C_E_TX"
+   ],
+   "timing": "C2C",
+   "assembly": "transmit {chip_id}, {link}",
+   "width": 32,
+   "match": "0101000011------000000----------",
+   "variables": [
+    {
+     "name": "chip_id",
+     "location": "21-16",
+     "kind": "chip_id",
+     "hi_location": "2-0"
+    },
+    {
+     "name": "link",
+     "location": "9-6",
+     "kind": "link_id",
+     "hi_location": "5-3"
+    }
+   ]
+  },
+  {
+   "slice": "C2C",
+   "name": "RuntimeDeskew",
+   "mnemonic": "runtime_deskew",
+   "units": [
+    "any"
+   ],
+   "timing": "C2C",
+   "assembly": "runtime_deskew {t}",
+   "width": 32,
+   "match": "0101000100000000----------------",
+   "variables": [
+    {
+     "name": "t",
+     "location": "15-0",
+     "kind": "imm16"
+    }
+   ]
+  },
+  {
+   "slice": "C2C",
+   "name": "PciReceive",
+   "mnemonic": "pci_receive",
+   "units": [
+    "C2C_W_RX",
+    "C2C_E_RX"
+   ],
+   "timing": "C2C",
+   "assembly": "pci_receive {stream}",
+   "width": 32,
+   "match": "0101000101000000------0000000000",
+   "variables": [
+    {
+     "name": "stream",
+     "location": "15-10",
+     "kind": "stream",
+     "values": [
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31,
+      56,
+      57,
+      58,
+      59,
+      60,
+      61,
+      62,
+      63
+     ],
+     "streams": 1,
+     "align": 1
+    }
+   ]
+  },
+  {
+   "slice": "C2C",
+   "name": "PciSend",
+   "mnemonic": "pci_send",
+   "units": [
+    "C2C_W_TX",
+    "C2C_E_TX"
+   ],
+   "timing": "C2C",
+   "assembly": "pci_send {stream}",
+   "width": 32,
+   "match": "0101000110000000------0000000000",
+   "variables": [
+    {
+     "name": "stream",
+     "location": "15-10",
+     "kind": "stream",
+     "streams": 1,
+     "align": 1
+    }
+   ]
+  },
+  {
+   "slice": "C2C",
+   "name": "HostWait",
+   "mnemonic": "host_wait",
+   "units": [
+    "any"
+   ],
+   "timing": "CU",
+   "assembly": "host_wait {i}",
+   "width": 32,
+   "match": "01010001110000000000000000------",
+   "variables": [
+    {
+     "name": "i",
+     "location": "5-0",
+     "kind": "imm6"
+    }
+   ]
+  },
+  {
+   "slice": "C2C",
+   "name": "HostNotify",
+   "mnemonic": "host_notify",
+   "units": [
+    "any"
+   ],
+   "timing": "CU",
+   "assembly": "host_notify {n}",
+   "width": 32,
+   "match": "0101001000000000000000000000----",
+   "variables": [
+    {
+     "name": "n",
+     "location": "3-0",
+     "kind": "imm4",
+     "not_values": [
+      0
+     ]
+    }
+   ]
+  },
+  {
+   "slice": "C2C",
+   "name": "DeskewRecv",
+   "mnemonic": "deskew_recv",
+   "units": [
+    "C2C_W_RX",
+    "C2C_E_RX"
+   ],
+   "timing": "C2C",
+   "assembly": "deskew_recv {chip_id}, {link}, {stream}",
+   "width": 32,
+   "match": "0101001001----------------------",
+   "variables": [
+    {
+     "name": "chip_id",
+     "location": "21-16",
+     "kind": "chip_id",
+     "hi_location": "2-0"
+    },
+    {
+     "name": "stream",
+     "location": "15-10",
+     "kind": "stream",
+     "streams": 1,
+     "align": 1
+    },
+    {
+     "name": "link",
+     "location": "9-6",
+     "kind": "link_id",
+     "hi_location": "5-3"
+    }
+   ]
+  }
+ ]
+}

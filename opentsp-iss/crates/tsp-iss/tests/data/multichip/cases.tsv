@@ -1,0 +1,24 @@
+# name	profile	arguments	exit code (see gen_corpus.py)
+ref_k2_nominal	ref	--chips 2	0
+ref_k2_latency209	ref	--link-latency 209 --chips 2	0
+ref_k2_latency228	ref	--link-latency 228 --chips 2	0
+ref_k2_latency_seed	ref	--link-latency-seed 7 --chips 2	0
+ref_k2_jitter_seed	ref	--link-jitter-seed 3 --chips 2	0
+ref_k2_max_cycles_ok	ref	--max-cycles 400 --chips 2	0
+ref_k2_max_cycles_stop	ref	--max-cycles 300 --chips 2	3
+ref_k3_nominal	ref	--chips 3	0
+ref_k5_latency_seed	ref	--link-latency-seed 11 --chips 5	0
+ref_k8_nominal	ref	--chips 8	0
+ref_k8_latency220	ref	--link-latency 220 --chips 8	0
+ref_k8_latency_seed	ref	--link-latency-seed 2 --chips 8	0
+ref_k8_jitter_seed	ref	--link-jitter-seed 9 --chips 8	0
+ref_k16_nominal	ref	--chips 16	0
+ref_k16_latency215	ref	--link-latency 215 --chips 16	0
+ref_k16_latency_seed	ref	--link-latency-seed 5 --chips 16	0
+ref_k16_jitter_seed	ref	--link-jitter-seed 21 --chips 16	0
+mini_k2_nominal	mini	--chips 2	0
+mini_k8_nominal	mini	--chips 8	0
+mini_k16_jitter_seed	mini	--link-jitter-seed 4 --chips 16	0
+tight_k2_burst	test/link_tight	--chips 2	0
+tight_k8_burst	test/link_tight	--link-latency 212 --chips 8	0
+tight_k16_jitter_seed	test/link_tight	--link-jitter-seed 6 --chips 16	0

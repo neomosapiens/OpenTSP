@@ -1,0 +1,37 @@
+# Instruction catalogue entry. Sail (model/) is normative; test/isa_db/check_isa_db.py
+# checks this file against the model's encdec and assembly mappings.
+$schema: opentsp.isa-db.instruction
+spec_version: '0.1'
+name: Send
+mnemonic: send
+long_name: Chip-to-chip send
+slice: C2C
+units:
+- C2C_W_TX
+- C2C_E_TX
+timing: C2C
+encoding:
+  width: 32
+  match: 0101000000----------------------
+  variables:
+  - name: chip_id
+    location: 21-16
+    kind: chip_id
+    hi_location: 2-0
+  - name: stream
+    location: 15-10
+    kind: stream
+  - name: link
+    location: 9-6
+    kind: link_id
+    hi_location: 5-3
+assembly: send {chip_id}, {link}, {stream}
+operation: 'Reads stream at the TX gap and puts the vector on link `link` (0 .. c2c.links - 1; 16 links in the published
+  chip, ISCA20 sec. II; at most 128: the link number is 4 bits plus 3 bits in the low reserved bits, and the chip
+  number 6 bits plus 3 bits there); it arrives at chip_id after the link''s latency (c2c.link_latency_min .. c2c.link_latency_max).
+  link >= c2c.links or chip_id not the link''s peer: OTS-E-OPR-001. A link accepts one vector per c2c.cycles_per_vector
+  cycles: a Send on a link that accepted a vector fewer cycles before is OTS-E-LNK-001 and sends nothing (checked
+  after OPR-001, before the stream is read); a Send released into the cycles of a csr or ctrl packet in flight on
+  the link is OTS-E-LNK-003 and sends nothing (checked after LNK-001). ISCA20 Table I; ISCA22 sec. 2.2, 2.3, Table
+  2.'
+definedBy: ref

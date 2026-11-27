@@ -1,0 +1,14 @@
+[tasks]
+prove
+cover
+[options]
+prove: mode prove
+cover: mode cover
+depth 12
+[engines]
+smtbmc boolector
+[script]
+read -formal ras_commit.sv
+prep -top ras_commit
+[files]
+ras_commit.sv

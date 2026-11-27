@@ -1,0 +1,44 @@
+{
+ "schema": "opentsp.program-case",
+ "version": 1,
+ "spec_version": "0.1",
+ "name": "basic/vec_add",
+ "profile": "mini",
+ "program": "vec_add.mini.ots",
+ "tags": [
+  "sim",
+  "e2e"
+ ],
+ "weights": {
+  "x": {
+   "dtype": "i8",
+   "words": 1,
+   "hex": "4420823cfde6f1c26b30f90ec7dd01e4"
+  },
+  "y": {
+   "dtype": "i8",
+   "words": 1,
+   "hex": "887534a20f0b0d04c36ed80e71e0fd77"
+  }
+ },
+ "preload": {},
+ "dump": [
+  "44:9"
+ ],
+ "expect": {
+  "asm_warnings": [],
+  "diagnostics": [],
+  "words": {
+   "44:9": "cc95b6de0cf1fec62e9ed11c38bdfe5b"
+  },
+  "decoded": null
+ },
+ "golden": {
+  "source": "hand",
+  "generator": "gen/basic.py:vec_add",
+  "seed": 1
+ },
+ "budget": {
+  "cycles": 31
+ }
+}

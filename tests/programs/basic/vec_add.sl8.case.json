@@ -1,0 +1,44 @@
+{
+ "schema": "opentsp.program-case",
+ "version": 1,
+ "spec_version": "0.1",
+ "name": "basic/vec_add",
+ "profile": "test/sl8",
+ "program": "vec_add.sl8.ots",
+ "tags": [
+  "sim",
+  "e2e"
+ ],
+ "weights": {
+  "x": {
+   "dtype": "i8",
+   "words": 1,
+   "hex": "4420823cfde6f1c26b30f90ec7dd01e4887534a20f0b0d04c36ed80e71e0fd77b07670eb940bd5335f973daad8619b91ffc911f57cced458bbbf2ce03753c9bdfa0ff0169dc9575674066676cfb0b4eb8902c44269da1cf6ba66d3f8b6d4b100a9ea0e755a5c2e8210242a08e7078f7f89385eb09423555182568b96e8a4fef2"
+  },
+  "y": {
+   "dtype": "i8",
+   "words": 1,
+   "hex": "3a0c9fc5afd7608437816bdd0a7309cb4a1252e4da70e6720fcaa4da1e98406c189c24279e9851d5814204136feb5713c166b13269dd63fc35c797ff08a6cd90095066a745addb6d8831c2b0f87821142b4456556d89aa82bcadae3a9578fa4535a414d025c24b40ae3ac127722988ba973aea8d37179706072ed33a14607ad7"
+  }
+ },
+ "preload": {},
+ "dump": [
+  "44:9"
+ ],
+ "expect": {
+  "asm_warnings": [],
+  "diagnostics": [],
+  "words": {
+   "44:9": "7e2c2101acbd5146a2b164ebd1500aafd2878686e97bf376d2387ce88f783de3c812941232a32608e0d941bd474cf2a4c02fc227e5ab3754f086c3df3ff9964d035f56bde27632c3fc372826c728d5ffb4461a97d663c678761381324b4cab45de8e22457f1e79c2be5eeb2f593017392072483dcb3aec5789845ed0fc0478c9"
+  },
+  "decoded": null
+ },
+ "golden": {
+  "source": "hand",
+  "generator": "gen/basic.py:vec_add",
+  "seed": 1
+ },
+ "budget": {
+  "cycles": 31
+ }
+}

@@ -1,0 +1,26 @@
+{
+ "schema": "opentsp.program-case",
+ "version": 1,
+ "spec_version": "0.1",
+ "name": "mem/rw_pair_static",
+ "profile": "mini",
+ "program": "rw_pair_static.mini.ots",
+ "tags": [],
+ "weights": {},
+ "preload": {},
+ "dump": [],
+ "expect": {
+  "asm_warnings": [],
+  "diagnostics": [],
+  "words": {},
+  "decoded": null,
+  "asm_error": "OTS-E-MEM-001"
+ },
+ "golden": {
+  "source": "hand",
+  "generator": "gen/mem.py:rw_pair_static"
+ },
+ "budget": {
+  "cycles": 16
+ }
+}

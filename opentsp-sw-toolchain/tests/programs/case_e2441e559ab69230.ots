@@ -1,0 +1,6 @@
+.arch opentsp-tsa
+.profile ref
+.section text
+bundle @cycle=0 {
+  CU: ifetch E:2
+}

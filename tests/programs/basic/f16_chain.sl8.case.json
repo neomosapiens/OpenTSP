@@ -1,0 +1,75 @@
+{
+ "schema": "opentsp.program-case",
+ "version": 1,
+ "spec_version": "0.1",
+ "name": "basic/f16_chain",
+ "profile": "test/sl8",
+ "program": "f16_chain.sl8.ots",
+ "tags": [
+  "sim"
+ ],
+ "weights": {
+  "xp0": {
+   "dtype": "raw",
+   "words": 1,
+   "hex": "000094cb3fb150a3331c0427522736d0899dd00d001ff1ecd9e62a1ca5e110777e1b74ab291dd64091695f0a5c0a0b039747bc26c436c4546c7282e3190795e15821dc8f38db9aee94b15c19b2ad4f8ba4fb13d953404da88044c4b796060daf6c8886e79eba78873e5e2dc9fcf9074b080dcb8481afa9d3595ce876cb7970d0"
+  },
+  "xp1": {
+   "dtype": "raw",
+   "words": 1,
+   "hex": "00802c33c5b1d3bdaad04fca29cbc5c9c441b4d15345353fbf26aa39bc2fb2a8ce3f32cb50b24d48ca3f4e29ab523a3744b342cfc82bd04447afd33551ac2a4e43b5505227c3c8c5c3bdbeb02ab74753d2ac2750c748cb34cd414234b53445bda4a62dbac2d14b32bfc54eb847ac39cc35274a30b951b6b1aecf2e41adc9c4c0"
+  },
+  "yp0": {
+   "dtype": "raw",
+   "words": 1,
+   "hex": "0000dea9da8a44164e3f5fda035a878c5b7fad54b57d7874dd5e8777213b26a9aec5a81843dc95ca660543aa1c343bffb34eded55a398b3e7b0099ca98574335d88def03773c8f304652164e3912224cfc823a53b682c9f9fa17eb2ada1d1da71037b3f1817efe2655354f40b2a8a4c5c28886b4d16a2cb67dddc4556ec840eb"
+  },
+  "yp1": {
+   "dtype": "raw",
+   "words": 1,
+   "hex": "008040b9c5b7b140d3b0c02babb924c1bd37c95053b640b02948b6ba34b3c733a6d244504843d2332947442c5132d2bdad36ab353f50512ec64135a7beaa48acc8503bc4b5ccc6a434c4393abbb53dc732b03b3f38b2c43441bec92a2833d13b263930c9a542253c4bcc2bafabaaa435b9aa4dbe48bd3e2934c72ebfc1bb53d3"
+  },
+  "zp0": {
+   "dtype": "raw",
+   "words": 1,
+   "hex": "0000c6288defa2f1e37d8db224bf64ffa8bf516dea864ec7ddf82c4ebe9cdcb4e14d2702e761a205b54a348b6ddbb4494c475c5612841a2cfdd3bd7c8904b9eee7ef26702b7977a987edee529416f290fdb94959c2e06889f22415cde8a76455997940a072b0bd5c022769186dbb04d90aa2cc247058e0661fc85242dffd640e"
+  },
+  "zp1": {
+   "dtype": "raw",
+   "words": 1,
+   "hex": "00803ad2afbacd312dbf40b54a2946bdd14a4dce26d0a9b733b3a8ab333bae4a26ae534e4c44bfaf48434d4a4dd0a4a83c484c4bceac4a322550bdb735b2c7c436a9b3b94a353b3faa433ac34739374dc9cc47514e3851c5c838b733a4405150b6c9c633c32fcfcac244d0cebb29504cc338acb1d2b7ac524ed1beab5031c846"
+  },
+  "wp0": {
+   "dtype": "raw",
+   "words": 1,
+   "hex": "000010929e180a4fba2a8c6f3b64c3d737da0fdd96d8b3e01570c9b3405ae35a0ae45b8d034fbccff2375bf7e307be236ef15d2889396cdcc986b19f060ce809d38a06b0a923b9272b6f130324f76b737cd7699bcd9810c57810c130fbdf5180e3c05bb570392813f65451ff33e083bcd9622da27681e7494fbdd89304913db8"
+  },
+  "wp1": {
+   "dtype": "raw",
+   "words": 1,
+   "hex": "0080cdcfb734c4a95327adc349adc053abadb1b34150493ec350d3ca482bb3afc8b5264f523453bbb1b8bfb24348cda5b4aecd4830c3ae3c5234aeaab4ba465332c3d3bfbdd0d04dac50cad1b5464f334942d334344aa5282db835cc50383dc0b52acdb3c751c043c4b546bfc9c9c2ca244ad2323c2c3f434fbfc33dd3aeaeb2"
+  }
+ },
+ "preload": {},
+ "dump": [
+  "44:32",
+  "45:32"
+ ],
+ "expect": {
+  "asm_warnings": [],
+  "diagnostics": [],
+  "words": {
+   "44:32": "00003a00d80a5439d05b0414ae82bada662bbaef8748fb263680d9d0d73fb0bf429bc37ad831aaa8bbff177d276e82754c4ea040f58b95d5e828a8d4e73ac3ed5f0922bc4eb4942546361e6368ced8b9bdd8623b2686f6e5357b450af0d24efc3122dc5f3f4084f0e29733c6ceeb6072d0a9e4f42e770ed7bd584a78feeb967d",
+   "45:32": "0080ccd5c9bdd53a42d04fcc4dcbbc51d24c48cf57474a42c551d3ca473bc74ad0d2535456484f47c349524a544cd4bc4548b9c5cf4f4c455251d3b150bc4754c550cc5149d2d24cc350cad146465054d2cbd2554d4d4dc4cf3cc8cc5042484fbac9cecacbb9ccc744ccc4cec2c94fc9c34acabdd151425252d5c540ccc951d3"
+  },
+  "decoded": null
+ },
+ "golden": {
+  "source": "hand",
+  "generator": "gen/basic.py:f16_chain",
+  "seed": 1
+ },
+ "budget": {
+  "cycles": 41
+ }
+}

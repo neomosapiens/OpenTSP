@@ -1,0 +1,4 @@
+.arch opentsp-tsa
+.profile ref
+.section text
+.extern x, slice=4, addr=0x0, size=0x1

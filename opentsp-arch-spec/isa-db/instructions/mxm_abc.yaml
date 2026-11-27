@@ -1,0 +1,47 @@
+# Instruction catalogue entry. Sail (model/) is normative; test/isa_db/check_isa_db.py
+# checks this file against the model's encdec and assembly mappings.
+$schema: opentsp.isa-db.instruction
+spec_version: '0.1'
+name: ABC
+mnemonic: abc
+long_name: Activation buffer control
+slice: MXM
+units:
+- MXM_W
+- MXM_E
+timing: MXM_ABC
+encoding:
+  width: 32
+  match: 0011000010--------0-000000000000
+  variables:
+  - name: type
+    location: 21-20
+    kind: mxm_wtype
+    hi_location: '12'
+    values:
+    - 0
+    - 1
+    - 2
+    - 4
+    - 5
+    extension_codes:
+      bf16:
+      - 4
+      block_fp8:
+      - 5
+  - name: src
+    location: 19-14
+    kind: stream
+assembly: abc.{type} {src}
+operation: 'product[r] = sum_k W[r][k] * x[k] over vlanes inputs; up to mxm.rows output rows for i8/u8 and mxm.f16_rows
+  for f16, remaining lanes zero (i8/u8: exact, 32-bit wrap; the weight sign is the installed type, the activation
+  sign the ABC type, so i8 and u8 mix; f16 and bf16: exact sum rounded once to f32, weights of the same type only;
+  bf16 (type code 4, the weight-type bit 12) exists only in a profile that declares the extension `bf16`, and has
+  the capacity, plane pair and rate of f16; type 3 with mode bit 13 is the entry ABC8). Needs IW committed. FP16
+  and bf16 use an even/odd plane pair and accepts an ABC every timing.mxm_abc.occupancy_f16 cycles (1 in the shipped
+  profiles); an earlier issue is OTS-E-RES-001. The type bfp8 (extension `block_fp8`, code 5: the weight-type bit
+  12 set with bits 21..20 = 1) reads the activation as a stream pair (e4m3 data at src, block scales at src + 1)
+  and needs bfp8 weights; a block is the 16 lanes of one superlane with the scale of its first lane (the low four
+  bits, a two''s-complement exponent -8..7), the value of a lane is its e4m3 element times 2 to the power of the
+  block scale, the products and the sum are exact, and the plane pair and the initiation interval are those of f16.'
+definedBy: ref

@@ -1,0 +1,7 @@
+.arch opentsp-tsa
+.profile ref
+.section text
+bundle @cycle=3 {
+  VXM[0]: host_wait 0x1
+  VXM[0]: host_notify 0x1
+}

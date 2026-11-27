@@ -1,0 +1,75 @@
+{
+ "schema": "opentsp.program-case",
+ "version": 1,
+ "spec_version": "0.1",
+ "name": "basic/f16_chain",
+ "profile": "mini",
+ "program": "f16_chain.mini.ots",
+ "tags": [
+  "sim"
+ ],
+ "weights": {
+  "xp0": {
+   "dtype": "raw",
+   "words": 1,
+   "hex": "000094cb3fb150a3331c0427522736d0"
+  },
+  "xp1": {
+   "dtype": "raw",
+   "words": 1,
+   "hex": "0080b437cd2d3fb126c8a732b93ba9d1"
+  },
+  "yp0": {
+   "dtype": "raw",
+   "words": 1,
+   "hex": "000074ab291dd64091695f0a5c0a0b03"
+  },
+  "yp1": {
+   "dtype": "raw",
+   "words": 1,
+   "hex": "00803e4b2446c9c84eaf3ec9372eba27"
+  },
+  "zp0": {
+   "dtype": "raw",
+   "words": 1,
+   "hex": "0000dc8f38db9aee94b15c19b2ad4f8b"
+  },
+  "zp1": {
+   "dtype": "raw",
+   "words": 1,
+   "hex": "008030aec74b4cad4fc932a44acb3bab"
+  },
+  "wp0": {
+   "dtype": "raw",
+   "words": 1,
+   "hex": "000086e79eba78873e5e2dc9fcf9074b"
+  },
+  "wp1": {
+   "dtype": "raw",
+   "words": 1,
+   "hex": "0080d14a2e454baaabb526b8bbc0bdb8"
+  }
+ },
+ "preload": {},
+ "dump": [
+  "44:32",
+  "45:32"
+ ],
+ "expect": {
+  "asm_warnings": [],
+  "diagnostics": [],
+  "words": {
+   "44:32": "0000576205e8e06a1203274018368ee2",
+   "45:32": "0080d14fcf4e4dc853cd3fc94accbcd1"
+  },
+  "decoded": null
+ },
+ "golden": {
+  "source": "hand",
+  "generator": "gen/basic.py:f16_chain",
+  "seed": 1
+ },
+ "budget": {
+  "cycles": 41
+ }
+}

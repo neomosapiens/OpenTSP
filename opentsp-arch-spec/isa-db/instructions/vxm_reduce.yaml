@@ -1,0 +1,59 @@
+# Instruction catalogue entry. Sail (model/) is normative; test/isa_db/check_isa_db.py
+# checks this file against the model's encdec and assembly mappings.
+$schema: opentsp.isa-db.instruction
+spec_version: '0.1'
+name: Reduce
+mnemonic: reduce
+long_name: Superlane reduction
+slice: VXM
+units:
+- VXM
+timing: VXM
+encoding:
+  width: 64
+  match: 0010100001--------------000000000000-------000-00000000000000000
+  variables:
+  - name: type
+    location: 53-52
+    kind: eltype_code
+    hi_location: 23-22
+    top_location: '17'
+    codes:
+    - 0
+    - 1
+    - 2
+    - 3
+    - 4
+    - 5
+    - 6
+    - 7
+    - 11
+    - 12
+    - 16
+    extension_codes:
+      bf16:
+      - 16
+  - name: dst
+    location: 51-46
+    kind: stream
+  - name: lhs
+    location: 45-40
+    kind: stream
+  - name: mode
+    location: 27-24
+    kind: reduce_op
+    values:
+    - 0
+    - 1
+    - 2
+  - name: lhs_chain
+    location: '21'
+    kind: chain
+assembly: reduce.{mode}.{type} {dst}, {lhs}{lhs_chain}
+operation: 'Per superlane g: lane 16g = add/max/min over lanes 16g..16g+15, folded in ascending lane order (acc
+  = lane 16g; acc = op(acc, lane 16g+j) for j = 1..15), each step rounded to nearest even in the element type for
+  floats, wrapping for integers (opentsp decision: no source gives the order); other lanes zero; types: signed integer,
+  unsigned integer, float, fp8 or bf16 (extension) (i8, f16, i32, f32, u8, i16, u16, u32, e4m3, e5m2, bf16). A source
+  written `x.chain` (chain bit set) is the VXM result committed at the VXM station in the cycle before the read
+  (ALU chaining, ISCA20 sec. III-C); otherwise the stream value that flows to the station.'
+definedBy: ref

@@ -1,0 +1,28 @@
+# Instruction catalogue entry. Sail (model/) is normative; test/isa_db/check_isa_db.py
+# checks this file against the model's encdec and assembly mappings.
+$schema: opentsp.isa-db.instruction
+spec_version: '0.1'
+name: SetVL
+mnemonic: setvl
+long_name: Set vector length
+slice: CU
+units:
+- any
+timing: CU
+encoding:
+  width: 32
+  match: 00000001100000000000000000------
+  variables:
+  - name: n
+    location: 5-0
+    kind: imm6
+    not_values:
+    - 0
+    max: 32
+assembly: setvl {n}
+operation: 'Vector length of the issuing queue = n x 16 lanes, n = 1..32 on every profile (a profile has at most
+  32 superlanes; n above the profile''s superlane count is the count: clamped). Inactive superlanes make no SRAM
+  data changes and produce zero stream output; input integrity checks remain active. This is an opentsp output/storage
+  mask, not a power-gating model. ISCA20 sec. II-F motivates activity control but does not specify this instruction
+  or its masking semantics.'
+definedBy: ref

@@ -1,0 +1,21 @@
+[package]
+name = "ots-asm"
+version = "0.1.0"
+edition = "2021"
+description = "Assembler and disassembler of opentsp specification 0.1: instruction parser (A3), program files, bundle checks and lowering (A4); listing and objects follow"
+
+[lib]
+name = "ots_asm"
+path = "src/lib.rs"
+
+[[bin]]
+name = "ots-asm"
+path = "src/main.rs"
+
+[dependencies]
+ots-isa = { path = "../ots-isa" }
+ots-format = { path = "../ots-format" }
+ots-profile = { path = "../ots-profile" }
+regex = "1"
+serde_json = "1"
+num-bigint = "0.4"

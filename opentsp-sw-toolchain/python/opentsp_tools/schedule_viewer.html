@@ -1,0 +1,411 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OpenTSP Schedule Explorer</title>
+<style>
+:root{color-scheme:dark;--page:#0b111a;--panel:#111b27;--line:#26364a;--muted:#9caec4;--ink:#f2f6fc;--blue:#68c9ff;--gap:#ffc477;--wait:#ff8391;font:14px/1.45 system-ui,sans-serif}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 25% 0%,#15273b 0%,var(--page) 50%);color:var(--ink)}button,select,input{font:inherit;color:inherit;background:#172436;border:1px solid #354a62;border-radius:7px;padding:7px 10px}button{cursor:pointer}button:hover,button:focus-visible{border-color:var(--blue)}button:disabled{opacity:.45;cursor:default}button[aria-pressed=true]{background:#254768;border-color:#68c9ff}main{max-width:1620px;margin:auto;padding:34px 36px 24px}header{display:flex;align-items:end;justify-content:space-between;gap:30px;margin-bottom:24px}h1{font-size:clamp(28px,3vw,43px);margin:0;letter-spacing:-.04em;line-height:1.1}h2{margin:0;font-size:16px}p{margin:6px 0;color:var(--muted)}.metrics{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:18px}.metric{flex:1;min-width:185px;background:#132133;border:1px solid var(--line);padding:12px 16px;border-radius:10px}.metric small{color:var(--muted);display:block}.metric strong{font-size:25px;letter-spacing:-.045em}.metric em{font-style:normal;color:#8de2c1}.layout{display:grid;grid-template-columns:minmax(0,1fr) 318px;gap:16px;align-items:start}.panel{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}.controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:13px 14px;border-bottom:1px solid var(--line)}label{display:flex;gap:7px;align-items:center;color:#c0cddd}input[type=number]{width:77px}label input[type=checkbox]{accent-color:#68c9ff}.tools{margin-left:auto;display:flex;gap:5px}.legend{display:flex;gap:15px;flex-wrap:wrap;color:var(--muted);padding:8px 15px;font-size:12px}.legend b{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px}.surface{overflow:auto;max-height:65vh;border-block:1px solid var(--line)}canvas{display:block;width:100%;cursor:crosshair;outline-offset:-2px;touch-action:none}.inspect{min-height:53px;padding:10px 14px;color:#c2d1e2;font-size:13px}.inspect strong{color:var(--ink)}aside h2,aside p{padding-inline:14px}aside h2{padding-top:13px}.ranking{display:grid;max-height:60vh;overflow:auto;padding:6px 8px 8px;gap:3px}.rank{width:100%;display:grid;grid-template-columns:1fr auto;text-align:left;border:1px solid transparent;background:#142131;padding:7px 9px}.rank:hover,.rank.selected{background:#243148;border-color:#936339}.rank span:nth-child(2){color:var(--gap);font-variant-numeric:tabular-nums}.rank small{color:var(--muted);grid-column:1/-1}.muted{color:var(--muted)}footer{color:var(--muted);font-size:12px;margin-top:13px}.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}@media(max-width:960px){main{padding:20px 16px}.layout{grid-template-columns:1fr}.ranking{max-height:32vh}.tools{margin-left:0}.surface{max-height:55vh}}@media(max-width:520px){header{display:block}.metric strong{font-size:22px}.controls{gap:7px}}
+</style>
+</head>
+<body>
+<main>
+<header><div><h1>OpenTSP Schedule Explorer</h1><p>Explicit issue, queue gaps, and sampled waits</p></div></header>
+<section class="metrics" id="metrics" aria-label="Measured route timing"></section>
+<div class="layout">
+<section class="panel" aria-label="Schedule timeline">
+<div class="controls">
+<label>Stage <select id="chip"></select></label>
+<label>Unit <select id="group"></select></label>
+<label>Queue <select id="queue"></select></label>
+<label>Range <select id="scope"><option value="template">Stage template</option><option value="wave">Full wave</option></select></label>
+<label>View <select id="mode"><option value="group">Unit lanes</option><option value="queue">Queue lanes</option></select></label>
+<label>Gap type <select id="gapType" disabled><option value="all">Any gap</option><option value="within">Within panel</option><option value="between">Between panels</option></select></label>
+<label>Min. gap <input id="threshold" type="number" min="1" step="1" value="256" aria-label="Minimum gap in cycles"></label>
+<label><input id="showWait" type="checkbox" checked> ISS waits</label>
+<div class="tools"><button id="out" type="button" title="Zoom out">−</button><button id="in" type="button" title="Zoom in">+</button><button id="left" type="button" title="Pan left">←</button><button id="right" type="button" title="Pan right">→</button><button id="reset" type="button">Reset view</button></div>
+</div>
+<div class="legend"><span><b style="background:#59b8ee"></b>Explicit issue · brighter means denser</span><span><b style="background:#ffc477"></b>Ranked issue gap</span><span><b style="background:#ff8391"></b>Sampled ISS wait</span></div>
+<div class="surface"><canvas id="timeline" tabindex="0" aria-label="Issue timeline. Use arrow keys to pan, plus or minus to zoom."></canvas></div>
+<div class="inspect" id="inspect" aria-live="polite"></div>
+</section>
+<aside class="panel" aria-label="Ranked issue gaps"><h2>Largest issue gaps</h2><p id="rank-caption"></p><div class="ranking" id="ranking"></div></aside>
+</div>
+<footer>Issue gaps lie between explicit parcels on one queue. Implicit Repeat and address-generator effects and in-flight occupancy can overlap them. Wait markers show sampled callbacks on the captured chip and queues. Static cycles are relative to the program template. Full-wave view repeats those templates using the measured pair period and boot origin.</footer>
+</main>
+<script id="schedule-data" type="application/json">/*__SCHEDULE_DATA__*/</script>
+<script>
+"use strict";
+const data = JSON.parse(document.querySelector("#schedule-data").textContent);
+const id = (name) => document.getElementById(name);
+const nf = new Intl.NumberFormat("en-US");
+const fmt = (v) => nf.format(v);
+const chipSelect = id("chip"), unitSelect = id("group"), modeSelect = id("mode"), queueSelect = id("queue");
+const cv = id("timeline"), ctx = cv.getContext("2d"), ranking = id("ranking");
+const colors = ["#60bce7", "#a9dc9f", "#bdabff", "#80cce7", "#f39fa8", "#b6bed1"];
+const active = [...new Set(data.routes.flatMap(r=>r.chips.flatMap((c,i)=>c.queues.length?[i]:[])))].sort((a,b)=>a-b);
+if (!active.length) active.push(0);
+const state = {chip:active.includes(data.traces[0]?.chip)?data.traces[0].chip:active[0], group:-1, queue:-1, scope:"template", gapType:"all", mode:"group", threshold:256, start:0, end:1, selected:null};
+const GUTTER = 104, RIGHT = 20, HEADER = 49, ROW = 26;
+let width = 0, tracks = [], ranked = [], limit = 0, origin = 0, drag = null, displayed = [];
+
+function unpack(encoded, cumulative) {
+  const raw = atob(encoded), values = [];
+  let value = 0, shift = 0, prior = 0;
+  for (let i=0; i<raw.length; i++) {
+    const byte = raw.charCodeAt(i);
+    value += (byte & 127) * 2 ** shift;
+    if (byte & 128) { shift += 7; continue; }
+    prior = cumulative ? prior + value : value;
+    values.push(prior);
+    value = 0;
+    shift = 0;
+  }
+  return Float64Array.from(values);
+}
+for (const route of data.routes) {
+  for (const chip of route.chips) {
+    chip.queues = chip.queues.map(([q,g,name,cycles,ops]) =>
+      ({q,g,name,cycles:unpack(cycles,true),ops:unpack(ops,false)}));
+  }
+  const card = document.createElement("div");
+  card.className = "metric";
+  const label = document.createElement("small");
+  label.textContent = route.label;
+  card.append(label);
+  if (route.observed) {
+    const v = document.createElement("strong");
+    v.textContent = fmt(route.observed.cycles);
+    card.append(v, " wave cycles");
+    const period = document.createElement("small");
+    period.textContent = fmt(route.observed.period) + " cycles per panel · ISS measured";
+    card.append(period);
+  } else {
+    const v = document.createElement("strong");
+    v.textContent = route.manifest.slice(0,12);
+    card.append(v);
+    const t = document.createElement("small");
+    t.textContent = route.profile + " · " + route.panel + " rows per panel";
+    card.append(t);
+  }
+  if (route.incomplete) card.append(" · fetched text incomplete");
+  id("metrics").append(card);
+}
+if (data.routes.length === 2 && data.routes.every(r=>r.observed)) {
+  const change = 100*(data.routes[1].observed.cycles/data.routes[0].observed.cycles-1);
+  const card = document.createElement("div");
+  card.className = "metric";
+  card.innerHTML = "<small>Wave cycle change</small><strong><em></em></strong>";
+  card.querySelector("em").textContent = (change>0?"+":"") + change.toFixed(2) + "%";
+  const period = document.createElement("small");
+  period.textContent = fmt(data.routes[0].observed.period - data.routes[1].observed.period) + " fewer cycles per panel";
+  if (change > 0) {
+    card.querySelector("em").style.color = "var(--wait)";
+    period.textContent = fmt(data.routes[1].observed.period - data.routes[0].observed.period) + " more cycles per panel";
+  }
+  card.append(period);
+  id("metrics").append(card);
+}
+for (const i of active) chipSelect.add(new Option("Stage "+i,i));
+unitSelect.add(new Option("All units",-1));
+data.groups.forEach((g,i)=>unitSelect.add(new Option(g,i)));
+chipSelect.value = String(state.chip);
+id("showWait").disabled = data.traces.length === 0;
+const waveAvailable = !data.window && data.routes.every(r=>r.observed && !r.incomplete &&
+  r.chips.every(c=>c.queues.every(q=>q.cycles.at(-1)-q.cycles[0]<r.observed.period &&
+    r.observed.boot+(r.observed.rows/r.panel-1)*r.observed.period+q.cycles.at(-1)<=r.observed.cycles)));
+id("scope").querySelector('option[value="wave"]').disabled = !waveAvailable;
+function expandWave(route, queues) {
+  const {rows,period,boot} = route.observed, groups=rows/route.panel;
+  return queues.map(q=>{
+    const cycles=new Float64Array(q.cycles.length*groups);
+    const ops=new Float64Array(cycles.length);
+    for(let i=0;i<groups;i++) {
+      const from=i*q.cycles.length, delta=boot+i*period;
+      for(let j=0;j<q.cycles.length;j++) cycles[from+j]=q.cycles[j]+delta;
+      ops.set(q.ops,from);
+    }
+    return {...q, cycles, ops, panelIssues:q.cycles.length};
+  });
+}
+function bisect(a, v) {
+  let left=0, right=a.length;
+  while (left<right) {
+    const mid = Math.floor((left+right)/2);
+    if (a[mid]<v) left=mid+1; else right=mid;
+  }
+  return left;
+}
+function included(q) {
+  return (state.group<0 || q.g===state.group) && (state.queue<0 || q.q===state.queue);
+}
+function queueOptions() {
+  const options=new Map();
+  for (const route of data.routes) for (const q of (route.chips[state.chip]?.queues ?? [])) {
+    if (state.group<0 || q.g===state.group) options.set(q.q,q.name);
+  }
+  queueSelect.replaceChildren(new Option("Any queue",-1));
+  for (const [q,name] of [...options].sort((a,b)=>a[0]-b[0])) queueSelect.add(new Option("Q"+q+" · "+name,q));
+  if (!options.has(state.queue)) state.queue=-1;
+  queueSelect.value=String(state.queue);
+}
+function makeRows() {
+  const all = displayed;
+  const names = new Map();
+  for (const list of all) for (const q of list)
+    if (included(q)) names.set(state.mode==="group"?q.g:q.q,q);
+  const keys = [...names.keys()].sort((a,b)=>a-b);
+  tracks = [];
+  data.routes.forEach((route, ri) => {
+    tracks.push({heading:route.label, ri});
+    for (const key of keys) {
+      const member = names.get(key);
+      const queues = all[ri].filter(q=>included(q)&&(state.mode==="group"?q.g:q.q)===key);
+      tracks.push({ri, queues, group:member.g, label:state.mode==="group"?data.groups[key]:member.name});
+    }
+  });
+}
+function setView(start,end) {
+  const floor=data.window?.[0]??0;
+  const span = Math.min(limit-floor,Math.max(8,end-start));
+  state.start = Math.max(floor,Math.min(limit-span,start));
+  state.end = state.start+span;
+  draw();
+}
+function reset() {setView(origin,limit);}
+function rankGaps() {
+  const keep=[];
+  data.routes.forEach((route,ri)=>{
+    for (const q of displayed[ri]) {
+      if (!included(q)) continue;
+      for (let i=1; i<q.cycles.length; i++) {
+        const a=q.cycles[i-1]+1, b=q.cycles[i], n=b-a;
+        const boundary = q.panelIssues > 0 && i % q.panelIssues === 0;
+        if (state.scope==="wave" && state.gapType!=="all" && (state.gapType==="between")!==boundary) continue;
+        if (n>=state.threshold) keep.push({ri,q,a,b,n,i,boundary});
+      }
+    }
+  });
+  keep.sort((a,b)=>b.n-a.n||a.ri-b.ri||a.q.q-b.q.q||a.a-b.a);
+  ranked=keep;
+  id("rank-caption").textContent = fmt(keep.length)+" gaps ≥ "+fmt(state.threshold)+" cycles on stage "+state.chip;
+  ranking.replaceChildren();
+  for (const g of keep.slice(0,80)) {
+    const b=document.createElement("button");
+    b.className="rank";
+    const label=document.createElement("span"), count=document.createElement("span"), range=document.createElement("small");
+    label.textContent=data.routes[g.ri].label+" · Q"+g.q.q;
+    count.textContent=fmt(g.n)+" cyc";
+    range.textContent=fmt(g.a)+"–"+fmt(g.b-1)+" · "+g.q.name+(g.boundary?" · between panels":"");
+    b.append(label,count,range);
+    b.onclick=()=>selectGap(g,b);
+    ranking.append(b);
+  }
+  if (!keep.length) {
+    const e=document.createElement("div");
+    e.className="inspect";
+    e.textContent="No issue gaps meet the current filter.";
+    ranking.append(e);
+  }
+}
+function describe(g) {
+  const r=data.routes[g.ri];
+  const box=id("inspect"), bold=document.createElement("strong");
+  bold.textContent=r.label+" · chip "+r.chips[state.chip].physical_chip+" · Q"+g.q.q+" "+g.q.name;
+  box.replaceChildren(bold,document.createElement("br"),document.createTextNode(
+    fmt(g.a)+"–"+fmt(g.b-1)+" inclusive · "+fmt(g.n)+" cycles · "+r.opcodes[g.q.ops[g.i-1]]+
+    " → "+r.opcodes[g.q.ops[g.i]]));
+  const sameUnit=r.chips[state.chip].queues.filter(q=>q.g===g.q.g&&q.q!==g.q.q);
+  const effective=state.scope==="wave"?expandWave(r,sameUnit):sameUnit;
+  const others=effective.reduce((sum,q)=>sum+bisect(q.cycles,g.b)-bisect(q.cycles,g.a),0);
+  const context=document.createElement("div");
+  context.className="muted";
+  context.textContent=fmt(others)+" explicit issues on other "+data.groups[g.q.g]+" queues inside this gap";
+  box.append(context);
+  if(state.scope==="template"&&id("showWait").checked) {
+    const trace=data.traces.find(t=>t.label===r.label&&t.chip===state.chip&&t.queues.includes(g.q.q)
+      &&t.extent[0]<=g.a&&t.extent[1]>=g.b);
+    if(trace) {
+      const waits=trace.waits.filter(([cycle,q])=>q===g.q.q&&cycle>=g.a&&cycle<g.b);
+      const sample=document.createElement("div");
+      sample.className="muted";
+      sample.textContent=fmt(waits.length)+" sampled wait callbacks on this queue inside the gap";
+      box.append(sample);
+    }
+  }
+}
+function selectGap(g,button) {
+  state.selected=g;
+  for (const el of ranking.querySelectorAll(".selected")) el.classList.remove("selected");
+  if (button) button.classList.add("selected");
+  describe(g);
+  const row=tracks.findIndex(t=>t.ri===g.ri&&t.queues?.includes(g.q));
+  const surface=cv.parentElement, top=HEADER+row*ROW;
+  if (top<surface.scrollTop||top+ROW>surface.scrollTop+surface.clientHeight)
+    surface.scrollTop=Math.max(0,top-surface.clientHeight/3);
+  const span=Math.max(18,g.n), pad=Math.max(14,Math.round(span*.38));
+  setView(g.a-pad,g.b+pad);
+}
+function reconfigure(fit=false) {
+  state.selected=null;
+  const wave=state.scope==="wave";
+  queueOptions();
+  displayed=data.routes.map(r=>{
+    const queues=(r.chips[state.chip]?.queues ?? []).filter(included);
+    return wave?expandWave(r,queues):queues;
+  });
+  id("gapType").disabled=!wave;
+  id("showWait").disabled=wave||data.traces.length===0;
+  limit=data.window?data.window[1]+1:Math.max(...data.routes.map(r=>wave?r.observed.cycles:(r.chips[state.chip]?.budget??0)),8);
+  const first = displayed.flatMap(qs=>qs.map(q=>q.cycles[0]));
+  origin = data.window?data.window[0]:(first.length?Math.max(0,Math.min(...first)-Math.round(limit*.025)):0);
+  makeRows();
+  rankGaps();
+  id("inspect").textContent=wave
+    ?"Full wave places the static template at the measured panel starts. Select a gap to inspect its cycle range."
+    :"Select a ranked gap for its cycle range and neighboring instructions.";
+  if (fit) reset(); else setView(state.start,state.end);
+}
+function paintIssue(queues,xSpan,y,color) {
+  const pixels = Math.max(1,Math.floor(xSpan)), bins = new Uint32Array(pixels);
+  const scale=xSpan/(state.end-state.start);
+  for (const q of queues) {
+    for (let i=bisect(q.cycles,state.start);i<q.cycles.length&&q.cycles[i]<state.end;i++)
+      bins[Math.min(pixels-1,Math.floor((q.cycles[i]-state.start)*scale))]++;
+  }
+  const capacity=Math.max(1, queues.length * (state.end-state.start)/pixels);
+  ctx.fillStyle=color;
+  for(let i=0;i<pixels;i++) if(bins[i]) {
+    const density=Math.min(1,bins[i]/capacity);
+    ctx.globalAlpha=.24+.76*Math.sqrt(density);
+    const height=Math.max(3,Math.round(17*Math.sqrt(density)));
+    ctx.fillRect(GUTTER+i,y+ROW-4-height,1,height);
+  }
+  ctx.globalAlpha=1;
+}
+function draw() {
+  width=cv.parentElement.clientWidth;
+  const height=HEADER+tracks.length*ROW+7;
+  const ratio=window.devicePixelRatio||1;
+  cv.width=Math.ceil(width*ratio); cv.height=Math.ceil(height*ratio);
+  cv.style.height=height+"px"; ctx.scale(ratio,ratio);
+  const span=Math.max(1,width-GUTTER-RIGHT), cycleSpan=state.end-state.start;
+  const px=c=>GUTTER+(c-state.start)*span/cycleSpan;
+  ctx.fillStyle="#111b27"; ctx.fillRect(0,0,width,height);
+  ctx.font="12px system-ui";
+  ctx.fillStyle="#bac9db"; ctx.fillText("Cycle",14,28);
+  const target=cycleSpan/Math.max(2,Math.floor(span/110));
+  const base=10**Math.floor(Math.log10(target)), step=[1,2,5,10].map(m=>m*base).find(x=>x>=target);
+  for(let t=Math.ceil(state.start/step)*step;t<=state.end;t+=step) {
+    const x=Math.max(GUTTER,px(t));
+    ctx.strokeStyle="#29394b";ctx.beginPath();ctx.moveTo(x,35);ctx.lineTo(x,height);ctx.stroke();
+    ctx.fillStyle="#bac9db";
+    const tick=fmt(t);
+    ctx.fillText(tick,Math.min(x+3,width-6-ctx.measureText(tick).width),27);
+  }
+  ctx.save();
+  ctx.beginPath();ctx.rect(GUTTER,35,span,height-35);ctx.clip();
+  tracks.forEach((row,i)=>{
+    const y=HEADER+i*ROW;
+    if(row.heading) {ctx.fillStyle="#1c2d43";ctx.fillRect(GUTTER,y,span,ROW-1);return;}
+    ctx.fillStyle=i%2?"#14202c88":"#17243666";ctx.fillRect(GUTTER,y,span,ROW-1);
+    paintIssue(row.queues,span,y,colors[row.group]);
+    const markers=ranked.slice(0,24);
+    if(state.selected && !markers.includes(state.selected)) markers.push(state.selected);
+    for(const gap of markers) {
+      if(gap.ri!==row.ri||!row.queues.includes(gap.q)||gap.b<=state.start||gap.a>=state.end)continue;
+      ctx.fillStyle=gap===state.selected?"#ffc47756":"#ffc47724";
+      ctx.fillRect(px(gap.a),y+1,Math.max(1,px(gap.b)-px(gap.a)),ROW-3);
+      if(gap===state.selected) {
+        ctx.strokeStyle="#ffc477";ctx.strokeRect(px(gap.a)+.5,y+1.5,Math.max(1,px(gap.b)-px(gap.a)-1),ROW-4);
+      }
+    }
+    if(state.scope==="template"&&id("showWait").checked) {
+      const route=data.routes[row.ri];
+      ctx.fillStyle="#ff8391";
+      for(const trace of data.traces) if(trace.label===route.label&&trace.chip===state.chip)
+        for(const [cycle,q] of trace.waits) if(cycle>=state.start&&cycle<state.end&&row.queues.some(x=>x.q===q))
+          ctx.fillRect(px(cycle),y+3,2,6);
+    }
+  });
+  ctx.restore();
+  tracks.forEach((row,i)=>{
+    const y=HEADER+i*ROW;
+    ctx.fillStyle=row.heading?"#1c2d43":"#111b27";ctx.fillRect(0,y,GUTTER,ROW-1);
+    ctx.font=row.heading?"600 12px system-ui":"12px system-ui";
+    ctx.fillStyle=row.heading?"#f2f6fc":colors[row.group];
+    const name=row.heading||row.label;
+    ctx.fillText(name.length>13?name.slice(0,12)+"…":name,12,y+18);
+  });
+  cv.setAttribute("aria-label","Cycle timeline from "+Math.round(state.start)+" to "+Math.round(state.end)+" on stage "+state.chip);
+}
+function zoom(factor, center=(state.start+state.end)/2) {
+  const span=state.end-state.start, n=span*factor;
+  const relative=(center-state.start)/span;
+  setView(center-n*relative,center+n*(1-relative));
+}
+function pan(ratio) {
+  const move=(state.end-state.start)*ratio;
+  setView(state.start+move,state.end+move);
+}
+function cycleAt(x) {
+  return Math.min(state.end-1,Math.max(state.start,state.start+(x-GUTTER)/(width-GUTTER-RIGHT)*(state.end-state.start)));
+}
+cv.addEventListener("wheel",e=>{
+  if(!e.ctrlKey&&!e.metaKey)return;
+  e.preventDefault();
+  zoom(e.deltaY>0?1.25:.8,cycleAt(e.offsetX));
+},{passive:false});
+cv.addEventListener("pointerdown",e=>{
+  if(e.button!==0)return;
+  drag={x:e.offsetX,start:state.start,end:state.end};cv.setPointerCapture(e.pointerId);
+});
+cv.addEventListener("pointermove",e=>{
+  if(!drag)return;
+  const delta=(drag.x-e.offsetX)/(width-GUTTER-RIGHT)*(drag.end-drag.start);
+  if(Math.abs(e.offsetX-drag.x)>4) drag.moved=true;
+  if(drag.moved)setView(drag.start+delta,drag.end+delta);
+});
+cv.addEventListener("pointercancel",()=>{drag=null;});
+cv.addEventListener("pointerup",e=>{
+  const previous=drag;
+  drag=null;
+  if(previous?.moved)return;
+  const track=tracks[Math.floor((e.offsetY-HEADER)/ROW)], cycle=Math.floor(cycleAt(e.offsetX));
+  if(!track?.queues?.length||e.offsetX<GUTTER)return;
+  const matches=ranked.filter(g=>g.ri===track.ri&&track.queues.includes(g.q)&&g.a<=cycle&&g.b>cycle);
+  if(matches.length) {selectGap(matches[0]);return;}
+  const text=track.queues.flatMap(q=>{
+    const i=bisect(q.cycles,cycle);
+    return q.cycles[i]===cycle?["Q"+q.q+" "+data.routes[track.ri].opcodes[q.ops[i]]]:[];
+  });
+  const route=data.routes[track.ri];
+  const waits=state.scope==="template"&&id("showWait").checked
+    ? data.traces.filter(t=>t.label===route.label&&t.chip===state.chip).flatMap(t=>t.waits)
+      .filter(([at,q])=>at===cycle&&track.queues.some(x=>x.q===q))
+      .map(([,q,reason,due])=>"Q"+q+" "+reason+" since "+fmt(due))
+    : [];
+  id("inspect").textContent=route.label+" · "+track.label+" · cycle "+fmt(cycle)+
+    (text.length?" · "+text.join(", "):" · no explicit issue in this lane")+
+    (waits.length?" · ISS wait: "+waits.join(", "):"");
+});
+cv.addEventListener("keydown",e=>{
+  const f={"ArrowLeft":()=>pan(-.3),"ArrowRight":()=>pan(.3),"+":()=>zoom(.5),"-":()=>zoom(2)};
+  if(f[e.key]){e.preventDefault();f[e.key]();}
+});
+chipSelect.onchange=()=>{state.chip=Number(chipSelect.value);reconfigure(true);};
+unitSelect.onchange=()=>{state.group=Number(unitSelect.value);reconfigure();};
+id("gapType").onchange=()=>{state.gapType=id("gapType").value;reconfigure();};
+id("scope").onchange=()=>{state.scope=id("scope").value;reconfigure(true);};
+queueSelect.onchange=()=>{state.queue=Number(queueSelect.value);reconfigure();};
+modeSelect.onchange=()=>{state.mode=modeSelect.value;reconfigure();};
+id("threshold").onchange=()=>{state.threshold=Math.max(1,Math.round(Number(id("threshold").value)||1));id("threshold").value=state.threshold;reconfigure();};
+id("showWait").onchange=()=>{if(state.selected)describe(state.selected);draw();};
+id("out").onclick=()=>zoom(2);id("in").onclick=()=>zoom(.5);
+id("left").onclick=()=>pan(-.3);id("right").onclick=()=>pan(.3);id("reset").onclick=reset;
+window.addEventListener("resize",draw);
+reconfigure(true);
+</script>
+</body>
+</html>

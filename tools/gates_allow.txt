@@ -1,0 +1,59 @@
+# Checks and recipes that no gate calls, each with a reason (tools/check_gates_wired.py reads this file; `just check-docs` runs it).
+# Format: <path or recipe> | <reason> | <note>. Reasons: manual (run by hand when its area changes), long (more than about 20 minutes;
+# run by hand before a release and recorded in the ledger), owner (the owner decides when it runs), ci (only a CI workflow runs it,
+# and CI does not run in this repository). There is no scheduler, so there is no reason for a scheduled run. What a listed recipe
+# runs needs no line of its own. An entry whose gate is wired later must be removed: the checker fails on it.
+fmt | manual | rewrites files with rustfmt; `lint` is the check
+coverage-asm | manual | coverage report of the assembler; not a check; run when its tests change
+coverage-iss | manual | coverage report of the ISS; not a check; run when its tests change
+iss-tick | manual | every-cycle tick equality (about ten minutes); run before a change of the tick loop
+iss-bench | manual | timing targets of the ISS on a quiet host; not a correctness gate
+iss-numerics-sail | manual | the numerics against the Sail model's functions (about ten minutes); run before a change of tsp-numerics
+iss-transcendental | long | needs the work directory of `model-transcendental`
+iss-counters | manual | the counters against the reference trace; needs the simulator; run before a change of the activity counters
+iss-perf-gate | manual | the timed A/B on a quiet host; the verdict tests run in check-docs
+iss-perf-insn | manual | optional retired-instruction comparison; needs a distinct baseline and a working host instruction counter
+iss-perf-baseline | owner | the stored benchmark baseline, updated on a quiet host with the change that moves it
+iss-pgo | manual | builds a profile-guided binary; not a check
+iss-replay-bucket | manual | the real bucket under single-bit faults; needs the benchmark inputs
+replay-plan | manual | the parametrised replay proof of concept; needs its inputs and about ten minutes
+replay-plan-prep | manual | makes the inputs of replay-plan; not a check
+prove-profiles | long | the obligations on every profile (about 3 minutes per profile and pass)
+f16-exhaustive | long | every binary16 pair, about 43 minutes per operation on 16 idle cores
+f32-sample | long | 160 million binary32 pairs per operation, about 4 minutes per operation on 8 cores
+model-transcendental | long | f32 screening of the transcendentals (about 8 minutes on 12 threads)
+serving-profiles | manual | the 2-layer serving step on other profiles (about 5 minutes)
+serving-profiles-full | long | the 18 buckets of the grid (about 14 minutes)
+programs-sim | manual | the `sim`-tagged cases of the program suite on tsp_sim, in parallel (about five minutes); `programs` runs them all
+ship-system-test | manual | GPT-2 small on chips through the binding (needs the binding; about 20 s)
+showcase-kernels | manual | the showcase kernels; needs the simulator
+showcase-test | manual | the showcase tests; needs the vLLM environment
+vllm-binding-test | manual | the in-process binding tests (needs the vLLM environment and the built binding)
+vllm-schedules | manual | seeded serving schedules (needs the vLLM environment)
+vllm-schedules-full | long | the full serving schedule sweep
+vllm-surface | manual | the vLLM surface check (needs the vLLM environment)
+schema-check | manual | not a check: the same command as step V1 of model-test, which runs it; the recipe is the shortcut for a schema change
+prove-mutants | long | the proof-gate mutation ratchet: about 35 minutes per surviving mutant and about two hours for the table at 3 jobs; run by hand before a release
+prove-extra-wide | long | the extra obligations at 256-bit integers (hours on a quiet machine); run by prove-nightly, by hand before a release
+prove-nightly | long | the mutation ratchet, the proof on every profile and the 256-bit extra obligations in one run (hours); run by hand before a release
+model-coverage | long | what the proofs and the suites reach in the model, about 30 minutes; run by hand when the obligations or the suites change
+iss-pgo-binding | manual | builds a profile-guided binding for serving; not a check
+showcase-batch | manual | an interactive batch session of the showcase in the vLLM environment, with the real weights; `showcase-test` and `vllm-e2e` are the checks
+showcase-serve | manual | starts `vllm serve` on a port with the real weights and runs until stopped; not a check (`vllm-serve-test` is the check)
+vllm-ref-checkpoint | manual | writes the reference checkpoint for vLLM's stock CPU backend (the vLLM environment, minutes); an input of a comparison, not a check
+showcase | manual | the interactive showcase session in the vLLM environment with the real weights; `showcase-test` and `vllm-e2e` are the checks
+showcase-reference-full | manual | `showcase-reference` with the slow tests (the 8-layer text-sizing grid and the paged ISS tests, about ten minutes); a cold program cache adds generation time
+showcase-paged | manual | the paged ISS tests that `showcase-reference` leaves out (programs are built on demand into the cache; about ten minutes when it is cold)
+showcase-paged-full | manual | the full 8-layer model with two requests on the ISS; builds three buckets on the first run (about 10 minutes)
+showcase-prepare | manual | builds the showcase weights and stages under ~/.cache/opentsp/showcase (needs the vLLM environment and the binding); an input of the showcase, not a check
+vllm-programs | manual | builds the bucket-program grid into the shared cache (about 22 minutes for 8 layers); the vLLM gates build what they need on demand
+prove-widened | long | the obligations on w16, one_plane, acc8 and c2c_wide (about 21 minutes)
+opentsp-arch-spec/test/config/test_model_reaching_obligations.py | manual | checks the model-reaching obligations; needs the formal environment
+all-ext-vectors | manual | regenerates the combined-extension model-extra dump and RTL sidecar; not a check; iss-vectors checks the sidecar and executes the extension vector programs
+opentsp-arch-spec/test/formal/lean/resource_mutations.py | manual | Needs a generated Lean environment for its native four-mutation CLI; source-linked proof mutation helper imported by formal-unit's test_resource_mutations.py. Central production-source mutation qualification runs through mutants.py.
+opentsp-arch-spec/test/formal/isqrt_build.py | manual | Links the certificate driver to receipt-pinned production C with complete include/source/tool checks; needs an existing native cap build, not a per-test build.
+opentsp-arch-spec/test/formal/isqrt_certificate.py | manual | Full 234881024-case production isqrt certificate controller; needs the identified native driver and an absolute execution deadline. Its synthetic failure controls run in formal-unit via test_isqrt_certificate.py.
+opentsp-arch-spec/test/formal/numeric_cap_certificate.py | manual | needs the identified native cap driver and an absolute execution deadline, covering 17180396544 cases. Synthetic failure controls run in formal-unit via test_numeric_cap_certificate.py.
+gpt2-demo | manual | interactive four-chip browser and CLI; needs the serving environment and sealed GPT-2 programs
+vllm-ship-e2e | manual | two-layer GPT-2 scheduling and exactness; requires the serving environment, checkpoint and program cache
+gpt2-programs | manual | needs the external GPT-2 small checkpoint and builds five sealed variants

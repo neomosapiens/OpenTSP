@@ -1,0 +1,13 @@
+{
+  "name": "dense-7b (the shape of a published 7-billion-parameter decoder; every row computed from it is an estimate)",
+  "layers": 32,
+  "hidden": 4096,
+  "heads": 32,
+  "kv_heads": 32,
+  "ffn": 11008,
+  "ffn_matrices": 3,
+  "vocab": 32000,
+  "context": 4096,
+  "weight_bytes": 1,
+  "kv_bytes": 2
+}

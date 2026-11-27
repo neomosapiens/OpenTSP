@@ -1,0 +1,13 @@
+.arch opentsp-tsa
+.profile ref
+.section text
+bundle @cycle=0 {
+  CU: sync
+  MEM[0]: sync
+}
+bundle @cycle=1 {
+  VXM[0]: nop 0x4
+}
+bundle @cycle=2 {
+  VXM[0]: sync
+}

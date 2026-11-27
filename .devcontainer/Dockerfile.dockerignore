@@ -1,0 +1,4 @@
+**
+!.devcontainer/
+!.devcontainer/toolchain/
+!.devcontainer/toolchain/**

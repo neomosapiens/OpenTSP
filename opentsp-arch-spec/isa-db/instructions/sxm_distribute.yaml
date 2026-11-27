@@ -1,0 +1,28 @@
+# Instruction catalogue entry. Sail (model/) is normative; test/isa_db/check_isa_db.py
+# checks this file against the model's encdec and assembly mappings.
+$schema: opentsp.isa-db.instruction
+spec_version: '0.1'
+name: Distribute
+mnemonic: distribute
+long_name: Superlane distribute
+slice: SXM
+units:
+- SXM_W_DST
+- SXM_E_DST
+timing: SXM
+encoding:
+  width: 64
+  match: 010000001000------------000000----000000000000000000000000000000
+  variables:
+  - name: dst
+    location: 51-46
+    kind: stream
+  - name: src
+    location: 45-40
+    kind: stream
+  - name: map
+    location: 33-30
+    kind: map_id
+assembly: distribute {src}, {map}, {dst}
+operation: 'Per superlane g: e = m[16g + j]; dst[16g + j] = e < 16 ? src[16g + e] : 0.'
+definedBy: ref

@@ -1,0 +1,6 @@
+.arch opentsp-tsa
+.profile ref
+.section text
+bundle @cycle=0 {
+  VXM[0]: read 0x0, E:0, 0x0
+}

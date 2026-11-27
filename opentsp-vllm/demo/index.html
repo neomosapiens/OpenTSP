@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>OpenTSP · GPT-2 Pipeline</title>
+  <link rel="stylesheet" href="/demo.css">
+  <link rel="stylesheet" href="/lab.css">
+  <script src="/demo.js" defer></script>
+  <script src="/projection.js" defer></script>
+  <script src="/lab.js" defer></script>
+</head>
+<body>
+  <main class="layout">
+    <header class="topbar">
+      <a class="wordmark" href="/" aria-label="OpenTSP demo">
+        <span class="mark" aria-hidden="true"><i></i><i></i><i></i></span>
+        <span>Open<span class="accent">TSP</span></span>
+      </a>
+      <nav class="demo-nav" aria-label="Demo views">
+        <button type="button" id="lab-view" aria-pressed="true">Live requests</button>
+        <button type="button" id="generate-view" aria-pressed="false">Single prompt</button>
+      </nav>
+      <button class="connection" type="button" id="connection" data-state="checking" aria-label="Check connection to vLLM">
+        <i aria-hidden="true"></i><span id="connection-label" role="status">Checking vLLM</span>
+      </button>
+    </header>
+
+    <div id="generation-view" hidden>
+    <section class="intro">
+      <p class="eyebrow">vLLM · OpenTSP ISS</p>
+      <h1>GPT-2 Pipeline</h1>
+      <p>Watch GPT-2 generate text through a four-chip OpenTSP simulation.</p>
+    </section>
+
+    <div id="single-clock"></div>
+    <div class="projection-settings" id="clock-settings">
+      <label for="projection-clock">Projected TSP silicon clock
+        <input id="projection-clock" type="number" min="1" max="10000" step="1" value="900"> MHz
+      </label>
+      <p class="lab-caption">Cycle-based estimate for the same schedule. Device time excludes host, browser and service overhead.</p>
+    </div>
+
+    <div class="panels">
+      <section class="panel generation" aria-labelledby="generate-title">
+        <div class="section-header">
+          <h2 id="generate-title">Text generation</h2>
+          <span class="model">GPT-2 small</span>
+        </div>
+        <form id="request">
+          <label for="prompt">Prompt</label>
+          <textarea id="prompt" rows="2" required maxlength="800">At the edge of the city, a small observatory</textarea>
+          <div class="presets" aria-label="Example prompts">
+            <button type="button" data-prompt="At the edge of the city, a small observatory">Observatory</button>
+            <button type="button" data-prompt="The secret to making a great cup of coffee is">Coffee</button>
+            <button type="button" data-prompt="On the first morning of the expedition, we discovered">Expedition</button>
+          </div>
+          <div class="action-row">
+            <label class="token-setting" for="limit">Max new tokens
+              <select id="limit"><option>4</option><option>8</option><option selected>12</option><option>24</option><option>32</option></select>
+            </label>
+            <div class="actions">
+              <button type="button" class="secondary" id="stop" disabled>Stop</button>
+              <button type="submit" class="primary" id="generate" disabled>Generate <span aria-hidden="true">↗</span></button>
+            </div>
+          </div>
+        </form>
+        <div class="output">
+          <div class="output-header"><h3>Continuation</h3><button type="button" class="copy" id="copy" disabled>Copy</button></div>
+          <div class="output-text" id="completion" aria-label="Generated continuation"></div>
+          <p id="run-status" class="run-status" role="status">Generated text will appear here.</p>
+        </div>
+      </section>
+
+      <aside class="panel pipeline" aria-labelledby="example-pipeline-title">
+        <div class="section-header"><h2 id="example-pipeline-title">SHIP execution path</h2><span class="model">4 active chips</span></div>
+        <div class="host"><strong>vLLM host</strong><span>Embeddings enter at C0</span></div>
+        <div class="chip-group" role="group" aria-label="Transformer stages 1–2">
+          <div class="stage-title"><strong>Transformer stages 1–2</strong><span>Layers 01–08</span></div>
+          <ol class="chip-row" id="layers-first" aria-label="Layers 1 to 4"></ol>
+          <div class="turn" aria-hidden="true"><span>↓</span></div>
+          <ol class="chip-row chip-row-return" id="layers-return" aria-label="Layers 5 to 8"></ol>
+        </div>
+        <div class="bridge"><span class="down-link" aria-hidden="true">↓</span><span>On-node link <b>C1 → C2</b></span></div>
+        <div class="chip-group" role="group" aria-label="Transformer stage 3 and vocabulary">
+          <div class="stage-title"><strong>Transformer stage 3</strong><span>Layers 09–12 + output head</span></div>
+          <ol class="chip-row" id="layers-last" aria-label="Layers 9 to 12"></ol>
+          <div class="fanout" aria-hidden="true"><span>Full vocabulary projection</span></div>
+          <ol class="chip-row heads" id="heads" aria-label="One vocabulary stage"></ol>
+        </div>
+        <div class="host" id="output-host"><strong>vLLM host</strong><span>Gathers logits and samples</span></div>
+        <p class="diagram-note">Static architecture. Live requests shows observed handoffs.</p>
+      </aside>
+    </div>
+
+    <div class="performance-columns">
+    <section aria-labelledby="software-metrics-label">
+    <h2 class="metrics-heading" id="software-metrics-label">Software ISS</h2>
+    <dl class="metrics" aria-labelledby="software-metrics-label">
+      <div><dt>New tokens</dt><dd id="metric-tokens">—</dd></div>
+      <div><dt>Time to first token</dt><dd id="metric-first">—</dd></div>
+      <div><dt>Request time</dt><dd id="metric-total">—</dd></div>
+      <div><dt>Input rate · whole request</dt><dd id="metric-input-rate">—</dd></div>
+      <div><dt>Output rate · whole request</dt><dd id="metric-output-rate">—</dd></div>
+      <div><dt>Decode rate · after first token</dt><dd id="metric-decode-rate">—</dd></div>
+    </dl>
+    <p class="lab-caption">Measured in the browser. Whole-request rates include the first-token wait. Decode starts at the first streamed token.</p>
+    </section>
+    <section aria-labelledby="silicon-metrics-label">
+    <h2 class="metrics-heading" id="silicon-metrics-label">Projected TSP silicon</h2>
+    <dl class="metrics projected-metrics" aria-labelledby="silicon-metrics-label">
+      <div><dt>Modeled cycles</dt><dd id="projection-cycles">—</dd></div>
+      <div><dt>Time to first token</dt><dd id="projection-first">—</dd></div>
+      <div><dt>Device time</dt><dd id="projection-total">—</dd></div>
+      <div><dt>Input rate · device time</dt><dd id="projection-input">—</dd></div>
+      <div><dt>Output rate · device time</dt><dd id="projection-output">—</dd></div>
+      <div><dt>Decode rate · after first token</dt><dd id="projection-decode">—</dd></div>
+    </dl>
+    <footer id="projection-status">Generate a response to project its device timing.</footer>
+    </section>
+    </div>
+    </div>
+
+    <section id="serving-lab" aria-labelledby="lab-title">
+      <div class="lab-top">
+        <div>
+          <h1 id="lab-title">Four-chip inference</h1>
+          <p class="model-facts" aria-label="GPT-2 small architecture">
+            <strong>GPT-2 small</strong>
+            <span title="124,439,808 unique parameters with tied embeddings">124.4M parameters</span>
+            <span>12 layers</span><span>12 attention heads</span><span>768 hidden width</span>
+            <span title="The demo has a separate 256-position shared KV pool">1,024 model positions</span>
+          </p>
+        </div>
+        <div class="lab-controls">
+        <div class="live-throughput" aria-label="Eight-user output throughput"
+             title="Tokens emitted since the start of this run. TPS/user is the aggregate rate divided by the eight concurrent requests.">
+          <section>
+            <h2>Software ISS</h2>
+            <div><strong id="iss-tps">—</strong> TPS <strong id="iss-tps-user">—</strong> TPS/user</div>
+          </section>
+          <section title="Observed simulated cycles scaled by the selected clock. Excludes host overhead.">
+            <h2>Projected TSP silicon <span id="silicon-clock">· 900 MHz</span></h2>
+            <div><strong id="silicon-tps">—</strong> TPS <strong id="silicon-tps-user">—</strong> TPS/user</div>
+          </section>
+        </div>
+          <div class="lab-actions">
+            <button type="button" class="secondary" id="stop-wave" hidden>Stop all</button>
+            <button type="button" class="primary" data-action="eight" disabled>Run 8 users</button>
+          </div>
+        </div>
+      </div>
+      <p id="lab-status" role="status" hidden></p>
+      <section class="execution panel" id="live-execution" aria-labelledby="execution-title">
+        <div class="section-header">
+          <h2 id="execution-title">Live execution</h2>
+          <div class="execution-actions">
+            <button type="button" class="secondary" id="compact-execution" aria-expanded="true" aria-controls="execution-guide">Compact</button>
+          </div>
+        </div>
+
+        <div class="live-batch">
+          <div class="execution-heading"><h3>Continuous batching</h3><span id="latest-batch-label">Waiting for a batch</span></div>
+          <div id="latest-batch" class="batch-tokens" aria-label="Rows admitted to the displayed batch"></div>
+        </div>
+
+        <div class="live-chips">
+          <div class="execution-heading"><h3>Four-chip pipeline</h3><span id="live-chip-status">Waiting for input</span></div>
+          <div class="execution-guide" id="execution-guide">
+            <span><b class="kind-icon" data-kind="P" aria-hidden="true">P</b><strong>Prefill</strong> reads the prompt and builds its KV cache.</span>
+            <span><b class="kind-icon" data-kind="D" aria-hidden="true">D</b><strong>Decode</strong> uses that cache to predict the next token.</span>
+            <span>Matching colors belong to the same user.</span>
+          </div>
+          <ol class="chip-stops" id="live-chip-stops" aria-label="Rows move from the batch through four chips to the host">
+            <li class="pipeline-end"><small>vLLM</small><strong>Batch</strong><span class="stage-role">Ready to enter</span><div class="chip-users"></div></li>
+            <li class="chip-stage"><small>Chip 0</small><strong>Layers 1–4</strong><span class="stage-role">Attention + KV</span><div class="chip-users"></div></li>
+            <li class="chip-stage"><small>Chip 1</small><strong>Layers 5–8</strong><span class="stage-role">Attention + KV</span><div class="chip-users"></div></li>
+            <li class="chip-stage"><small>Chip 2</small><strong>Layers 9–12</strong><span class="stage-role">Attention + KV</span><div class="chip-users"></div></li>
+            <li class="chip-stage"><small>Chip 3</small><strong>Vocabulary</strong><span class="stage-role">Scores next tokens</span><div class="chip-users"></div></li>
+            <li class="pipeline-end"><small>vLLM</small><strong>Output</strong><span class="stage-role">Sample and stream</span><div class="chip-users"></div></li>
+          </ol>
+        </div>
+        <div class="live-path">
+          <strong id="live-path-title">Follow U1 through the pipeline</strong>
+          <ol id="live-path-steps" aria-label="Selected request progress"></ol>
+        </div>
+      </section>
+      <section aria-label="User prompts and live responses">
+        <div class="stream-header">
+          <div><h2>User streams</h2><span class="stream-key">Bold text is the prompt</span></div>
+          <span id="lab-active">Ready to start</span>
+        </div>
+        <div id="request-cards"></div>
+      </section>
+
+      <details class="lab-drawer">
+        <summary>Custom prompt</summary>
+        <form id="lab-form">
+          <label for="lab-prompt">Prompt text</label>
+          <textarea id="lab-prompt" rows="2" maxlength="800" required></textarea>
+          <div class="action-row">
+            <label class="token-setting" for="lab-limit">New tokens
+              <select id="lab-limit"><option>2</option><option selected>4</option><option>8</option><option>16</option></select>
+            </label>
+            <button type="submit" class="primary" id="lab-send" disabled>Send as a user</button>
+          </div>
+        </form>
+      </details>
+      <details class="lab-drawer" id="lab-diagnostics">
+        <summary>Execution details</summary>
+        <div id="lab-clock"></div>
+      <div class="wave-performance performance-columns" id="wave-performance" hidden>
+      <section aria-labelledby="wave-software-label">
+      <h3 class="metrics-heading" id="wave-software-label">Software ISS</h3>
+      <dl class="metrics" aria-labelledby="wave-software-label">
+        <div><dt>8 requests · input rate</dt><dd id="wave-input-rate">—</dd></div>
+        <div><dt>8 requests · output rate</dt><dd id="wave-output-rate">—</dd></div>
+        <div><dt>Batch wall time</dt><dd id="wave-total">—</dd></div>
+      </dl>
+      </section>
+      <section aria-labelledby="wave-silicon-label">
+      <h3 class="metrics-heading" id="wave-silicon-label">Projected TSP silicon</h3>
+      <dl class="metrics projected-metrics" aria-labelledby="wave-silicon-label">
+        <div><dt>8 requests · input rate</dt><dd id="wave-projection-input">—</dd></div>
+        <div><dt>8 requests · output rate</dt><dd id="wave-projection-output">—</dd></div>
+        <div><dt>Batch device time</dt><dd id="wave-projection-total">—</dd></div>
+      </dl>
+      </section>
+      </div>
+        <div class="lab-actions cache-actions" aria-label="Cache experiments">
+          <button type="button" class="secondary" data-action="warm" disabled>Warm prefix</button>
+          <button type="button" class="secondary" data-action="pair" disabled>Run staggered pair</button>
+          <button type="button" class="secondary" data-action="grow" disabled>Grow KV</button>
+          <button type="button" class="secondary" data-action="cold" disabled>Cold control</button>
+        </div>
+        <div id="request-details"></div>
+        <div class="lab-inspector">
+          <section class="panel lab-batches" aria-labelledby="batches-title">
+            <div class="section-header">
+              <h2 id="batches-title">Continuous batching</h2>
+              <div class="actions">
+                <button type="button" class="secondary" id="step-prev" aria-label="Previous scheduler event">←</button>
+                <button type="button" class="secondary" id="step-next" aria-label="Next scheduler event">→</button>
+                <button type="button" class="secondary" id="step-live" aria-pressed="true">Live</button>
+              </div>
+            </div>
+            <p id="step-label" class="lab-caption">Waiting for a scheduler step.</p>
+            <div id="batch-rows" aria-label="Recent scheduled token rows"></div>
+            <p class="lab-caption">P · Prefill &nbsp;&nbsp; D · Decode &nbsp;&nbsp; Each tile is one scheduled token.</p>
+          </section>
+          <section class="panel lab-kv" aria-labelledby="kv-title">
+            <div class="section-header"><h2 id="kv-title">KV cache residency</h2><span id="kv-usage" class="model">16 pages · 16 slots each</span></div>
+            <div class="kv-layout">
+              <div>
+                <div id="kv-pages" aria-label="Physical KV pages"></div>
+                <p class="kv-legend"><span data-page-state="active">Held</span><span data-page-state="shared">Shared</span><span data-page-state="retained">Retained prefix</span><span data-page-state="free">Free</span></p>
+              </div>
+              <div class="kv-detail">
+                <h3 id="page-heading">Select a page</h3>
+                <p id="page-info" class="lab-caption">The same page number identifies its KV storage on each transformer chip.</p>
+                <p id="page-address" class="lab-caption"></p>
+                <p id="page-owners" class="lab-caption"></p>
+                <p id="page-chips" class="lab-caption">Each of the three transformer chips holds separate KV for its four layers. The vocabulary chip holds no KV pages.</p>
+              </div>
+            </div>
+          </section>
+        </div>
+      </details>
+    </section>
+  </main>
+</body>
+</html>

@@ -1,0 +1,6 @@
+.arch opentsp-tsa
+.profile ref
+.section text
+bundle @cycle=3 {
+  CU: host_wait 0x1
+}

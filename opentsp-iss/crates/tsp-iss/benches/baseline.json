@@ -1,0 +1,123 @@
+{
+  "commit": "639165701fc41de478db9042cf928972ced4d1c5",
+  "load_average": [
+    12.4599609375,
+    13.33203125,
+    12.2314453125
+  ],
+  "host": "macOS-26.4.1-arm64-arm-64bit",
+  "machine": "arm64",
+  "command": "tsp-iss bench --repeat 3 --elements (release build)",
+  "programs": {
+    "b0": {
+      "cycles": 1.0,
+      "ticks": 1.0,
+      "seconds": 6.7e-05,
+      "dispatches": 0.0,
+      "ns_per_dispatch": 0.0,
+      "ns_per_visited_tick": 66833.0,
+      "elements": 0.0,
+      "ns_per_element": 0.0
+    },
+    "b1": {
+      "cycles": 205.0,
+      "ticks": 205.0,
+      "seconds": 0.001249,
+      "dispatches": 128.0,
+      "ns_per_dispatch": 9754.2,
+      "ns_per_visited_tick": 6090.4,
+      "elements": 12800.0,
+      "ns_per_element": 97.54
+    },
+    "b2": {
+      "cycles": 193.0,
+      "ticks": 193.0,
+      "seconds": 0.000223,
+      "dispatches": 32.0,
+      "ns_per_dispatch": 6964.8,
+      "ns_per_visited_tick": 1154.8,
+      "elements": 0.0,
+      "ns_per_element": 0.0
+    },
+    "b3": {
+      "cycles": 205.0,
+      "ticks": 205.0,
+      "seconds": 0.001935,
+      "dispatches": 160.0,
+      "ns_per_dispatch": 12092.7,
+      "ns_per_visited_tick": 9438.2,
+      "elements": 15672.0,
+      "ns_per_element": 123.46
+    },
+    "b4": {
+      "cycles": 1048580.0,
+      "ticks": 1048580.0,
+      "seconds": 5.8758,
+      "dispatches": 5984.0,
+      "ns_per_dispatch": 981918.4,
+      "ns_per_visited_tick": 5603.6,
+      "elements": 83159772.0,
+      "ns_per_element": 70.66
+    },
+    "idle": {
+      "cycles": 100000015.0,
+      "ticks": 424.0,
+      "seconds": 8.8e-05,
+      "dispatches": 11.0,
+      "ns_per_dispatch": 8045.5,
+      "ns_per_visited_tick": 208.7,
+      "elements": 11.0,
+      "ns_per_element": 8045.45
+    },
+    "dense_f16": {
+      "cycles": 1610.0,
+      "ticks": 1605.0,
+      "seconds": 0.095148,
+      "dispatches": 698.0,
+      "ns_per_dispatch": 136315.5,
+      "ns_per_visited_tick": 59282.4,
+      "elements": 12682.0,
+      "ns_per_element": 7502.62
+    },
+    "dense_i8": {
+      "cycles": 20110.0,
+      "ticks": 20105.0,
+      "seconds": 0.148258,
+      "dispatches": 764.0,
+      "ns_per_dispatch": 194054.8,
+      "ns_per_visited_tick": 7374.2,
+      "elements": 160724.0,
+      "ns_per_element": 922.44
+    },
+    "vxm_valid": {
+      "cycles": 20017.0,
+      "ticks": 20017.0,
+      "seconds": 0.020889,
+      "dispatches": 48.0,
+      "ns_per_dispatch": 435180.6,
+      "ns_per_visited_tick": 1043.5,
+      "elements": 320000.0,
+      "ns_per_element": 65.28
+    },
+    "transc": {
+      "cycles": 3014.0,
+      "ticks": 3013.0,
+      "seconds": 0.003307,
+      "dispatches": 6.0,
+      "ns_per_dispatch": 551166.7,
+      "ns_per_visited_tick": 1097.6,
+      "elements": 9000.0,
+      "ns_per_element": 367.44
+    },
+    "syncnotify": {
+      "cycles": 3963.0,
+      "ticks": 197.0,
+      "seconds": 0.001344,
+      "dispatches": 14400.0,
+      "ns_per_dispatch": 93.3,
+      "ns_per_visited_tick": 6822.8,
+      "elements": 14300.0,
+      "ns_per_element": 93.99
+    }
+  }
+}

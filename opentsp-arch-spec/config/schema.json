@@ -1,0 +1,1098 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "barrier": {
+      "type": "object",
+      "properties": {
+        "release_latency": {
+          "description": "core/geometry.sail:109.47-109.77",
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4095
+        }
+      },
+      "required": [
+        "release_latency"
+      ],
+      "additionalProperties": false
+    },
+    "c2c": {
+      "type": "object",
+      "properties": {
+        "cycles_per_vector": {
+          "description": "slices/c2c/c2c_insts.sail:105.16-105.44",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
+        },
+        "hac_period": {
+          "description": "slices/c2c/c2c_insts.sail:112.16-112.37",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
+        },
+        "link_latency": {
+          "description": "slices/c2c/c2c_insts.sail:95.29-95.52",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
+        },
+        "link_latency_max": {
+          "description": "slices/c2c/c2c_insts.sail:97.33-97.60",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
+        },
+        "link_latency_min": {
+          "description": "slices/c2c/c2c_insts.sail:96.33-96.60",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
+        },
+        "links": {
+          "description": "slices/c2c/c2c_insts.sail:88.16-88.32",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 128
+        },
+        "rx_depth": {
+          "description": "slices/c2c/c2c_insts.sail:110.25-110.44",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 65535
+        }
+      },
+      "required": [
+        "cycles_per_vector",
+        "hac_period",
+        "link_latency",
+        "link_latency_max",
+        "link_latency_min",
+        "links",
+        "rx_depth"
+      ],
+      "additionalProperties": false
+    },
+    "extensions": {
+      "description": "core/types.sail:108.32-108.49",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "geometry": {
+      "type": "object",
+      "properties": {
+        "mem_slices_per_hemisphere": {
+          "description": "core/geometry.sail:64.47-64.88",
+          "type": "integer",
+          "minimum": 4,
+          "maximum": 44,
+          "multipleOf": 4
+        },
+        "srf_positions": {
+          "type": "integer",
+          "const": 45
+        },
+        "streams_per_row": {
+          "type": "integer",
+          "const": 32
+        },
+        "superlanes": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 32
+        }
+      },
+      "required": [
+        "mem_slices_per_hemisphere",
+        "srf_positions",
+        "streams_per_row",
+        "superlanes"
+      ],
+      "additionalProperties": false
+    },
+    "host": {
+      "type": "object",
+      "properties": {
+        "cycles_per_vector": {
+          "description": "core/csr.sail:82.44-82.73",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 64
+        },
+        "doorbells": {
+          "description": "core/csr.sail:84.36-84.57",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 64
+        },
+        "ingress_depth": {
+          "description": "core/csr.sail:83.41-83.66",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 256
+        },
+        "remote_csr": {
+          "description": "core/csr.sail:85.29-85.51",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "cycles_per_vector",
+        "doorbells",
+        "ingress_depth",
+        "remote_csr"
+      ],
+      "additionalProperties": false
+    },
+    "icu": {
+      "type": "object",
+      "properties": {
+        "fetch_bytes_per_cycle": {
+          "description": "slices/cu/cu_iq.sail:18.35-18.67",
+          "type": "integer",
+          "minimum": 4,
+          "maximum": 64,
+          "multipleOf": 4
+        },
+        "fetch_latency": {
+          "allOf": [
+            {
+              "description": "core/csr.sail:97.39-97.63",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 64
+            },
+            {
+              "description": "slices/cu/cu_iq.sail:17.38-17.62",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 64
+            }
+          ]
+        },
+        "fetch_staging_depth": {
+          "description": "slices/cu/cu_iq.sail:19.38-19.68",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 64
+        },
+        "iq_depth": {
+          "description": "slices/cu/cu_iq.sail:16.33-16.52",
+          "type": "integer",
+          "minimum": 64,
+          "maximum": 4096,
+          "multipleOf": 4
+        }
+      },
+      "required": [
+        "fetch_bytes_per_cycle",
+        "fetch_latency",
+        "fetch_staging_depth",
+        "iq_depth"
+      ],
+      "additionalProperties": false,
+      "x-opentsp-why": "For beat b=0,1 and tile k=0..S-1, 1+fetch_latency+floor(16*(b*S+k)/fetch_bytes_per_cycle) > b+k; S=geometry.superlanes."
+    },
+    "layout": {
+      "type": "object",
+      "properties": {
+        "c2c_rx_gap": {
+          "description": "core/layout.sail:27.31-27.55",
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 43
+        },
+        "c2c_tx_gap": {
+          "description": "core/layout.sail:26.31-26.55",
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 43
+        },
+        "mem_down_gap_base": {
+          "description": "core/layout.sail:20.38-20.69",
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 43
+        },
+        "mem_up_gap_base": {
+          "description": "core/layout.sail:19.36-19.65",
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 43
+        },
+        "mxm_acc_gap": {
+          "description": "core/layout.sail:22.32-22.57",
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 43
+        },
+        "mxm_in_gap": {
+          "description": "core/layout.sail:21.31-21.55",
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 43
+        },
+        "sxm_dst_gap": {
+          "description": "core/layout.sail:23.32-23.57",
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 43
+        },
+        "sxm_turn_in_gap": {
+          "description": "core/layout.sail:24.36-24.65",
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 43
+        },
+        "sxm_turn_out_gap": {
+          "description": "core/layout.sail:25.37-25.67",
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 43
+        },
+        "vxm_gap": {
+          "description": "core/layout.sail:18.28-18.49",
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 43
+        }
+      },
+      "required": [
+        "c2c_rx_gap",
+        "c2c_tx_gap",
+        "mem_down_gap_base",
+        "mem_up_gap_base",
+        "mxm_acc_gap",
+        "mxm_in_gap",
+        "sxm_dst_gap",
+        "sxm_turn_in_gap",
+        "sxm_turn_out_gap",
+        "vxm_gap"
+      ],
+      "additionalProperties": false
+    },
+    "mxm": {
+      "type": "object",
+      "properties": {
+        "acc_bits": {
+          "description": "core/geometry.sail:114.36-114.55",
+          "type": "integer",
+          "minimum": 32,
+          "maximum": 128,
+          "anyOf": [
+            {
+              "type": "integer",
+              "const": 32
+            },
+            {
+              "type": "integer",
+              "const": 128
+            }
+          ]
+        },
+        "acc_depth": {
+          "type": "integer",
+          "minimum": 2,
+          "maximum": 32
+        },
+        "f16_rows": {
+          "type": "integer",
+          "minimum": 8,
+          "maximum": 320,
+          "multipleOf": 8
+        },
+        "fp8_rate": {
+          "description": "core/geometry.sail:104.33-104.52",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2
+        },
+        "planes_per_hemisphere": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "const": 1
+            },
+            {
+              "type": "integer",
+              "const": 2
+            }
+          ]
+        },
+        "rows": {
+          "type": "integer",
+          "minimum": 16,
+          "maximum": 320,
+          "multipleOf": 16
+        }
+      },
+      "required": [
+        "acc_bits",
+        "acc_depth",
+        "f16_rows",
+        "fp8_rate",
+        "planes_per_hemisphere",
+        "rows"
+      ],
+      "additionalProperties": false
+    },
+    "ras": {
+      "type": "object",
+      "properties": {
+        "diag_depth": {
+          "description": "core/csr.sail:96.36-96.57",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 64,
+          "default": 16
+        },
+        "log_depth": {
+          "description": "core/csr.sail:95.34-95.54",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 8
+        }
+      },
+      "required": [
+        "log_depth"
+      ],
+      "additionalProperties": false
+    },
+    "scrub": {
+      "type": "object",
+      "properties": {
+        "period": {
+          "description": "core/csr.sail:99.37-99.56",
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 65535
+        }
+      },
+      "required": [
+        "period"
+      ],
+      "additionalProperties": false
+    },
+    "spec_version": {
+      "description": "core/geometry.sail:3.28-3.47",
+      "type": "string",
+      "const": "0.1",
+      "x-opentsp-why": "this model is specification version 0.1"
+    },
+    "sram": {
+      "type": "object",
+      "properties": {
+        "addr_bits": {
+          "type": "integer",
+          "minimum": 13,
+          "maximum": 16
+        },
+        "bank_bit": {
+          "type": "integer"
+        },
+        "slices": {
+          "type": "integer",
+          "const": 88
+        },
+        "words_per_slice": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "const": 256
+            },
+            {
+              "type": "integer",
+              "const": 512
+            },
+            {
+              "type": "integer",
+              "const": 1024
+            },
+            {
+              "type": "integer",
+              "const": 2048
+            },
+            {
+              "type": "integer",
+              "const": 4096
+            },
+            {
+              "type": "integer",
+              "const": 8192
+            },
+            {
+              "type": "integer",
+              "const": 16384
+            },
+            {
+              "type": "integer",
+              "const": 32768
+            },
+            {
+              "type": "integer",
+              "const": 65536
+            }
+          ]
+        }
+      },
+      "required": [
+        "addr_bits",
+        "bank_bit",
+        "slices",
+        "words_per_slice"
+      ],
+      "additionalProperties": false
+    },
+    "timing": {
+      "type": "object",
+      "properties": {
+        "c2c": {
+          "type": "object",
+          "properties": {
+            "d_func": {
+              "description": "core/timing.sail:36.54-36.78",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 63
+            },
+            "d_skew": {
+              "description": "core/timing.sail:36.93-36.117",
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 15
+            },
+            "rtdeskew_floor": {
+              "description": "core/timing.sail:51.34-51.66",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 65535
+            }
+          },
+          "required": [
+            "d_func",
+            "d_skew",
+            "rtdeskew_floor"
+          ],
+          "additionalProperties": false
+        },
+        "cu": {
+          "type": "object",
+          "properties": {
+            "d_func": {
+              "description": "core/timing.sail:24.54-24.77",
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 63
+            },
+            "d_skew": {
+              "description": "core/timing.sail:24.93-24.116",
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 15
+            }
+          },
+          "required": [
+            "d_func",
+            "d_skew"
+          ],
+          "additionalProperties": false
+        },
+        "mem": {
+          "type": "object",
+          "properties": {
+            "d_func": {
+              "description": "core/timing.sail:25.54-25.78",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 63
+            },
+            "d_skew": {
+              "description": "core/timing.sail:25.93-25.117",
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 15
+            }
+          },
+          "required": [
+            "d_func",
+            "d_skew"
+          ],
+          "additionalProperties": false
+        },
+        "mxm_abc": {
+          "type": "object",
+          "properties": {
+            "d_func": {
+              "description": "core/timing.sail:29.54-29.82",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 63
+            },
+            "d_skew": {
+              "description": "core/timing.sail:29.93-29.121",
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 15
+            },
+            "occupancy_f16": {
+              "description": "core/timing.sail:50.37-50.72",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 63
+            }
+          },
+          "required": [
+            "d_func",
+            "d_skew",
+            "occupancy_f16"
+          ],
+          "additionalProperties": false
+        },
+        "mxm_acc": {
+          "type": "object",
+          "properties": {
+            "d_func": {
+              "description": "core/timing.sail:30.54-30.82",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 63
+            },
+            "d_skew": {
+              "description": "core/timing.sail:30.93-30.121",
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 15
+            }
+          },
+          "required": [
+            "d_func",
+            "d_skew"
+          ],
+          "additionalProperties": false
+        },
+        "mxm_iw": {
+          "type": "object",
+          "properties": {
+            "d_func": {
+              "description": "core/timing.sail:28.54-28.81",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 63
+            },
+            "d_skew": {
+              "description": "core/timing.sail:28.93-28.120",
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 15
+            }
+          },
+          "required": [
+            "d_func",
+            "d_skew"
+          ],
+          "additionalProperties": false
+        },
+        "mxm_lw": {
+          "type": "object",
+          "properties": {
+            "d_func": {
+              "description": "core/timing.sail:27.54-27.81",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 63
+            },
+            "d_skew": {
+              "description": "core/timing.sail:27.93-27.120",
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 15
+            }
+          },
+          "required": [
+            "d_func",
+            "d_skew"
+          ],
+          "additionalProperties": false
+        },
+        "overrides": {
+          "description": "core/timing.sail:80.47-80.70",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "entry": {
+                "type": "string"
+              },
+              "d_func": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 63
+              },
+              "d_skew": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 15
+              }
+            },
+            "required": [
+              "entry",
+              "d_func",
+              "d_skew"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "sxm": {
+          "type": "object",
+          "properties": {
+            "d_func": {
+              "description": "core/timing.sail:31.54-31.78",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 63
+            },
+            "d_skew": {
+              "description": "core/timing.sail:31.93-31.117",
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 15
+            }
+          },
+          "required": [
+            "d_func",
+            "d_skew"
+          ],
+          "additionalProperties": false
+        },
+        "sxm_cross": {
+          "type": "object",
+          "properties": {
+            "d_func": {
+              "description": "core/timing.sail:35.56-35.86",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 63
+            },
+            "d_skew": {
+              "description": "core/timing.sail:35.97-35.127",
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 15
+            }
+          },
+          "required": [
+            "d_func",
+            "d_skew"
+          ],
+          "additionalProperties": false
+        },
+        "sxm_map_ready": {
+          "description": "core/timing.sail:49.33-49.60",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 63
+        },
+        "vxm": {
+          "type": "object",
+          "properties": {
+            "d_func": {
+              "description": "core/timing.sail:26.54-26.78",
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 63
+            },
+            "d_skew": {
+              "description": "core/timing.sail:26.93-26.117",
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 15
+            }
+          },
+          "required": [
+            "d_func",
+            "d_skew"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "c2c",
+        "cu",
+        "mem",
+        "mxm_abc",
+        "mxm_acc",
+        "mxm_iw",
+        "mxm_lw",
+        "overrides",
+        "sxm",
+        "sxm_cross",
+        "sxm_map_ready",
+        "vxm"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "barrier",
+    "c2c",
+    "extensions",
+    "geometry",
+    "host",
+    "icu",
+    "layout",
+    "mxm",
+    "ras",
+    "scrub",
+    "spec_version",
+    "sram",
+    "timing"
+  ],
+  "additionalProperties": false,
+  "anyOf": [
+    {
+      "type": "object",
+      "properties": {
+        "sram": {
+          "type": "object",
+          "properties": {
+            "words_per_slice": {
+              "type": "integer",
+              "const": 256
+            },
+            "bank_bit": {
+              "type": "integer",
+              "const": 7
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "properties": {
+        "sram": {
+          "type": "object",
+          "properties": {
+            "words_per_slice": {
+              "type": "integer",
+              "const": 512
+            },
+            "bank_bit": {
+              "type": "integer",
+              "const": 8
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "properties": {
+        "sram": {
+          "type": "object",
+          "properties": {
+            "words_per_slice": {
+              "type": "integer",
+              "const": 1024
+            },
+            "bank_bit": {
+              "type": "integer",
+              "const": 9
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "properties": {
+        "sram": {
+          "type": "object",
+          "properties": {
+            "words_per_slice": {
+              "type": "integer",
+              "const": 2048
+            },
+            "bank_bit": {
+              "type": "integer",
+              "const": 10
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "properties": {
+        "sram": {
+          "type": "object",
+          "properties": {
+            "words_per_slice": {
+              "type": "integer",
+              "const": 4096
+            },
+            "bank_bit": {
+              "type": "integer",
+              "const": 11
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "properties": {
+        "sram": {
+          "type": "object",
+          "properties": {
+            "words_per_slice": {
+              "type": "integer",
+              "const": 8192
+            },
+            "bank_bit": {
+              "type": "integer",
+              "const": 12
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "properties": {
+        "sram": {
+          "type": "object",
+          "properties": {
+            "words_per_slice": {
+              "type": "integer",
+              "const": 16384
+            },
+            "bank_bit": {
+              "type": "integer",
+              "const": 13
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "properties": {
+        "sram": {
+          "type": "object",
+          "properties": {
+            "words_per_slice": {
+              "type": "integer",
+              "const": 32768
+            },
+            "bank_bit": {
+              "type": "integer",
+              "const": 14
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "object",
+      "properties": {
+        "sram": {
+          "type": "object",
+          "properties": {
+            "words_per_slice": {
+              "type": "integer",
+              "const": 65536
+            },
+            "bank_bit": {
+              "type": "integer",
+              "const": 15
+            }
+          }
+        }
+      }
+    }
+  ],
+  "x-opentsp-why": "sram.bank_bit must be the upper-most address bit: log2(words_per_slice) - 1 (7 for 256 words, 12 for 8192, 15 for 65536)",
+  "x-opentsp-relations": [
+    {
+      "a": "sram.bank_bit",
+      "op": "<",
+      "b": "sram.addr_bits",
+      "offset": 0,
+      "why": "a slice has at most 2^addr_bits words, so the bank bit (log2(words_per_slice) - 1) is below addr_bits"
+    },
+    {
+      "a": "layout.c2c_rx_gap",
+      "op": "<",
+      "b": "layout.mem_up_gap_base",
+      "offset": 1,
+      "quads": -1,
+      "why": "the C2C receiver is outside the last MEM quad on the inward row"
+    },
+    {
+      "a": "layout.mem_up_gap_base",
+      "op": "<",
+      "b": "layout.vxm_gap",
+      "offset": 0,
+      "why": "MEM (inward) is between the C2C receiver and the VXM"
+    },
+    {
+      "a": "layout.vxm_gap",
+      "op": "<",
+      "b": "layout.mem_down_gap_base",
+      "offset": 0,
+      "why": "the VXM is between the inward and outward MEM gaps"
+    },
+    {
+      "a": "layout.mem_down_gap_base",
+      "op": "<",
+      "b": "layout.c2c_tx_gap",
+      "offset": 1,
+      "quads": -1,
+      "why": "the last MEM quad (outward) is before the C2C transmitter"
+    },
+    {
+      "a": "layout.c2c_tx_gap",
+      "op": "<",
+      "b": "layout.sxm_dst_gap",
+      "offset": 0,
+      "why": "the C2C transmitter is before the SXM distributor"
+    },
+    {
+      "a": "layout.sxm_dst_gap",
+      "op": "<",
+      "b": "layout.sxm_turn_in_gap",
+      "offset": 0,
+      "why": "the SXM distributor is before the SXM turn"
+    },
+    {
+      "a": "layout.sxm_turn_in_gap",
+      "op": "<",
+      "b": "layout.mxm_in_gap",
+      "offset": 0,
+      "why": "the SXM turn is before the MXM input"
+    },
+    {
+      "a": "layout.mxm_acc_gap",
+      "op": "<",
+      "b": "layout.sxm_turn_out_gap",
+      "offset": 0,
+      "why": "the MXM result enters the row before the SXM turn output"
+    },
+    {
+      "a": "layout.sxm_turn_out_gap",
+      "op": "<",
+      "b": "layout.c2c_rx_gap",
+      "offset": 0,
+      "why": "the SXM turn output is before the C2C receiver"
+    },
+    {
+      "a": "c2c.link_latency_min",
+      "op": "<=",
+      "b": "c2c.link_latency",
+      "offset": 0,
+      "why": "the nominal link latency is inside the published range"
+    },
+    {
+      "a": "c2c.link_latency",
+      "op": "<=",
+      "b": "c2c.link_latency_max",
+      "offset": 0,
+      "why": "the nominal link latency is inside the published range"
+    },
+    {
+      "a": "c2c.link_latency_max",
+      "op": "<",
+      "b": "c2c.hac_period",
+      "offset": 0,
+      "why": "every link latency is below the HAC period, so Deskew is deterministic"
+    },
+    {
+      "a": "geometry.superlanes",
+      "op": "<=",
+      "b": "timing.sxm_cross.d_func",
+      "offset": 0,
+      "why": "Shift and Permute read lanes of later superlanes, which arrive up to superlanes - 1 cycles after superlane 0"
+    },
+    {
+      "a": "geometry.superlanes",
+      "op": "<=",
+      "b": "timing.mxm_abc.d_func",
+      "offset": 0,
+      "why": "ABC sums lanes of every superlane, which arrive up to superlanes - 1 cycles after superlane 0"
+    },
+    {
+      "a": "timing.mxm_abc.occupancy_f16",
+      "op": "<=",
+      "b": "timing.mxm_abc.d_func",
+      "offset": 0,
+      "why": "an f16 ABC holds its plane for at most d_func cycles, the time before its product commits"
+    },
+    {
+      "a": "timing.c2c.d_skew",
+      "op": "<",
+      "b": "timing.c2c.d_func",
+      "offset": 0,
+      "why": "an instruction executes at dispatch + d_skew and commits after that, at dispatch + d_func"
+    },
+    {
+      "a": "timing.mem.d_skew",
+      "op": "<",
+      "b": "timing.mem.d_func",
+      "offset": 0,
+      "why": "an instruction executes at dispatch + d_skew and commits after that, at dispatch + d_func"
+    },
+    {
+      "a": "timing.mxm_abc.d_skew",
+      "op": "<",
+      "b": "timing.mxm_abc.d_func",
+      "offset": 0,
+      "why": "an instruction executes at dispatch + d_skew and commits after that, at dispatch + d_func"
+    },
+    {
+      "a": "timing.mxm_acc.d_skew",
+      "op": "<",
+      "b": "timing.mxm_acc.d_func",
+      "offset": 0,
+      "why": "an instruction executes at dispatch + d_skew and commits after that, at dispatch + d_func"
+    },
+    {
+      "a": "timing.mxm_iw.d_skew",
+      "op": "<",
+      "b": "timing.mxm_iw.d_func",
+      "offset": 0,
+      "why": "an instruction executes at dispatch + d_skew and commits after that, at dispatch + d_func"
+    },
+    {
+      "a": "timing.mxm_lw.d_skew",
+      "op": "<",
+      "b": "timing.mxm_lw.d_func",
+      "offset": 0,
+      "why": "an instruction executes at dispatch + d_skew and commits after that, at dispatch + d_func"
+    },
+    {
+      "a": "timing.sxm.d_skew",
+      "op": "<",
+      "b": "timing.sxm.d_func",
+      "offset": 0,
+      "why": "an instruction executes at dispatch + d_skew and commits after that, at dispatch + d_func"
+    },
+    {
+      "a": "timing.sxm_cross.d_skew",
+      "op": "<",
+      "b": "timing.sxm_cross.d_func",
+      "offset": 0,
+      "why": "an instruction executes at dispatch + d_skew and commits after that, at dispatch + d_func"
+    },
+    {
+      "a": "timing.vxm.d_skew",
+      "op": "<",
+      "b": "timing.vxm.d_func",
+      "offset": 0,
+      "why": "an instruction executes at dispatch + d_skew and commits after that, at dispatch + d_func"
+    }
+  ]
+}

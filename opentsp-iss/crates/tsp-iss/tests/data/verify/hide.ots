@@ -1,0 +1,28 @@
+.arch opentsp-tsa
+.profile ref
+.extern x, slice=8, addr=0x10, size=0x1
+.extern m00, slice=12, addr=0x10, size=0x1
+.extern m01, slice=13, addr=0x10, size=0x1
+.section text
+bundle @cycle=27 {
+  MEM[12]: read m00, W:8, 0x0
+  MEM[13]: read m01, W:9, 0x0
+}
+bundle @cycle=45 {
+  SXM.W.PRM: loadmapwide 0x0, W:8, W:9
+}
+bundle @cycle=46 {
+  MEM[8]: read x, W:0, 0x0
+}
+bundle @cycle=61 {
+  MEM[8]: read x, W:1, 0x0
+}
+bundle @cycle=65 {
+  SXM.W.PRM: permute W:0, 0x0, E:4
+}
+bundle @cycle=80 {
+  SXM.W.TSP[0]: rotate W:1, 0x3, E:4
+}
+bundle @cycle=105 {
+  MEM[44]: write 0x20, E:4, 0x0
+}

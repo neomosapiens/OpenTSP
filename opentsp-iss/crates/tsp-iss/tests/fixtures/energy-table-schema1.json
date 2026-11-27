@@ -1,0 +1,97 @@
+{
+  "schema": 1,
+  "status": "estimate",
+  "calibration": {
+    "status": "unresolved - the owner has not picked a target; the two published ranges below disagree",
+    "published_range_w": {
+      "low": 35,
+      "high": 350,
+      "source": "the power-semantics design record, 35-350 W"
+    },
+    "product_brief_w": {
+      "average": 185,
+      "maximum": 300,
+      "source": "the published product brief v1.7 of the chip, 185 W average and 300 W maximum"
+    },
+    "how_to_calibrate": "choose one target; run a workload whose power is known; scale events.* and cycles.* until `watts.average` of the run and `full_activity_watts` bracket it; record the workload and the date here"
+  },
+  "static_w": 30,
+  "static_share": {
+    "MEM": 0.35,
+    "VXM": 0.1,
+    "MXM": 0.3,
+    "SXM": 0.05,
+    "C2C": 0.15,
+    "CU": 0.05
+  },
+  "reference": {
+    "vlanes": 320,
+    "mem_slices": 88,
+    "mxm_planes": 4,
+    "mxm_rows": 320,
+    "c2c_links": 16
+  },
+  "peak": {
+    "vxm_alus_per_lane": 16
+  },
+  "events": {
+    "mem_read_pj_per_byte": 0.4,
+    "mem_write_pj_per_byte": 0.5,
+    "srf_write_pj_per_byte": 0.15,
+    "vxm_op_pj": {
+      "add_sub": 0.04,
+      "mul": 0.15,
+      "minmax": 0.03,
+      "logic": 0.02,
+      "compare_select": 0.04,
+      "convert": 0.08,
+      "reduce": 0.05,
+      "transcendental": 3.0
+    },
+    "vxm_width_scale": {
+      "w1": 1.0,
+      "w2": 2.2,
+      "w4": 4.8
+    },
+    "vxm_float_scale": 3.0,
+    "mxm_mac_pj": {
+      "i8": 0.2,
+      "u8": 0.2,
+      "f16": 0.55,
+      "fp8": 0.15
+    },
+    "mxm_load_pj_per_byte": 0.3,
+    "mxm_install_pj_per_byte": 0.1,
+    "mxm_acc_pj_per_lane": 0.3,
+    "sxm_pj_per_byte": 0.1,
+    "c2c_pj_per_byte": 8.0,
+    "host_pj_per_byte": 40.0,
+    "ifetch_pj_per_byte": 0.3
+  },
+  "cycles": {
+    "MEM": {
+      "active_pj": 3000,
+      "idle_pj": 2000
+    },
+    "VXM": {
+      "active_pj": 800,
+      "idle_pj": 500
+    },
+    "MXM": {
+      "active_pj": 2500,
+      "idle_pj": 1500
+    },
+    "SXM": {
+      "active_pj": 500,
+      "idle_pj": 300
+    },
+    "C2C": {
+      "active_pj": 1000,
+      "idle_pj": 800
+    },
+    "CU": {
+      "active_pj": 600,
+      "idle_pj": 400
+    }
+  }
+}

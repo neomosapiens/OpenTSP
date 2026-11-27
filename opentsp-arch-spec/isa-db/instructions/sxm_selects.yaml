@@ -1,0 +1,36 @@
+# Instruction catalogue entry. Sail (model/) is normative; test/isa_db/check_isa_db.py
+# checks this file against the model's encdec and assembly mappings.
+$schema: opentsp.isa-db.instruction
+spec_version: '0.1'
+name: SelectS
+mnemonic: sxselect
+long_name: Shifter select
+slice: SXM
+units:
+- SXM_W_SEL
+- SXM_E_SEL
+timing: SXM
+encoding:
+  width: 64
+  match: 010000011100------------0000000000------------------000000000000
+  variables:
+  - name: dst
+    location: 51-46
+    kind: stream
+  - name: a
+    location: 45-40
+    kind: stream
+  - name: b
+    location: 29-24
+    kind: stream
+  - name: sel
+    location: 23-18
+    kind: stream
+  - name: c
+    location: 17-12
+    kind: stream
+assembly: sxselect {a}, {b}, {c}, {sel}, {dst}
+operation: dst[l] = a[l], b[l] or c[l] for sel[l] = 0, 1 or 2 (unshifted, north-shifted, south-shifted); a lane
+  whose sel is above 2 is zero, the other lanes are written, and the instruction reports one OTS-E-OPR-001 (an exception
+  to "a diagnostic means no effect"). ISCA20 Fig. 8.
+definedBy: ref

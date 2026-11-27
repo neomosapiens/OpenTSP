@@ -1,0 +1,24 @@
+# Instruction catalogue entry. Sail (model/) is normative; test/isa_db/check_isa_db.py
+# checks this file against the model's encdec and assembly mappings.
+$schema: opentsp.isa-db.instruction
+spec_version: '0.1'
+name: Config
+mnemonic: config
+long_name: Configure low-power mode
+slice: CU
+units:
+- any
+timing: CU
+encoding:
+  width: 32
+  match: 0000000101000000----------------
+  variables:
+  - name: v
+    location: 15-0
+    kind: imm16
+assembly: config {v}
+operation: 'On a MEM queue: liquid-thread split, tiles 0..v are thread 0 and the rest thread 1 (v >= geometry.superlanes
+  - 1: all thread 0). On other queues it is an accepted power hint with no architectural state, result, diagnostic
+  or timing effect; physical power state is not modelled. Config is named in ISCA20 Table I; the liquid-thread partition
+  rule is an opentsp choice.'
+definedBy: ref

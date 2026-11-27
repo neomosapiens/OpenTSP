@@ -1,0 +1,4 @@
+#!/bin/bash
+# Raises Sail's per-query limits so that a loaded machine does not fail the type check at random.
+args=(); for a in "$@"; do case "$a" in -t:*) args+=("-t:60000");; -T:*) args+=("-T:300");; *) args+=("$a");; esac; done
+exec "$(dirname "$0")/../sail/bin/z3" "${args[@]}"

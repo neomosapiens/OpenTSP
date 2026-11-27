@@ -1,0 +1,98 @@
+{
+ "schema": "opentsp.program-case",
+ "version": 1,
+ "spec_version": "0.1",
+ "name": "mem/agt_levels",
+ "profile": "mini",
+ "program": "agt_levels.mini.ots",
+ "tags": [
+  "sim"
+ ],
+ "weights": {
+  "xa": {
+   "dtype": "i8",
+   "words": 2,
+   "hex": "4420823cfde6f1c26b30f90ec7dd01e4887534a20f0b0d04c36ed80e71e0fd77"
+  },
+  "xb": {
+   "dtype": "i8",
+   "words": 16,
+   "hex": "b07670eb940bd5335f973daad8619b91ffc911f57cced458bbbf2ce03753c9bdfa0ff0169dc9575674066676cfb0b4eb8902c44269da1cf6ba66d3f8b6d4b100a9ea0e755a5c2e8210242a08e7078f7f89385eb09423555182568b96e8a4fef23a0c9fc5afd7608437816bdd0a7309cb4a1252e4da70e6720fcaa4da1e98406c189c24279e9851d5814204136feb5713c166b13269dd63fc35c797ff08a6cd90095066a745addb6d8831c2b0f87821142b4456556d89aa82bcadae3a9578fa4535a414d025c24b40ae3ac127722988ba973aea8d37179706072ed33a14607ad7523be6557b5134dec19681f4a1336aa2140d0597a3e6c8a0cc2020a2e939806e"
+  },
+  "xc": {
+   "dtype": "i8",
+   "words": 4,
+   "hex": "f0b6845d6a9d657eb8298f2de52ead74c79d15a75fa29b7dab332f7d700a7ccd258924260b0594b7fcf04e33a727585b4c48a39c369640694810a1695b99dd50"
+  }
+ },
+ "preload": {},
+ "dump": [
+  "44:48",
+  "44:49",
+  "44:50",
+  "44:51",
+  "44:52",
+  "44:53",
+  "45:64",
+  "45:65",
+  "45:66",
+  "45:67",
+  "45:68",
+  "45:69",
+  "45:70",
+  "45:71",
+  "45:72",
+  "45:73",
+  "45:74",
+  "45:75",
+  "45:76",
+  "45:77",
+  "45:78",
+  "45:79",
+  "46:80",
+  "46:81",
+  "46:82",
+  "46:83"
+ ],
+ "expect": {
+  "asm_warnings": [],
+  "diagnostics": [],
+  "words": {
+   "44:48": "4420823cfde6f1c26b30f90ec7dd01e4",
+   "44:49": "4420823cfde6f1c26b30f90ec7dd01e4",
+   "44:50": "4420823cfde6f1c26b30f90ec7dd01e4",
+   "44:51": "887534a20f0b0d04c36ed80e71e0fd77",
+   "44:52": "887534a20f0b0d04c36ed80e71e0fd77",
+   "44:53": "887534a20f0b0d04c36ed80e71e0fd77",
+   "45:64": "b07670eb940bd5335f973daad8619b91",
+   "45:65": "ffc911f57cced458bbbf2ce03753c9bd",
+   "45:66": "fa0ff0169dc9575674066676cfb0b4eb",
+   "45:67": "8902c44269da1cf6ba66d3f8b6d4b100",
+   "45:68": "a9ea0e755a5c2e8210242a08e7078f7f",
+   "45:69": "89385eb09423555182568b96e8a4fef2",
+   "45:70": "3a0c9fc5afd7608437816bdd0a7309cb",
+   "45:71": "4a1252e4da70e6720fcaa4da1e98406c",
+   "45:72": "189c24279e9851d5814204136feb5713",
+   "45:73": "c166b13269dd63fc35c797ff08a6cd90",
+   "45:74": "095066a745addb6d8831c2b0f8782114",
+   "45:75": "2b4456556d89aa82bcadae3a9578fa45",
+   "45:76": "35a414d025c24b40ae3ac127722988ba",
+   "45:77": "973aea8d37179706072ed33a14607ad7",
+   "45:78": "523be6557b5134dec19681f4a1336aa2",
+   "45:79": "140d0597a3e6c8a0cc2020a2e939806e",
+   "46:80": "f0b6845d6a9d657eb8298f2de52ead74",
+   "46:81": "c79d15a75fa29b7dab332f7d700a7ccd",
+   "46:82": "258924260b0594b7fcf04e33a727585b",
+   "46:83": "4c48a39c369640694810a1695b99dd50"
+  },
+  "decoded": null
+ },
+ "golden": {
+  "source": "hand",
+  "generator": "gen/mem.py:agt_levels",
+  "seed": 1
+ },
+ "budget": {
+  "cycles": 44
+ }
+}

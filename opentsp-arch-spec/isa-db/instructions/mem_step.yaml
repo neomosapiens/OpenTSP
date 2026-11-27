@@ -1,0 +1,26 @@
+# Instruction catalogue entry. Sail (model/) is normative; test/isa_db/check_isa_db.py
+# checks this file against the model's encdec and assembly mappings.
+$schema: opentsp.isa-db.instruction
+spec_version: '0.1'
+name: Step
+mnemonic: step
+long_name: AGT stride
+slice: MEM
+units:
+- MEM_W
+- MEM_E
+timing: MEM
+encoding:
+  width: 64
+  match: 00010001100000000000000000000000----------------0000000000000000
+  variables:
+  - name: a
+    location: 31-16
+    kind: simm16
+    min: -32767
+    max: 32767
+    max_expr: sram_words-1
+assembly: step {a}
+operation: 'AGT configuration: signed address stride of the current loop level, at most min(2^sram.addr_bits - 1,
+  32767) in magnitude (8191 with the reference 13 bits). HC34 p.25.'
+definedBy: ref

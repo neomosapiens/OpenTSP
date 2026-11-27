@@ -1,0 +1,16 @@
+.arch opentsp-tsa
+.profile ref
+.section text
+bundle @cycle=10 {
+  VXM[0]: host_wait 0x3
+  C2C.W.RX[0]: pci_receive W:24
+  C2C.E.RX[1]: pci_receive E:31
+}
+bundle @cycle=11 {
+  VXM[0]: host_notify 0x5
+  C2C.W.TX[1]: pci_send W:3
+  C2C.E.TX[0]: pci_send E:30
+}
+bundle @cycle=12 {
+  MEM[3]: host_wait 0x3f
+}

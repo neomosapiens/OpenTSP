@@ -1,0 +1,13 @@
+{
+  "name": "tinystories-3m (the showcase model: 8 layers, hidden 64; the measured reference of model_map)",
+  "layers": 8,
+  "hidden": 64,
+  "heads": 16,
+  "kv_heads": 16,
+  "ffn": 256,
+  "ffn_matrices": 2,
+  "vocab": 50257,
+  "context": 64,
+  "weight_bytes": 2,
+  "kv_bytes": 2
+}

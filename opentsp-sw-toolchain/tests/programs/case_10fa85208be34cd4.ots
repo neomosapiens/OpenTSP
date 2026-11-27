@@ -1,0 +1,6 @@
+.arch opentsp-tsa
+.profile ref
+.section text
+bundle @cycle=3 {
+  MEM[4]: pci_send W:0
+}

@@ -1,0 +1,6 @@
+.arch opentsp-tsa
+.profile ref
+.section text
+bundle @cycle=0 {
+  MEM[4]: add.i8 E:8, E:0, E:4
+}

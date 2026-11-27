@@ -1,0 +1,24 @@
+# Instruction catalogue entry. Sail (model/) is normative; test/isa_db/check_isa_db.py
+# checks this file against the model's encdec and assembly mappings.
+$schema: opentsp.isa-db.instruction
+spec_version: '0.1'
+name: SetSegment
+mnemonic: setsegment
+long_name: Set segment size
+slice: MEM
+units:
+- MEM_W
+- MEM_E
+timing: MEM
+encoding:
+  width: 64
+  match: 0001001000000000000000000000000-----------------0000000000000000
+  variables:
+  - name: n
+    location: 32-16
+    kind: imm17
+    max_expr: sram_words
+assembly: setsegment {n}
+operation: References at address >= n raise OTS-E-OPR-001. n is at most 2^sram.addr_bits (a 17-bit field, so that
+  65536 is expressible).
+definedBy: ref

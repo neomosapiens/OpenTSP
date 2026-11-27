@@ -1,0 +1,13 @@
+{
+  "name": "dense-70b (the shape of a published 70-billion-parameter decoder with grouped KV heads; every row computed from it is an estimate)",
+  "layers": 80,
+  "hidden": 8192,
+  "heads": 64,
+  "kv_heads": 8,
+  "ffn": 28672,
+  "ffn_matrices": 3,
+  "vocab": 32000,
+  "context": 4096,
+  "weight_bytes": 1,
+  "kv_bytes": 2
+}

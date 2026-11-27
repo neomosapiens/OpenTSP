@@ -1,0 +1,31 @@
+# Instruction catalogue entry. Sail (model/) is normative; test/isa_db/check_isa_db.py
+# checks this file against the model's encdec and assembly mappings.
+$schema: opentsp.isa-db.instruction
+spec_version: '0.1'
+name: ABC8
+mnemonic: abc
+long_name: Activation buffer control, FP8
+slice: MXM
+units:
+- MXM_W
+- MXM_E
+timing: MXM_ABC
+encoding:
+  width: 32
+  match: 001100001011-------0000000000000
+  variables:
+  - name: fmt
+    location: '13'
+    kind: fp8_format
+  - name: src
+    location: 19-14
+    kind: stream
+assembly: abc.{fmt} {src}
+operation: 'The fp8 form of ABC (type field 3, mode bit 13 = the format: 0 e4m3, 1 e5m2, for the weights and the
+  activations alike): product[r] = sum_k W[r][k] * x[k] for r < mxm.rows, the exact sum of the exact products rounded
+  once to f32 (round to nearest even), as the f16 form; fp8 weights only (an i8, u8, f16, bf16 or bfp8 plane gives
+  OTS-E-RES-001, as does an fp8 ABC on any other weight type). Capacity and rate as i8: one ABC per cycle, mxm.rows
+  rows, the plane is not held. A NaN operand, an infinity times zero or products of both infinities give the canonical
+  NaN (e5m2 only: e4m3 has no infinity), else an infinite product gives that infinity; an exact zero sum is -0 only
+  if every product is -0. ACC f32 reads the product. Implementation choice (microarchitecture.md sec. 6).'
+definedBy: ref

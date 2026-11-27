@@ -1,0 +1,26 @@
+# Instruction catalogue entry. Sail (model/) is normative; test/isa_db/check_isa_db.py
+# checks this file against the model's encdec and assembly mappings.
+$schema: opentsp.isa-db.instruction
+spec_version: '0.1'
+name: HostNotify
+mnemonic: host_notify
+long_name: Raise an MSI-X interrupt to the host
+slice: C2C
+units:
+- any
+timing: CU
+encoding:
+  width: 32
+  match: 0101001000000000000000000000----
+  variables:
+  - name: n
+    location: 3-0
+    kind: imm4
+    not_values:
+    - 0
+assembly: host_notify {n}
+operation: 'Raises MSI-X vector n (1..15) towards the host at the execute cycle: IRQ_CAUSE bit n is set, and the
+  interrupt is delivered at once if IRQ_MASK bit n is set; a masked vector keeps its cause bit and is delivered
+  when the host enables it. Vector 0 is the error interrupt. The published sources: MSI-X interrupts from the C2C
+  slice; implementation choice: the instruction and the numbering.'
+definedBy: ref

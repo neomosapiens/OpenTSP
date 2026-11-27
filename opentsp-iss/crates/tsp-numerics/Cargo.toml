@@ -1,0 +1,12 @@
+[package]
+name = "tsp-numerics"
+version = "0.1.0"
+edition = "2021"
+description = "Bit-exact numerics of the opentsp ISS (specification 0.1): lane kernels, conversions, f16/f32 arithmetic, transcendentals, f16 dot product"
+license = "Apache-2.0"
+
+[dependencies]
+num-bigint = "0.4"
+
+[dev-dependencies]
+sha2 = "0.10"

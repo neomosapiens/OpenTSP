@@ -1,0 +1,27 @@
+# Instruction catalogue entry. Sail (model/) is normative; test/isa_db/check_isa_db.py
+# checks this file against the model's encdec and assembly mappings.
+$schema: opentsp.isa-db.instruction
+spec_version: '0.1'
+name: Ifetch
+mnemonic: ifetch
+long_name: Instruction fetch
+slice: CU
+units:
+- any
+timing: CU
+encoding:
+  width: 32
+  match: 0000000100000000------0000000000
+  variables:
+  - name: stream
+    location: 15-10
+    kind: stream
+assembly: ifetch {stream}
+operation: 'Reads instruction text from the one stream operand stream: the vector at the execute cycle t and the
+  next vector of the same stream at t + 1 (2 x vlanes bytes; any stream; a missing vector reports OTS-E-TIM-001
+  at its sample cycle and discards the pair) and appends it to the issuing queue''s instruction queue (IQ): the
+  text arrives icu.fetch_latency cycles after the second vector, at icu.fetch_bytes_per_cycle, padding units (0xFFFFFFFF)
+  are dropped, and text that finds the IQ full (icu.iq_depth) is lost (OTS-E-IQ-002). An Ifetch that at either admission
+  check (first sample or completion) finds the queue''s fetch staging FIFO full (icu.fetch_staging_depth payloads)
+  fetches nothing (OTS-E-IQ-003). ISCA20 sec. III-A3.'
+definedBy: ref

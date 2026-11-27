@@ -1,0 +1,45 @@
+# Instruction catalogue entry. Sail (model/) is normative; test/isa_db/check_isa_db.py
+# checks this file against the model's encdec and assembly mappings.
+$schema: opentsp.isa-db.instruction
+spec_version: '0.1'
+name: PciReceive
+mnemonic: pci_receive
+long_name: Host receive over PCIe
+slice: C2C
+units:
+- C2C_W_RX
+- C2C_E_RX
+timing: C2C
+encoding:
+  width: 32
+  match: 0101000101000000------0000000000
+  variables:
+  - name: stream
+    location: 15-10
+    kind: stream
+    values:
+    - 24
+    - 25
+    - 26
+    - 27
+    - 28
+    - 29
+    - 30
+    - 31
+    - 56
+    - 57
+    - 58
+    - 59
+    - 60
+    - 61
+    - 62
+    - 63
+assembly: pci_receive {stream}
+operation: 'Writes the oldest vector the host''s DMA engine has pushed (the ingress FIFO of this chip''s own host
+  interface, host.cycles_per_vector cycles per vector, host.ingress_depth deep; a vector that finds it full waits
+  in the DMA engine, nothing is dropped) to stream, which must be one of S24..S31 on either row (the upper eight
+  streams, an implementation choice); a MEM Write commits it to SRAM (the two steps, the instruction and the Write,
+  are the model''s choice). None arrived: OTS-E-TIM-001. Implementation choice: the instruction, the encoding, the
+  queues, the restriction to S24..S31. The published TSP sources: ISCA20 sec. II-6 (the PCIe host interface in the
+  C2C module, a lightweight DMA engine that emplaces a model onto the TSP memory).'
+definedBy: ref

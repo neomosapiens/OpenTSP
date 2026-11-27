@@ -1,0 +1,73 @@
+{
+ "schema": "opentsp.program-case",
+ "version": 1,
+ "spec_version": "0.1",
+ "name": "mem/rw_pair",
+ "profile": "mini",
+ "program": "rw_pair.mini.ots",
+ "tags": [
+  "sim"
+ ],
+ "weights": {
+  "x": {
+   "dtype": "i8",
+   "words": 1,
+   "hex": "4420823cfde6f1c26b30f90ec7dd01e4"
+  },
+  "old": {
+   "dtype": "i8",
+   "words": 1,
+   "hex": "b07670eb940bd5335f973daad8619b91"
+  },
+  "x2": {
+   "dtype": "i8",
+   "words": 1,
+   "hex": "ffc911f57cced458bbbf2ce03753c9bd"
+  },
+  "y": {
+   "dtype": "i8",
+   "words": 1,
+   "hex": "887534a20f0b0d04c36ed80e71e0fd77"
+  },
+  "y2": {
+   "dtype": "i8",
+   "words": 1,
+   "hex": "fa0ff0169dc9575674066676cfb0b4eb"
+  }
+ },
+ "preload": {},
+ "dump": [
+  "4:160",
+  "44:48",
+  "4:17"
+ ],
+ "expect": {
+  "asm_warnings": [],
+  "diagnostics": [
+   {
+    "cycle": 24,
+    "queue": 4,
+    "code": "OTS-E-MEM-001"
+   },
+   {
+    "cycle": 24,
+    "queue": 4,
+    "code": "OTS-E-MEM-001"
+   }
+  ],
+  "words": {
+   "4:160": "887534a20f0b0d04c36ed80e71e0fd77",
+   "44:48": "4420823cfde6f1c26b30f90ec7dd01e4",
+   "4:17": "b07670eb940bd5335f973daad8619b91"
+  },
+  "decoded": null
+ },
+ "golden": {
+  "source": "hand",
+  "generator": "gen/mem.py:rw_pair",
+  "seed": 1
+ },
+ "budget": {
+  "cycles": 40
+ }
+}

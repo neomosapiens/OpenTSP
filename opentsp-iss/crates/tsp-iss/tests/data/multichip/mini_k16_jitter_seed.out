@@ -1,0 +1,99 @@
+C 0
+T srf 22 E:8 gap 18 dce3eaf1f8ff060d141b222930373e45
+T srf 46 W:7 gap 18 bdc4cbd2d9e0e7eef5fc030a11181f26
+T srf 54 E:1 gap 18 030a11181f262d343b424950575e656c
+T diag 61 queue 127 OTS-E-LNK-001
+T diag 66 queue 127 OTS-E-LNK-001
+T diag 284 queue 143 OTS-E-TIM-001
+T diag 288 queue 143 OTS-E-TIM-001
+T diag 292 queue 143 OTS-E-TIM-001
+T srf 297 W:9 gap 5 01000000000000000000000000000000
+T diag 300 queue 143 OTS-E-TIM-001
+T diag 304 queue 143 OTS-E-TIM-001
+E OTS-E-LNK-001 61 7
+C 1
+E - -1 0
+C 2
+E - -1 0
+C 3
+E - -1 0
+C 4
+T diag 251 queue 128 OTS-E-TIM-001
+T diag 255 queue 128 OTS-E-TIM-001
+T diag 259 queue 128 OTS-E-TIM-001
+T diag 263 queue 128 OTS-E-TIM-001
+T diag 265 queue 129 OTS-E-TIM-001
+T srf 268 E:8 gap 5 dce3eaf1f8ff060d141b222930373e45
+T diag 269 queue 129 OTS-E-TIM-001
+T diag 271 queue 128 OTS-E-TIM-001
+T diag 273 queue 129 OTS-E-TIM-001
+T diag 277 queue 129 OTS-E-TIM-001
+T diag 281 queue 129 OTS-E-TIM-001
+T srf 286 E:2 gap 5 01000000000000000000000000000000
+E OTS-E-TIM-001 251 10
+C 5
+T diag 265 queue 128 OTS-E-TIM-001
+T diag 269 queue 128 OTS-E-TIM-001
+T diag 273 queue 128 OTS-E-TIM-001
+T diag 277 queue 128 OTS-E-TIM-001
+T srf 282 E:10 gap 5 01000000000000000000000000000000
+T diag 285 queue 128 OTS-E-TIM-001
+E OTS-E-TIM-001 265 5
+C 6
+E - -1 0
+C 7
+E - -1 0
+C 8
+T diag 253 queue 129 OTS-E-TIM-001
+T diag 257 queue 129 OTS-E-TIM-001
+T diag 261 queue 129 OTS-E-TIM-001
+T diag 265 queue 129 OTS-E-TIM-001
+T diag 269 queue 142 OTS-E-TIM-001
+T srf 270 E:5 gap 5 01000000000000000000000000000000
+T diag 270 queue 129 OTS-E-TIM-001
+T diag 273 queue 129 OTS-E-TIM-001
+T diag 273 queue 142 OTS-E-TIM-001
+T diag 274 queue 129 OTS-E-TIM-001
+T diag 275 queue 143 OTS-E-TIM-001
+T diag 277 queue 142 OTS-E-TIM-001
+T diag 278 queue 129 OTS-E-TIM-001
+T diag 279 queue 143 OTS-E-TIM-001
+T srf 282 W:6 gap 5 9ea5acb3bac1c8cfd6dde4ebf2f90007
+T diag 282 queue 129 OTS-E-TIM-001
+T diag 283 queue 128 OTS-E-TIM-001
+T diag 283 queue 143 OTS-E-TIM-001
+T diag 285 queue 142 OTS-E-TIM-001
+T diag 286 queue 129 OTS-E-TIM-001
+T diag 287 queue 128 OTS-E-TIM-001
+T diag 287 queue 143 OTS-E-TIM-001
+T diag 289 queue 142 OTS-E-TIM-001
+T diag 290 queue 129 OTS-E-TIM-001
+T diag 291 queue 128 OTS-E-TIM-001
+T diag 291 queue 143 OTS-E-TIM-001
+T diag 295 queue 143 OTS-E-TIM-001
+T srf 296 E:1 gap 5 030a11181f262d343b424950575e656c
+T diag 299 queue 128 OTS-E-TIM-001
+T diag 303 queue 128 OTS-E-TIM-001
+E OTS-E-TIM-001 253 27
+C 9
+E - -1 0
+C 10
+E - -1 0
+C 11
+T diag 280 queue 128 OTS-E-TIM-001
+T diag 284 queue 128 OTS-E-TIM-001
+T diag 288 queue 128 OTS-E-TIM-001
+T diag 292 queue 128 OTS-E-TIM-001
+T diag 296 queue 128 OTS-E-TIM-001
+T srf 301 E:4 gap 5 60676e757c838a91989fa6adb4bbc2c9
+E OTS-E-TIM-001 280 5
+C 12
+T srf 51 E:4 gap 18 60676e757c838a91989fa6adb4bbc2c9
+E - -1 0
+C 13
+E - -1 0
+C 14
+E - -1 0
+C 15
+T srf 40 E:6 gap 18 9ea5acb3bac1c8cfd6dde4ebf2f90007
+E - -1 0

@@ -1,0 +1,144 @@
+{
+  "spec_version": "0.1",
+  "extensions": [],
+  "geometry": {
+    "superlanes": 20,
+    "srf_positions": 45,
+    "streams_per_row": 32,
+    "mem_slices_per_hemisphere": 44
+  },
+  "sram": {
+    "slices": 88,
+    "words_per_slice": 8192,
+    "bank_bit": 12,
+    "addr_bits": 13
+  },
+  "mxm": {
+    "rows": 320,
+    "acc_bits": 32,
+    "planes_per_hemisphere": 2,
+    "acc_depth": 2,
+    "f16_rows": 160,
+    "fp8_rate": 2
+  },
+  "layout": {
+    "vxm_gap": 21,
+    "mem_up_gap_base": 18,
+    "mem_down_gap_base": 24,
+    "mxm_in_gap": 43,
+    "mxm_acc_gap": 2,
+    "sxm_dst_gap": 39,
+    "sxm_turn_in_gap": 40,
+    "sxm_turn_out_gap": 4,
+    "c2c_tx_gap": 38,
+    "c2c_rx_gap": 5
+  },
+  "timing": {
+    "cu": {
+      "d_func": 0,
+      "d_skew": 0
+    },
+    "mem": {
+      "d_func": 5,
+      "d_skew": 0
+    },
+    "vxm": {
+      "d_func": 5,
+      "d_skew": 2
+    },
+    "mxm_lw": {
+      "d_func": 20,
+      "d_skew": 0
+    },
+    "mxm_iw": {
+      "d_func": 1,
+      "d_skew": 0
+    },
+    "mxm_abc": {
+      "d_func": 20,
+      "d_skew": 0,
+      "occupancy_f16": 1
+    },
+    "mxm_acc": {
+      "d_func": 20,
+      "d_skew": 0
+    },
+    "sxm": {
+      "d_func": 5,
+      "d_skew": 0
+    },
+    "sxm_cross": {
+      "d_func": 20,
+      "d_skew": 0
+    },
+    "c2c": {
+      "d_func": 1,
+      "d_skew": 0,
+      "rtdeskew_floor": 1
+    },
+    "sxm_map_ready": 20,
+    "overrides": [
+      {
+        "entry": "Exp",
+        "d_func": 5,
+        "d_skew": 2
+      },
+      {
+        "entry": "Log",
+        "d_func": 5,
+        "d_skew": 2
+      },
+      {
+        "entry": "Permute",
+        "d_func": 20,
+        "d_skew": 0
+      },
+      {
+        "entry": "RSqrt",
+        "d_func": 5,
+        "d_skew": 2
+      },
+      {
+        "entry": "TanH",
+        "d_func": 5,
+        "d_skew": 2
+      },
+      {
+        "entry": "Transpose",
+        "d_func": 5,
+        "d_skew": 0
+      }
+    ]
+  },
+  "barrier": {
+    "release_latency": 35
+  },
+  "c2c": {
+    "links": 16,
+    "link_latency": 216,
+    "link_latency_min": 209,
+    "link_latency_max": 228,
+    "hac_period": 252,
+    "cycles_per_vector": 24,
+    "rx_depth": 16
+  },
+  "icu": {
+    "fetch_latency": 4,
+    "fetch_bytes_per_cycle": 16,
+    "iq_depth": 1280,
+    "fetch_staging_depth": 8
+  },
+  "host": {
+    "cycles_per_vector": 10,
+    "ingress_depth": 16,
+    "doorbells": 16,
+    "remote_csr": true
+  },
+  "ras": {
+    "log_depth": 8,
+    "diag_depth": 16
+  },
+  "scrub": {
+    "period": 0
+  }
+}

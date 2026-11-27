@@ -1,0 +1,64 @@
+{
+ "schema": "opentsp.program-case",
+ "version": 1,
+ "spec_version": "0.1",
+ "name": "negative/stream_timing",
+ "profile": "mini",
+ "program": "stream_timing.mini.ots",
+ "tags": [
+  "sim"
+ ],
+ "weights": {
+  "x": {
+   "dtype": "i8",
+   "words": 1,
+   "hex": "4420823cfde6f1c26b30f90ec7dd01e4"
+  },
+  "y": {
+   "dtype": "i8",
+   "words": 1,
+   "hex": "887534a20f0b0d04c36ed80e71e0fd77"
+  }
+ },
+ "preload": {},
+ "dump": [
+  "44:48"
+ ],
+ "expect": {
+  "asm_warnings": [],
+  "diagnostics": [
+   {
+    "cycle": 8,
+    "queue": 88,
+    "code": "OTS-E-TIM-001"
+   },
+   {
+    "cycle": 25,
+    "queue": 8,
+    "code": "OTS-E-DIR-001"
+   },
+   {
+    "cycle": 41,
+    "queue": 4,
+    "code": "OTS-E-SRF-002"
+   },
+   {
+    "cycle": 41,
+    "queue": 5,
+    "code": "OTS-E-SRF-002"
+   }
+  ],
+  "words": {
+   "44:48": "4420823cfde6f1c26b30f90ec7dd01e4"
+  },
+  "decoded": null
+ },
+ "golden": {
+  "source": "hand",
+  "generator": "gen/negative.py:stream_timing",
+  "seed": 1
+ },
+ "budget": {
+  "cycles": 64
+ }
+}

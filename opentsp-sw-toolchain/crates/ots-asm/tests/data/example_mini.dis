@@ -1,0 +1,15 @@
+.arch opentsp-tsa
+.profile mini
+.extern x, slice=4, addr=0x10, size=0x1
+.extern y, slice=5, addr=0x0, size=0x1
+.section text
+bundle @cycle=33 {
+  MEM[4]: read 0x10, E:0, 0x0
+  MEM[5]: read 0x0, E:4, 0x0
+}
+bundle @cycle=40 {
+  VXM[0]: add.i8 E:8, E:0, E:4
+}
+bundle @cycle=48 {
+  MEM[44]: write 0x9, E:8, 0x0
+}

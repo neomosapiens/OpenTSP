@@ -1,0 +1,23 @@
+# Instruction catalogue entry. Sail (model/) is normative; test/isa_db/check_isa_db.py
+# checks this file against the model's encdec and assembly mappings.
+$schema: opentsp.isa-db.instruction
+spec_version: '0.1'
+name: Countdown
+mnemonic: countdown
+long_name: AGT inter-reference delay
+slice: MEM
+units:
+- MEM_W
+- MEM_E
+timing: MEM
+encoding:
+  width: 64
+  match: 00010001010000000000000000000000----------------0000000000000000
+  variables:
+  - name: d
+    location: 31-16
+    kind: imm16
+assembly: countdown {d}
+operation: 'AGT configuration: idle cycles after each reference of the current loop level (Wait(countdown)): the
+  period is d + 1; an explicit value below 1 counts as 1; 0 when not received. HC34 p.25.'
+definedBy: ref

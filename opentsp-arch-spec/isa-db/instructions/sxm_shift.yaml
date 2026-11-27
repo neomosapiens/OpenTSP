@@ -1,0 +1,33 @@
+# Instruction catalogue entry. Sail (model/) is normative; test/isa_db/check_isa_db.py
+# checks this file against the model's encdec and assembly mappings.
+$schema: opentsp.isa-db.instruction
+spec_version: '0.1'
+name: Shift
+mnemonic: shift
+long_name: Lane shift
+slice: SXM
+units:
+- SXM_W_SHF
+- SXM_E_SHF
+timing: SXM_CROSS
+encoding:
+  width: 64
+  match: 010000000000----------------------000000000000000000000000000000
+  variables:
+  - name: dst
+    location: 51-46
+    kind: stream
+  - name: src
+    location: 45-40
+    kind: stream
+  - name: dir
+    location: '39'
+    kind: shift_dir
+  - name: amount
+    location: 38-30
+    kind: lane_count
+    max_expr: vlanes-1
+assembly: shift {src}, {dir}, {amount}, {dst}
+operation: 'up: dst[l] = src[l - amount]; down: dst[l] = src[l + amount]; zero fill. ISCA20 Fig. 8. Timing class
+  SXM_CROSS: a lane may come from a later superlane, so the result commits no earlier than dispatch + superlanes.'
+definedBy: ref

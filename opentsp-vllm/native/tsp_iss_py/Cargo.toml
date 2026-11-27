@@ -1,0 +1,29 @@
+[package]
+name = "tsp_iss_py"
+version = "0.1.0"
+edition = "2021"
+description = "PyO3 binding of the opentsp ISS: module opentsp_vllm._tsp_iss"
+license = "Apache-2.0"
+publish = false
+
+[lib]
+name = "_tsp_iss"
+crate-type = ["cdylib"]
+
+[features]
+# Parametrised schedule replay (opt-in at run time: `Chip.param_replay(True)`; the default driver is the normal one). `just vllm-binding`
+# builds with it unless OPENTSP_BINDING_REPLAY=0.
+replay = ["tsp-iss/replay"]
+native-mem-prefetch = ["tsp-iss/native-mem-prefetch"]
+
+[dependencies]
+# abi3: the limited API, so the build needs no Python headers and one .so serves Python 3.11 and later.
+pyo3 = { version = "0.28", features = ["abi3-py311"] }
+tsp-iss = { path = "../../../opentsp-iss/crates/tsp-iss" }
+ots-format = { path = "../../../opentsp-sw-toolchain/crates/ots-format" }
+ots-isa = { path = "../../../opentsp-sw-toolchain/crates/ots-isa" }
+ots-profile = { path = "../../../opentsp-sw-toolchain/crates/ots-profile" }
+sha2 = "0.10"
+
+[build-dependencies]
+pyo3-build-config = "0.28"

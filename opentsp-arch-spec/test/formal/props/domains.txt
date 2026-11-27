@@ -1,0 +1,17 @@
+p_f32_finite_domain
+p_f16_finite_domain
+p_bf16_finite_domain
+p_e4m3_finite_domain
+p_e5m2_finite_domain
+p_f32_decode_external
+p_ilog2_24
+p_f32_exp_input_bound
+p_f32_tanh_input_bound
+p_f16_exp_input_bound
+p_f16_tanh_input_bound
+p_bf16_exp_input_bound
+p_bf16_tanh_input_bound
+p_e4m3_exp_input_bound
+p_e4m3_tanh_input_bound
+p_e5m2_exp_input_bound
+p_e5m2_tanh_input_bound

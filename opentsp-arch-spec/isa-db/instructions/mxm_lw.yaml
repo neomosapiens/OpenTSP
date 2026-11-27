@@ -1,0 +1,45 @@
+# Instruction catalogue entry. Sail (model/) is normative; test/isa_db/check_isa_db.py
+# checks this file against the model's encdec and assembly mappings.
+$schema: opentsp.isa-db.instruction
+spec_version: '0.1'
+name: LW
+mnemonic: lw
+long_name: Load weights
+slice: MXM
+units:
+- MXM_W
+- MXM_E
+timing: MXM_LW
+encoding:
+  width: 32
+  match: 0011000000----00000-000000000000
+  variables:
+  - name: type
+    location: 21-20
+    kind: mxm_wtype
+    hi_location: '12'
+    values:
+    - 0
+    - 1
+    - 2
+    - 3
+    - 4
+    - 5
+    extension_codes:
+      bf16:
+      - 4
+      block_fp8:
+      - 5
+  - name: src
+    location: 19-18
+    kind: stream_group16
+assembly: lw.{type} {src}
+operation: 'Appends 16 stream values src..src+15 to the weight buffer, which holds mxm.rows stream values for i8,
+  u8 and fp8 and 2 x mxm.f16_rows for f16, bf16 and bfp8 (a longer one: OTS-E-RES-002; mxm.rows i8/u8/fp8 rows or
+  mxm.f16_rows f16, bf16 or bfp8 rows). The type fp8 (code 3) stores bytes whose format (e4m3 or e5m2) the ABC gives.
+  The type bf16 (code 4, the weight-type bit 12 set) exists only in a profile that declares the extension `bf16`:
+  otherwise the word does not decode (OTS-E-DEC-003); a bf16 row is two stream values as an f16 row is, and takes
+  the plane pair as f16 does. The type bfp8 (code 5, extension `block_fp8`; the weight-type bit 12 set, bits 21..20
+  = 1) takes two stream values per row, the e4m3 data and the block scales, like f16 (a plane pair, mxm.f16_rows
+  rows); in a profile that does not declare `block_fp8` the word does not decode. ISCA20 Table I.'
+definedBy: ref

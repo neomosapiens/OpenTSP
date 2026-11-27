@@ -1,0 +1,123 @@
+# Post-hoc energy table of the ISS. Read by `tsp-iss run --energy opentsp-iss/perf/energy.yaml
+# --clock-mhz 900 <program>`, which prices the activity counters of the run (`--stats`, object `activity`) in joules and watts.
+#
+# EVERY VALUE BELOW IS AN ESTIMATE. None is measured on a chip and none is taken from a published source: the published TSP
+# sources (ISCA20, ISCA22, HC34) give no unit energies. The values are order-of-magnitude placeholders for a large process node
+# (an 8-bit multiply-accumulate a fraction of a picojoule, an SRAM byte a few tenths, a SerDes byte several, a host byte tens),
+# chosen so that the canonical busy mix the tool prints lands inside both published power ranges below. They show how the
+# counters turn into joules and watts; they are not a prediction of any chip. Replace them from a calibration, then change
+# `calibration.status`.
+#
+# What the model does not do: PWR-001 semantics (per-bank power-down, wake cycles) are not implemented (a
+# power-semantics feature is deferred), the clock is the tool's `--clock-mhz` argument (the specification has no clock key), and nothing here feeds back
+# into the simulation (traces and cycle counts are the same with and without it).
+#
+# Units: picojoules (pJ) per event or per cycle unless the key says watts (`_w`). The counters are defined in
+# `opentsp-iss/crates/tsp-iss/src/slices/activity.rs`; the arithmetic is in `src/slices/energy.rs`.
+schema: 1
+status: estimate
+
+calibration:
+  status: unresolved - the owner has not picked a target; the two published ranges below disagree
+  # Target A: the estimate calibration range.
+  published_range_w:
+    low: 35
+    high: 350
+    source: the power-semantics design record, 35-350 W
+  # Target B: the product brief of the published chip.
+  product_brief_w:
+    average: 185
+    maximum: 300
+    source: the published product brief v1.7 of the chip, 185 W average and 300 W maximum
+  how_to_calibrate: choose one target; run a workload whose power is known; scale events.* and cycles.* until `watts.average` of the run and `full_activity_watts` bracket it; record the workload and the date here
+
+# Leakage and always-on power of the reference chip below, in watts, charged for the whole run. It is split over the unit
+# classes by `static_share` (the shares add up to 1; an estimate) and each class's part scales with the size of that class on
+# the chip being priced, so a smaller chip pays less.
+static_w: 30
+static_share:
+  MEM: 0.35
+  VXM: 0.10
+  MXM: 0.30
+  SXM: 0.05
+  C2C: 0.15
+  CU: 0.05
+
+# The structure that `static_w` and the per-cycle energies of `cycles` are calibrated for: the `ref` profile (320 lanes,
+# 2 hemispheres x 44 MEM slices, 4 matrix planes of 320 rows, 16 links). A chip is priced at the ratio of its own size to this,
+# class by class: MEM slices x lanes, VXM lanes, matrix planes x rows x lanes, SXM lanes, C2C links; the control unit is one per
+# chip and does not scale. The calibration of the table is only for this reference; the sizes of other profiles are read from
+# the profile, and the scaling is an estimate like every other number here.
+reference:
+  vlanes: 320
+  mem_slices: 88
+  mxm_planes: 4
+  mxm_rows: 320
+  c2c_links: 16
+
+# Used only by the canonical busy mix (`full_activity_watts`, retained output key): published structure of the chip.
+# Its MEM slices and matrix planes are the priced chip's own (read from its profile).
+# This selected event mix is neither a universal power upper bound nor a calibrated physical prediction.
+peak:
+  vxm_alus_per_lane: 16   # ISCA20 section III-C, HC34 p.14 (also topology.md section 4)
+
+events:
+  # MEM: per byte of the active tiles of a reference (a full vector is vlanes bytes).
+  mem_read_pj_per_byte: 0.40
+  mem_write_pj_per_byte: 0.50
+  # Stream register file: per byte of every vector scheduled for commit (hop energy of the registers is folded in).
+  srf_write_pj_per_byte: 0.15
+  # VXM: per element operation (one lane, one operation), 8-bit integer reference. width and float scale it.
+  vxm_op_pj:
+    add_sub: 0.04
+    mul: 0.15
+    minmax: 0.03
+    logic: 0.02
+    compare_select: 0.04
+    convert: 0.08
+    reduce: 0.05
+    transcendental: 3.0
+  vxm_width_scale:
+    w1: 1.0
+    w2: 2.2
+    w4: 4.8
+  vxm_float_scale: 3.0
+  # MXM: per multiply-accumulate by ABC operand type.
+  mxm_mac_pj:
+    i8: 0.20
+    u8: 0.20
+    f16: 0.55
+    fp8: 0.15
+  mxm_load_pj_per_byte: 0.30      # LW and IWS rows moved into the weight buffer or the weights
+  mxm_install_pj_per_byte: 0.10   # IW copy of the buffered rows into the weights
+  mxm_acc_pj_per_lane: 0.30       # ACC accumulator lane (one 32-bit lane unit; ACC x128 is priced the same, not 4x -  stated limit)
+  # SXM: per byte of every vector read and written.
+  sxm_pj_per_byte: 0.10
+  # Off-chip: per byte of a vector sent, received or announced on a link, and per byte of a host vector.
+  c2c_pj_per_byte: 8.0
+  host_pj_per_byte: 40.0
+  # Instruction text fetched (the `fetch_bytes` counter).
+  ifetch_pj_per_byte: 0.30
+
+# Clocking and control per cycle of the run, by unit class, for the reference structure above (scaled by the class's size on
+# the chip priced): charged `active_pj` in a cycle in which the class executed an instruction and `idle_pj` in every other
+# cycle of the run (the run is the last cycle ticked plus one).
+cycles:
+  MEM:
+    active_pj: 3000
+    idle_pj: 2000
+  VXM:
+    active_pj: 800
+    idle_pj: 500
+  MXM:
+    active_pj: 2500
+    idle_pj: 1500
+  SXM:
+    active_pj: 500
+    idle_pj: 300
+  C2C:
+    active_pj: 1000
+    idle_pj: 800
+  CU:
+    active_pj: 600
+    idle_pj: 400

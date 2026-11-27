@@ -1,0 +1,22 @@
+# Instruction catalogue entry. Sail (model/) is normative; test/isa_db/check_isa_db.py
+# checks this file against the model's encdec and assembly mappings.
+$schema: opentsp.isa-db.instruction
+spec_version: '0.1'
+name: RuntimeDeskew
+mnemonic: runtime_deskew
+long_name: Runtime deskew
+slice: C2C
+units:
+- any
+timing: C2C
+encoding:
+  width: 32
+  match: 0101000100000000----------------
+  variables:
+  - name: t
+    location: 15-0
+    kind: imm16
+assembly: runtime_deskew {t}
+operation: Holds the issuing queue max(t, 1) cycles (t plus the HAC-SAC drift, 0 for one modelled chip). ISCA22
+  sec. 3.3.
+definedBy: ref

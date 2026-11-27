@@ -1,0 +1,7 @@
+.arch opentsp-tsa
+.profile ref
+.section text
+bundle @cycle=0 {
+  MEM[4]: ifetchm 0x0
+  MEM[4]: read 0x0, E:0, 0x0
+}

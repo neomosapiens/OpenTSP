@@ -1,0 +1,29 @@
+# Instruction catalogue entry. Sail (model/) is normative; test/isa_db/check_isa_db.py
+# checks this file against the model's encdec and assembly mappings.
+$schema: opentsp.isa-db.instruction
+spec_version: '0.1'
+name: IfetchM
+mnemonic: ifetchm
+long_name: Instruction fetch from local memory
+slice: CU
+units:
+- MEM_W
+- MEM_E
+timing: CU
+encoding:
+  width: 32
+  match: 0000000111000000----------------
+  variables:
+  - name: addr
+    location: 15-0
+    kind: sram_addr
+    max_expr: sram_words-1
+assembly: ifetchm {addr}
+operation: Reads instruction text from words addr and addr+1 of the issuing MEM slice in two successive SRAM read
+  cycles (2 x vlanes bytes), sampling each word and its stored check bits at its own read; the R path is reserved
+  for two cycles and each cycle uses its own bank; addr+1 outside the segment is OTS-E-OPR-001. The payload completes
+  one cycle after the first read and then follows the same IQ latency, staging and overflow rules as Ifetch. A repeat
+  that overlaps a pending local read is OTS-E-QUE-001. A repeated IfetchM (Repeat) reserves the R path for two cycles
+  and the bank of its second read exactly as an explicit IfetchM issued in that cycle does. MEM queues only. Uses
+  the Ifetch slot. ISCA20 Table I ('from streams or local memory'); the address rule is an opentsp rule.
+definedBy: ref

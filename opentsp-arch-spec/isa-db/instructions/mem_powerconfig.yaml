@@ -1,0 +1,23 @@
+# Instruction catalogue entry. Sail (model/) is normative; test/isa_db/check_isa_db.py
+# checks this file against the model's encdec and assembly mappings.
+$schema: opentsp.isa-db.instruction
+spec_version: '0.1'
+name: PowerConfig
+mnemonic: powerconfig
+long_name: MEM power configuration
+slice: MEM
+units:
+- MEM_W
+- MEM_E
+timing: MEM
+encoding:
+  width: 64
+  match: 00010010010000000000000000000000----------------0000000000000000
+  variables:
+  - name: v
+    location: 31-16
+    kind: imm16
+assembly: powerconfig {v}
+operation: Accepted power hint; no architectural state, result, stream, diagnostic or timing effect. No power or
+  sleep/wake state is modelled.
+definedBy: ref

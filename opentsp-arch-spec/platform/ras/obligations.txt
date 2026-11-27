@@ -1,0 +1,9 @@
+p_fault_suppresses_effects
+p_stale_visibility
+p_stale_writes
+p_missing_participant
+p_last_write_is_private
+p_reopen_needs_evidence
+c_no_success
+c_gate_always_agrees
+p_deadline_wins

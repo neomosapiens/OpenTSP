@@ -1,0 +1,39 @@
+# Instruction catalogue entry. Sail (model/) is normative; test/isa_db/check_isa_db.py
+# checks this file against the model's encdec and assembly mappings.
+$schema: opentsp.isa-db.instruction
+spec_version: '0.1'
+name: IWS
+mnemonic: iw
+long_name: Install weights from streams
+slice: MXM
+units:
+- MXM_W
+- MXM_E
+timing: MXM_IW
+encoding:
+  width: 32
+  match: 0011000001----00001-000000000000
+  variables:
+  - name: type
+    location: 21-20
+    kind: mxm_wtype
+    hi_location: '12'
+    values:
+    - 0
+    - 1
+    - 2
+    - 3
+    - 4
+    - 5
+    extension_codes:
+      bf16:
+      - 4
+      block_fp8:
+      - 5
+  - name: src
+    location: 19-18
+    kind: stream_group16
+assembly: iw.{type} {src}
+operation: Installs 16 stream values directly into the array, appending rows (an array holds mxm.rows stream values;
+  beyond that OTS-E-RES-002). ISCA20 Table I ('from streams or LW buffer').
+definedBy: ref

@@ -1,0 +1,46 @@
+{
+ "schema": "opentsp.program-case",
+ "version": 1,
+ "spec_version": "0.1",
+ "name": "control/park_waits",
+ "profile": "mini",
+ "program": "park_waits.mini.ots",
+ "tags": [
+  "sim",
+  "e2e"
+ ],
+ "weights": {
+  "x0": {
+   "dtype": "i8",
+   "words": 1,
+   "hex": "4420823cfde6f1c26b30f90ec7dd01e4"
+  },
+  "x1": {
+   "dtype": "i8",
+   "words": 1,
+   "hex": "887534a20f0b0d04c36ed80e71e0fd77"
+  }
+ },
+ "preload": {},
+ "dump": [
+  "44:48",
+  "45:48"
+ ],
+ "expect": {
+  "asm_warnings": [],
+  "diagnostics": [],
+  "words": {
+   "44:48": "4420823cfde6f1c26b30f90ec7dd01e4",
+   "45:48": "887534a20f0b0d04c36ed80e71e0fd77"
+  },
+  "decoded": null
+ },
+ "golden": {
+  "source": "hand",
+  "generator": "gen/control.py:park_waits",
+  "seed": 1
+ },
+ "budget": {
+  "cycles": 68
+ }
+}

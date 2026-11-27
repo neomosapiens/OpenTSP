@@ -1,0 +1,6 @@
+.arch opentsp-tsa
+.profile ref
+.section text
+bundle @cycle=3 {
+  MEM[87]: host_notify 0x1
+}

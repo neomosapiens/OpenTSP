@@ -1,0 +1,20 @@
+# Instruction catalogue entry. Sail (model/) is normative; test/isa_db/check_isa_db.py
+# checks this file against the model's encdec and assembly mappings.
+$schema: opentsp.isa-db.instruction
+spec_version: '0.1'
+name: DeepSleep
+mnemonic: deepsleep
+long_name: MEM deep sleep
+slice: MEM
+units:
+- MEM_W
+- MEM_E
+timing: MEM
+encoding:
+  width: 64
+  match: '0001001010000000000000000000000000000000000000000000000000000000'
+  variables: []
+assembly: deepsleep
+operation: Accepted power hint; no architectural state, result, stream, diagnostic or timing effect. No power or
+  sleep/wake state is modelled.
+definedBy: ref

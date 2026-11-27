@@ -1,0 +1,15 @@
+.arch opentsp-tsa
+.profile ref
+.section text
+bundle @cycle=0 {
+  MEM[4]: read 0x0, E:0, 0x0
+}
+bundle @cycle=1 {
+  MEM[4]: countdown 0x1
+}
+bundle @cycle=2 {
+  MEM[4]: step 0x1
+}
+bundle @cycle=3 {
+  MEM[4]: iterations 0x2
+}

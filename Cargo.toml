@@ -1,0 +1,23 @@
+[workspace]
+resolver = "2"
+members = [
+    "opentsp-sw-toolchain/crates/ots-profile",
+    "opentsp-sw-toolchain/crates/ots-isa",
+    "opentsp-sw-toolchain/crates/ots-format",
+    "opentsp-sw-toolchain/crates/ots-asm",
+    "opentsp-iss/crates/tsp-numerics",
+    "opentsp-iss/crates/tsp-iss",
+]
+
+# The differential and conformance tests run the ISS on many programs; optimise it in test builds too.
+# Debug assertions and overflow checks stay on.
+[profile.dev.package.tsp-iss]
+opt-level = 3
+
+[profile.dev.package.tsp-numerics]
+opt-level = 3
+
+# A release build a sampling profiler can symbolicate (`cargo build --profile profiling`).
+[profile.profiling]
+inherits = "release"
+debug = true

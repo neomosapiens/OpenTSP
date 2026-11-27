@@ -1,0 +1,9 @@
+.arch opentsp-tsa
+.profile ref
+.section text
+bundle @cycle=235 {
+  C2C.W.RX[0]: receive 0x1, 0x0, E:0
+}
+bundle @cycle=249 {
+  MEM[0]: write 0x5, E:0, 0x0
+}

@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "opentsp-tools"
+version = "0.1.0"
+description = "OpenTSP profile, scheduling, assembly and kernel-building libraries"
+requires-python = ">=3.11,<3.15"
+license = "Apache-2.0"
+license-files = ["LICENSE-APACHE-2.0"]
+dependencies = ["numpy", "mpmath", "opentsp-reference==0.1.0"]
+
+[tool.setuptools.packages.find]
+where = ["python"]
+
+[tool.setuptools.package-data]
+opentsp_tools = ["schedule_viewer.html"]

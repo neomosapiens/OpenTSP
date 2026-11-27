@@ -1,0 +1,7 @@
+.arch opentsp-tsa
+.profile ref
+.section text
+bundle @cycle=3 {
+  C2C.W.RX[0]: pci_receive W:24
+  C2C.W.RX[0]: host_wait 0x1
+}

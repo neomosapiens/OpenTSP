@@ -1,0 +1,119 @@
+// opentsp TSP Sail model: modules, files and dependencies
+// (structure follows sail-riscv model/riscv.sail_project).
+
+prelude {
+  files
+    prelude/prelude.sail,
+    prelude/errors.sail,
+}
+
+core {
+  requires prelude
+
+  files
+    core/geometry.sail,
+    core/types.sail,
+    core/diagnostics.sail,
+    core/layout.sail,
+    core/callbacks.sail,
+    core/csr.sail,
+    core/lints.sail,
+    core/ecc.sail,
+    core/streams.sail,
+    core/queues.sail,
+    core/sram.sail,
+    core/timing.sail,
+}
+
+slice_types {
+  requires prelude, core
+
+  files
+    slices/mem/mem_types.sail,
+    slices/vxm/vxm_types.sail,
+    slices/mxm/mxm_types.sail,
+    slices/sxm/sxm_types.sail,
+}
+
+sys {
+  requires prelude, core, slice_types
+
+  files
+    sys/insts_begin.sail,
+    sys/operands.sail,
+}
+
+slices {
+  requires prelude, core, numerics, slice_types, sys
+
+  cu {
+    files slices/cu/cu_iq.sail, slices/cu/cu_insts.sail
+  }
+  mem {
+    files slices/mem/mem_insts.sail
+  }
+  vxm {
+    files slices/vxm/vxm_insts.sail
+  }
+  mxm {
+    files slices/mxm/mxm_regs.sail, slices/mxm/mxm_insts.sail
+  }
+  sxm {
+    files slices/sxm/sxm_regs.sail, slices/sxm/sxm_insts.sail
+  }
+  c2c {
+    files slices/c2c/c2c_insts.sail
+  }
+  cu_mem {
+    requires cu, mem
+    files slices/cu/cu_ifetchm.sail
+  }
+}
+
+postlude {
+  requires prelude, core, slice_types, sys, slices
+
+  files
+    postlude/insts_end.sail,
+    postlude/iq.sail,
+    postlude/tick.sail,
+    postlude/timing_check.sail,
+    postlude/isa_query.sail,
+    postlude/harness_api.sail,
+}
+
+numerics {
+  requires prelude, core
+
+  files
+    core/numerics/fp.sail,
+    core/numerics/lanes.sail,
+    core/numerics/transcendental.sail,
+}
+
+unit_tests {
+  requires prelude, core, numerics, slice_types, sys, slices, postlude
+
+  files
+    unit_tests/test_streams.sail,
+    unit_tests/test_ecc.sail,
+    unit_tests/test_ras.sail,
+    unit_tests/test_encdec.sail,
+    unit_tests/test_slices.sail,
+    unit_tests/test_c2c.sail,
+    unit_tests/test_vxm_mxm.sail,
+    unit_tests/test_dispatch.sail,
+    unit_tests/test_frontend.sail,
+    unit_tests/test_profile.sail,
+    unit_tests/test_fp8.sail,
+    unit_tests/test_ext_types.sail,
+    unit_tests/test_bf16.sail,
+    unit_tests/test_pure_helpers.sail,
+}
+
+main {
+  requires prelude, core
+
+  files
+    main/main.sail,
+}

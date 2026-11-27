@@ -1,0 +1,40 @@
+[package]
+name = "tsp-iss"
+version = "0.1.0"
+edition = "2021"
+description = "Instruction-set simulator of opentsp specification 0.1: a bit-exact port of the Sail model, drop-in compatible with the tsp_sim harness"
+license = "Apache-2.0"
+
+[lib]
+name = "tsp_iss"
+path = "src/lib.rs"
+
+[[bin]]
+name = "tsp-iss"
+path = "src/main.rs"
+
+[features]
+# Per-entry timing of the units' instructions, printed to standard error at the end of a run.
+opprof = []
+# Per-phase time counters of the tick loop (`driver/phase.rs`), printed to stderr at the end of a run.
+phases = []
+# Schedule recording and compiled replay (`driver/replay.rs`), opt-in: a build without it refuses to record or replay and its
+# tick loop has no replay code at all (a build with it ticks about 1 % slower than one without, also when no run uses it).
+replay = []
+native-mem-prefetch = []
+
+[dependencies]
+ots-profile = { path = "../../../opentsp-sw-toolchain/crates/ots-profile" }
+ots-isa = { path = "../../../opentsp-sw-toolchain/crates/ots-isa" }
+ots-format = { path = "../../../opentsp-sw-toolchain/crates/ots-format" }
+tsp-numerics = { path = "../tsp-numerics" }
+serde_json = { version = "1", features = ["arbitrary_precision"] }
+sha2 = "0.10"
+num-bigint = "0.4"
+
+# Optional allocator selected by an independent Cargo feature.
+[target.'cfg(any(target_os = "macos", all(target_os = "linux", target_arch = "x86_64")))'.dependencies]
+mimalloc = { version = "0.1", default-features = false }
+
+[dev-dependencies]
+tempfile = "3"

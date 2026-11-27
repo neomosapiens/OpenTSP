@@ -1,0 +1,11 @@
+.arch opentsp-tsa
+.profile ref
+.extern sel, slice=12, addr=0x10, size=0x1
+.section text
+bundle @cycle=27 {
+  MEM[12]: read sel, W:8, 0x0
+  MEM[13]: read 0x20, W:9, 0x0
+}
+bundle @cycle=45 {
+  SXM.W.SEL: sxselect W:9, W:9, W:9, W:8, E:4
+}

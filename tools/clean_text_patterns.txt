@@ -1,0 +1,18 @@
+# Public source-content rules: scope | name | Python regular expression.
+all | patent | (?i)\bpatents?\b
+all | patent-no | \bUS[ -]?[0-9]{1,2},?[0-9]{3},?[0-9]{3}\b
+all | vendor | (?i)\b(lpu|tsp v[0-9])\b|lpu_sw
+all | change-request | \bCR-[0-9]+\b
+all | work-package | \bWP-[0-9]+\b
+all | development-id | (?<![-\w])(?:R[123][A-Z]?-(?:[A-Z]+-)?[0-9]+|C-[0-9]{3}|D-[0-9]{2,3}|V[0-9]+G[0-9]+-D[0-9]+|TS[0-9]+-D[0-9]+)\b
+all | development-id | (?<![-\w])(?:RV|RDY|AUD|ICV|OD|PT|SPEC)-[A-Z]?[0-9]{1,2}\b
+all | decision-id | (?i)\bdecision\s+[A-Z][A-Za-z0-9]*-[A-Z0-9-]+
+all | private-process | (?i)\b(?:review finding|owner decision|audit batch|change request|work package)\b
+all | private-process-path | docs/(?:reviews|release|design|superpowers)/
+all | retired-qualification-label | \b(?:V(?:8[a-z][0-9]?|9|10[a-z]?|11|12|13|14)|V-[0-9]+[a-z]+|W[0-9]+-[0-9]+)\b|\b(?:validation(?: row)? V[1-9]|stage S[0-9]+)\b
+all | retired-package-name | \btsplib\b
+all | private-process-phrase | (?i)\b(?:owner to declare|extension change requests|what changed against the earlier tables|the reviewer estimated)\b
+all | retired-slice-test-label | \bg2_(?:abc_check|bcast|f32x4|feed|ill32|ill64|install|issue_on|lane|lanes2|lanes3|tick_to|vfeed)\b
+all | retired-screen-test-label | \bf32_matches_v12\b
+code | retired-design-citation | \bdesign §[0-9]|\bcommit [0-9a-f]{7,40}\b
+code | retired-test-label | \b(?:mut-[MP][0-9]+|q9_on_[a-z0-9_]+|known_failures\.txt)\b

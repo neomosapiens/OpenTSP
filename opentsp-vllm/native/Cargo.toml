@@ -1,0 +1,5 @@
+# The PyO3 binding of the ISS has its own
+# workspace, so that the root workspace (`just lint`, `cargo test`) never needs Python. `just vllm-binding` builds it.
+[workspace]
+members = ["tsp_iss_py"]
+resolver = "2"

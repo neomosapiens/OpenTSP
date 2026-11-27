@@ -1,0 +1,7 @@
+.arch opentsp-tsa
+.profile ref
+.extern
+.section text
+bundle @cycle=0 {
+  CU: sync
+}

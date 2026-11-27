@@ -1,0 +1,125 @@
+{
+ "schema": "opentsp.program-case",
+ "version": 1,
+ "spec_version": "0.1",
+ "name": "mxm/weighted_matmul",
+ "profile": "mini",
+ "program": "weighted_matmul.mini.ots",
+ "tags": [
+  "sim",
+  "e2e"
+ ],
+ "weights": {
+  "w0": {
+   "dtype": "i8",
+   "words": 1,
+   "hex": "41d8eb56c88379c2e4f17b9be36ae9cc"
+  },
+  "w1": {
+   "dtype": "i8",
+   "words": 1,
+   "hex": "9e316fe99f99f1507def06f31d4d0797"
+  },
+  "w2": {
+   "dtype": "i8",
+   "words": 1,
+   "hex": "55643ad5a5b02019e9acad50d371023a"
+  },
+  "w3": {
+   "dtype": "i8",
+   "words": 1,
+   "hex": "917bab7e64c89ab01f1ed66160969e8e"
+  },
+  "w4": {
+   "dtype": "i8",
+   "words": 1,
+   "hex": "ed64670efae4e4c64b490bb33207cd28"
+  },
+  "w5": {
+   "dtype": "i8",
+   "words": 1,
+   "hex": "390ec2cef924700f025519c281fbeaa6"
+  },
+  "w6": {
+   "dtype": "i8",
+   "words": 1,
+   "hex": "96ad4a3fb96440ee5493402dd891d72b"
+  },
+  "w7": {
+   "dtype": "i8",
+   "words": 1,
+   "hex": "cd0a7b71481dbbecfd27c0b8efdf9822"
+  },
+  "w8": {
+   "dtype": "i8",
+   "words": 1,
+   "hex": "9874d86f70612977deafae5e90d65d2e"
+  },
+  "w9": {
+   "dtype": "i8",
+   "words": 1,
+   "hex": "ae68d2e1ea06c1e42499af8a4f486faf"
+  },
+  "w10": {
+   "dtype": "i8",
+   "words": 1,
+   "hex": "c020bed5506010d84af2e914bab85502"
+  },
+  "w11": {
+   "dtype": "i8",
+   "words": 1,
+   "hex": "6984c53143cca6643e54046048db0b46"
+  },
+  "w12": {
+   "dtype": "i8",
+   "words": 1,
+   "hex": "2c65827abc8ef2d13c9acd6800fa196c"
+  },
+  "w13": {
+   "dtype": "i8",
+   "words": 1,
+   "hex": "6f8ccab95d0c0df878e3441172ad1a31"
+  },
+  "w14": {
+   "dtype": "i8",
+   "words": 1,
+   "hex": "3f57c933ab70f19b25d799fa5cdd439a"
+  },
+  "w15": {
+   "dtype": "i8",
+   "words": 1,
+   "hex": "e78ab4755bb430b3183877f2b7cbeb62"
+  },
+  "x0": {
+   "dtype": "u8",
+   "words": 1,
+   "hex": "e434b285ba1f08ae291ad07f3c8d67d9"
+  }
+ },
+ "preload": {},
+ "dump": [
+  "4:48",
+  "5:48",
+  "6:48",
+  "7:48"
+ ],
+ "expect": {
+  "asm_warnings": [],
+  "diagnostics": [],
+  "words": {
+   "4:48": "bd99e3dc5c575b7e71dfd4e597d09a61",
+   "5:48": "1bc2752e3586cd158118a1212fb13a5f",
+   "6:48": "00ff00ff00ffff0000ffff010000ff00",
+   "7:48": "00ff00ff00ffff0000ffff000000ff00"
+  },
+  "decoded": null
+ },
+ "golden": {
+  "source": "hand",
+  "generator": "gen/mxm.py:weighted_matmul",
+  "seed": 2
+ },
+ "budget": {
+  "cycles": 122
+ }
+}

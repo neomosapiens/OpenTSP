@@ -1,0 +1,29 @@
+# Instruction catalogue entry. Sail (model/) is normative; test/isa_db/check_isa_db.py
+# checks this file against the model's encdec and assembly mappings.
+$schema: opentsp.isa-db.instruction
+spec_version: '0.1'
+name: Repeat
+mnemonic: repeat
+long_name: Repeat previous instruction
+slice: CU
+units:
+- any
+timing: CU
+encoding:
+  width: 32
+  match: 0000000011000000----------------
+  variables:
+  - name: n
+    location: 15-4
+    kind: imm12
+    not_values:
+    - 0
+  - name: d
+    location: 3-0
+    kind: imm4
+assembly: repeat {n}, {d}
+operation: 'Re-issues the queue''s last instruction other than NOP, Repeat and AGT configuration n more times with
+  d cycles between iterations (d = 0: none, consecutive cycles; d is 0..15): iteration k issues at p + k (d + 1),
+  p the issue cycle of the repeated instruction, and the first not before the Repeat''s own cycle; after Sync, Notify,
+  Deskew or RuntimeDeskew there is nothing to repeat (OTS-E-RES-001). ISCA20 Table I.'
+definedBy: ref

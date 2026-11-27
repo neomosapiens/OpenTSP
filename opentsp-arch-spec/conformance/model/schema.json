@@ -1,0 +1,235 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "opentsp.conformance.model.schema",
+  "title": "Golden vectors of the Sail model (conformance/model/<profile>.json), spec version 0.1",
+  "description": "Written by tools/gen_model_vectors.py from tsp_sim --trace. A vector is a program (SRAM preload, the text of the queues, words to dump) and the model's results (every diagnostic in order, every dumped word, and the trace of stream-register and SRAM writes with their values). An implementation passes a vector when it produces exactly expect.diagnostics (same cycle, queue and code, in the same order), exactly expect.words, and the trace whose digest is expect.trace_sha256. Checked by test/isa_db/check_conformance_schema.py; documented in porting-guide.md sec. 2.",
+  "type": "object",
+  "required": [
+    "schema",
+    "spec_version",
+    "profile",
+    "config_sha256",
+    "text",
+    "vectors"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema": {
+      "const": "opentsp.conformance.model"
+    },
+    "spec_version": {
+      "const": "0.1"
+    },
+    "profile": {
+      "enum": [
+        "ref",
+        "mini"
+      ],
+      "description": "config/<profile>.json the vectors were generated with. An implementation conforms to a profile when it matches the vectors generated from that profile's configuration by the frozen model (porting-guide.md sec. 2.2); a profile without a committed file gets its vectors from `tools/gen_model_vectors.py` and the same model"
+    },
+    "config_sha256": {
+      "$ref": "#/$defs/sha256",
+      "description": "SHA-256 of the profile's configuration file as canonical JSON (keys sorted, separators , and :, ASCII): lets an implementation check that it runs the profile of these vectors"
+    },
+    "text": {
+      "type": "string",
+      "description": "Human-readable form of the vectors' text field"
+    },
+    "vectors": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/vector"
+      }
+    }
+  },
+  "$defs": {
+    "uint": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "event": {
+      "type": "string",
+      "pattern": "^(srf [0-9]+ [EW]:(0|[1-9][0-9]?) gap [0-9]+|sram [0-9]+ slice [0-9]+ addr [0-9]+) [0-9a-f]+$",
+      "description": "A trace line without its leading \"T \": `srf <cycle> <row>:<stream> gap <gap> <value>` or `sram <cycle> slice <slice> addr <addr> <value>`; the value is vlanes bytes as lower-case hex pairs, lane 0 first (microarchitecture.md sec. 12)"
+    },
+    "u64": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 18446744073709551615
+    },
+    "slice_addr": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]*):(0|[1-9][0-9]*)$",
+      "description": "\"<slice>:<address>\", both decimal; slice < 88, address < sram.words_per_slice"
+    },
+    "word": {
+      "type": "string",
+      "pattern": "^([0-9a-f]{2})+$",
+      "description": "One SRAM word, lane 0 first, two lower-case hex digits per lane byte; vlanes bytes (16 x geometry.superlanes)"
+    },
+    "code": {
+      "type": "string",
+      "pattern": "^OTS-E-[A-Z]+-[0-9]{3}$",
+      "description": "A diagnostic code of encoding.json diagnostics"
+    },
+    "queue_key": {
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]{0,2}|65535)$",
+      "description": "\"<queue>\", decimal: 0..143 is a data queue, 65535 the control channel"
+    },
+    "units": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{8}( [0-9a-f]{8})*$",
+      "description": "The 32-bit units of a queue's initial instruction queue (assembly.md sec. 4, text format), 8 lower-case hex digits each, one space between units; at most icu.iq_depth / 4 units, none of them the padding unit ffffffff"
+    },
+    "diagnostic": {
+      "type": "object",
+      "required": [
+        "cycle",
+        "queue",
+        "code"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "cycle": {
+          "$ref": "#/$defs/uint"
+        },
+        "queue": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 65535
+        },
+        "code": {
+          "$ref": "#/$defs/code"
+        }
+      }
+    },
+    "vector": {
+      "type": "object",
+      "required": [
+        "name",
+        "instructions",
+        "units",
+        "text",
+        "sram",
+        "dump",
+        "expect"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^(directed|generated|coverage|clean|link|host|ecc)-[0-9]{3}$"
+        },
+        "instructions": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_]+$"
+          },
+          "description": "Catalogue names of the entries the text uses, sorted: an instruction of the text uses an entry when it decodes to it under encoding.json decode_rule on a queue that may issue it (it may still raise a diagnostic when dispatched)"
+        },
+        "units": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "CU",
+              "MEM",
+              "VXM",
+              "MXM",
+              "SXM",
+              "C2C"
+            ]
+          },
+          "description": "Catalogue slices of those entries, sorted"
+        },
+        "text": {
+          "type": "object",
+          "propertyNames": {
+            "$ref": "#/$defs/queue_key"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/units"
+          },
+          "description": "The initial instruction queue of each queue that has text (the harness Q lines, tsp_sim.c); every other queue starts empty"
+        },
+        "sram": {
+          "type": "object",
+          "propertyNames": {
+            "$ref": "#/$defs/slice_addr"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/word"
+          },
+          "description": "SRAM preload; every other word is zero at reset"
+        },
+        "dump": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/slice_addr"
+          },
+          "description": "Words to read after the run (expect.words has exactly these keys)"
+        },
+        "host": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^(H (dma|db|csr|start|inject|csr) .+|R [0-9a-f]+|P ctrl [0-9a-f]+ [0-9]+|F sram [0-9a-f]+ [0-9a-f]+ [0-9a-f]+ [0-9a-f]+ [0-9a-f]+|F srf [0-9a-f]+ [ew] [0-9a-f]+ [0-9a-f]+ [0-9a-f]+ [0-9a-f]+|F link [0-9a-f]+ [0-9a-f]+ [0-9a-f]+ (corr|uncorr)( [tp])?|F mxm [0-9a-f]+ [0-9a-f]+ [0-9a-f]+ [0-9a-f]+( [tp])?|F iq [0-9a-f]+ [0-9a-f]+ [0-9a-f]+ [0-9a-f]+( [tp])?)$"
+          },
+          "description": "The host's script (microarchitecture.md sec. 14) and the ECC and link fault-injection lines (microarchitecture.md secs. 15 and 16): the `H`, `R`, `P` and `F` lines the harness reads after the program, in input order; absent when the vector has none"
+        },
+        "expect": {
+          "type": "object",
+          "required": [
+            "diagnostics",
+            "words",
+            "trace_sha256"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "diagnostics": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/diagnostic"
+              },
+              "description": "Every diagnostic, in the order the model raises them (the T diag lines of tsp_sim --trace)"
+            },
+            "words": {
+              "type": "object",
+              "propertyNames": {
+                "$ref": "#/$defs/slice_addr"
+              },
+              "additionalProperties": {
+                "$ref": "#/$defs/word"
+              }
+            },
+            "trace_sha256": {
+              "$ref": "#/$defs/sha256",
+              "description": "SHA-256 of the canonical trace: the `srf` and `sram` events of the run, in the canonical order of microarchitecture.md sec. 12 (each cycle's run of `srf` lines sorted by row E before W, stream, gap), each written as the harness prints it (`T srf ...`, `T sram ...`) followed by a newline. Present for every vector"
+            },
+            "ext_events": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "pattern": "^(dma [0-9]+ (in|wait|out)|irq [0-9]+ msix [0-9]+|csr [0-9]+ ([0-9]+ )?[0-9a-f]{3} [0-9a-f]+|Y [0-9]+( [0-9a-f]{2})+|X [0-9a-f]{3} [0-9a-f]+|pkt [0-9]+ (csr|ctrl) [0-9]+|ecc [0-9]+ queue [0-9]+ (corr|unc) ([EW]:[0-9]+|sram [0-9]+:[0-9]+) sl [0-9]+ pos [0-9]+|ecc [0-9]+ queue [0-9]+ spare [EW]:[0-9]+ sl [0-9]+ pos [0-9]+|ecc [0-9]+ link [0-9]+ (corr|unc) flit [0-9]+|ecc [0-9]+ queue [0-9]+ mxm corr plane [0-3] lane [0-9]+|ecc [0-9]+ queue [0-9]+ (corr|unc) text word [0-9]+ pos [0-9]+)$"
+              },
+              "description": "The external events of the host path and the ECC findings and the link FEC and matrix-unit check findings in output order: the `T dma`, `T irq`, `T csr`, `T pkt` and `T ecc` lines without the leading \"T \", then the `Y` and `X` lines as the harness prints them. Not part of trace_sha256. Absent when the run has none. An implementation compares the list exactly"
+            },
+            "events": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/event"
+              },
+              "description": "Those events, without the leading \"T \", in canonical order. Present for the vectors with at most 64 events (the digest covers the rest); an implementation that fails a digest can compare its own events with these on the small vectors"
+            }
+          }
+        }
+      }
+    }
+  }
+}

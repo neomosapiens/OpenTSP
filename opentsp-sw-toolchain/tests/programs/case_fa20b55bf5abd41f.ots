@@ -1,0 +1,6 @@
+.arch opentsp-tsa
+.profile ref
+.section text
+bundle @cycle=3 {
+  C2C.E.TX[1]: pci_send E:0
+}

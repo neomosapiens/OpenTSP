@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "opentsp-vllm"
+version = "0.1.0"
+description = "vLLM platform plugin for TinyStories and four-chip GPT-2 small on the OpenTSP ISS"
+readme = "README.md"
+license = "Apache-2.0"
+license-files = ["LICENSE-APACHE-2.0"]
+requires-python = ">=3.11,<3.15"
+dependencies = ["numpy", "safetensors", "opentsp-tools==0.1.0"]
+
+[project.optional-dependencies]
+serving = ["vllm==0.33.0"]
+
+# Inert unless OPENTSP_VLLM=1 (opentsp_vllm.register), so installing the package does not change other vLLM use.
+[project.entry-points."vllm.platform_plugins"]
+opentsp = "opentsp_vllm:register"
+
+[tool.setuptools.packages.find]
+where = ["src"]

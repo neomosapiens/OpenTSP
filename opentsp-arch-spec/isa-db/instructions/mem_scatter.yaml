@@ -1,0 +1,35 @@
+# Instruction catalogue entry. Sail (model/) is normative; test/isa_db/check_isa_db.py
+# checks this file against the model's encdec and assembly mappings.
+$schema: opentsp.isa-db.instruction
+spec_version: '0.1'
+name: Scatter
+mnemonic: scatter
+long_name: SRAM scatter
+slice: MEM
+units:
+- MEM_W
+- MEM_E
+timing: MEM
+encoding:
+  width: 64
+  match: 0001000100-0----------------000000000000000000000000000000000000
+  variables:
+  - name: src
+    location: 47-42
+    kind: stream
+  - name: map
+    location: 41-36
+    kind: stream
+  - name: k
+    location: 51-48
+    kind: imm4
+  - name: thread
+    location: '53'
+    kind: imm1
+assembly: scatter {src}, {map}, {k}, {thread}
+operation: 'Per active tile g: byte 16g+k of the word at map''s tile-g address (the bits of the little-endian halfword
+  in bytes 0..1 of the map from sram.addr_bits up are ignored: the address is the low sram.addr_bits bits; no diagnostic)
+  = lane 16g+k of src; the rest of the word is unchanged (one element per tile). Each tile acts alone: a tile whose
+  address (plus the AGT offset) is outside the segment or the slice writes nothing, the good tiles write, and the
+  instruction reports one OTS-E-OPR-001 (an exception to "a diagnostic means no effect"). Loopable.'
+definedBy: ref
